@@ -1,0 +1,29 @@
+apiVersion: cloudnative.redhat.com/v1alpha1
+kind: Workshop
+metadata:
+  name: workshop-installation
+spec:
+  users: 5
+  etherpad:
+    enabled: true
+  gogs:
+    enabled: true
+  nexus:
+    enabled: true
+  servicemesh:
+    enabled: false
+    maistraVersion: "0.10"
+  guide:
+    enabled: false
+    openshiftConsoleUrl: https://master.nextgenappdev-b61e.openshiftworkshop.com
+    openshiftUserPassword: openshift
+    gitRepositoryLabPath: mcouliba/cloud-native-labs
+    gitRepositoryLabReference: ocp-3.11
+    gitRepositoryGuidePath: mcouliba/cloud-native-guides
+    gitRepositoryGuideReference: ocp-3.11
+    gitRepositoryGuideContext:
+    gitRepositoryGuideName: codeready
+  workspaces:
+    enabled: true
+    openShiftoAuth: true
+  

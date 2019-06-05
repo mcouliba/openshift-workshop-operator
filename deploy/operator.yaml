@@ -16,7 +16,7 @@ spec:
       containers:
         - name: cloud-native-workshop-operator
           # Replace this with the built image name
-          image: REPLACE_IMAGE
+          image: quay.io/mcouliba/cloud-native-workshop-operator:v1
           command:
           - cloud-native-workshop-operator
           imagePullPolicy: Always
