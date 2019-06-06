@@ -1,20 +1,27 @@
 package workshop
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os/exec"
 	"reflect"
 	"regexp"
 	"strings"
+	"time"
 
+	imagev1 "github.com/openshift/api/image/v1"
 	routev1 "github.com/openshift/api/route/v1"
 	cloudnativev1alpha1 "github.com/redhat/cloud-native-workshop-operator/pkg/apis/cloudnative/v1alpha1"
 	checlustercustomresource "github.com/redhat/cloud-native-workshop-operator/pkg/customresource/checluster"
 	gogscustomresource "github.com/redhat/cloud-native-workshop-operator/pkg/customresource/gogs"
 	nexuscustomresource "github.com/redhat/cloud-native-workshop-operator/pkg/customresource/nexus"
 	deployment "github.com/redhat/cloud-native-workshop-operator/pkg/deployment"
+	"github.com/redhat/cloud-native-workshop-operator/pkg/stack"
+	"github.com/redhat/cloud-native-workshop-operator/pkg/util"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
@@ -56,8 +63,13 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// register OpenShift routes in the scheme
+	// register OpenShift Routes in the scheme
 	if err := routev1.AddToScheme(mgr.GetScheme()); err != nil {
+		return err
+	}
+
+	// register OpenShift Image in the scheme
+	if err := imagev1.AddToScheme(mgr.GetScheme()); err != nil {
 		return err
 	}
 
@@ -522,7 +534,7 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 			}
 
 			reqLogger.Info("Creating Nexus Custom Resource")
-			nexusCustomResource := deployment.NewNexusCustomResource(instance, "nexus-repository", instance.Namespace)
+			nexusCustomResource := nexuscustomresource.NewNexusCustomResource(instance, "nexus-repository", instance.Namespace)
 			if err := r.client.Create(context.TODO(), nexusCustomResource); err != nil && !errors.IsAlreadyExists(err) {
 				return reconcile.Result{}, err
 			}
@@ -573,7 +585,7 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 			}
 
 			reqLogger.Info("Creating Gogs Custom Resource")
-			gogsCustomResource := deployment.NewGogsCustomResource(instance, "gogs-server", instance.Namespace)
+			gogsCustomResource := gogscustomresource.NewGogsCustomResource(instance, "gogs-server", instance.Namespace)
 			if err := r.client.Create(context.TODO(), gogsCustomResource); err != nil && !errors.IsAlreadyExists(err) {
 				return reconcile.Result{}, err
 			}
@@ -634,11 +646,99 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 			}
 
 			reqLogger.Info("Creating Workspaces Custom Resource")
-			workspacesCustomResource := deployment.NewCheClusterCustomResource(instance, "codeready", workspacesNamespace.Name, "registry.redhat.io/codeready-workspaces/server-rhel8", "1.2", false, false, enabledOpenShiftoAuth)
+			workspacesCustomResource := checlustercustomresource.NewCheClusterCustomResource(instance, "codeready", workspacesNamespace.Name, "registry.redhat.io/codeready-workspaces/server-rhel8", "1.2", false, false, enabledOpenShiftoAuth)
 			if err := r.client.Create(context.TODO(), workspacesCustomResource); err != nil && !errors.IsAlreadyExists(err) {
 				return reconcile.Result{}, err
 			}
+
+			reqLogger.Info("Creating Cloud Native Stack Image Stream")
+			cloudNativeStackImageStream := deployment.NewImageStream(instance, "che-cloud-native", "openshift", "quay.io/mcouliba/che-cloud-native", "latest")
+			if err := r.client.Create(context.TODO(), cloudNativeStackImageStream); err != nil && !errors.IsAlreadyExists(err) {
+				return reconcile.Result{}, err
+			}
 		}
+
+		// Wait for CodeReady Workspaces to be running
+		var (
+			err            error
+			url            string
+			response       *http.Response
+			request        *http.Request
+			retries        = 60
+			codereadyToken util.Token
+			client         = &http.Client{}
+			stackResponse  = stack.Stack{}
+		)
+		for retries > 0 {
+			response, err = http.Get("http://codeready-workspaces." + appsHostnameSuffix + "/api/system/state")
+			if err != nil {
+				retries--
+			} else {
+				break
+			}
+			reqLogger.Info(fmt.Sprintf("Waiting for Workspaces to be up and running (%d retries left)", retries))
+			time.Sleep(30 * time.Second)
+		}
+
+		if response == nil {
+			return reconcile.Result{}, err
+		}
+
+		reqLogger.Info("Getting Workspaces Access Token")
+		url = "http://keycloak-workspaces." + appsHostnameSuffix + "/auth/realms/codeready/protocol/openid-connect/token"
+		request, err = http.NewRequest("POST", url, strings.NewReader("username=admin&password=admin&grant_type=password&client_id=admin-cli"))
+		request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		response, err = client.Do(request)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+		defer response.Body.Close()
+		if response.StatusCode == http.StatusOK {
+			if err := json.NewDecoder(response.Body).Decode(&codereadyToken); err != nil {
+				return reconcile.Result{}, err
+			}
+		}
+
+		reqLogger.Info("Adding Stack for Cloud Native Workshop")
+		url = "http://codeready-workspaces." + appsHostnameSuffix + "/api/stack"
+
+		body, err := json.Marshal(stack.NewCloudNativeStack(instance))
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+
+		request, err = http.NewRequest("POST", url, bytes.NewBuffer(body))
+		request.Header.Set("Authorization", "Bearer "+codereadyToken.AccessToken)
+		request.Header.Set("Content-Type", "application/json")
+
+		response, err = client.Do(request)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+		defer response.Body.Close()
+		if response.StatusCode == http.StatusCreated {
+			if err := json.NewDecoder(response.Body).Decode(&stackResponse); err != nil {
+				return reconcile.Result{}, err
+			}
+		}
+
+		reqLogger.Info("Granting Stack for Cloud Native Workshop for all")
+		url = "http://codeready-workspaces." + appsHostnameSuffix + "/api/permissions"
+
+		body, err = json.Marshal(stack.NewCloudNativeStackPermission(instance, stackResponse.ID))
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+
+		request, err = http.NewRequest("POST", url, bytes.NewBuffer(body))
+		request.Header.Set("Authorization", "Bearer "+codereadyToken.AccessToken)
+		request.Header.Set("Content-Type", "application/json")
+
+		response, err = client.Do(request)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+
 	}
 
 	//Success

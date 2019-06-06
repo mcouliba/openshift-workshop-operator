@@ -1,14 +1,12 @@
-package deployment
+package customresource
 
 import (
 	cloudnativev1alpha1 "github.com/redhat/cloud-native-workshop-operator/pkg/apis/cloudnative/v1alpha1"
-	checlustercustomresource "github.com/redhat/cloud-native-workshop-operator/pkg/customresource/checluster"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func NewCheClusterCustomResource(cr *cloudnativev1alpha1.Workshop, name string, namespace string, cheImage string, cheImageTag string, tlsSupport bool, selfSignedCert bool, openShiftoAuth bool) *checlustercustomresource.CheCluster {
-	labels := GetLabels(cr, name)
-	return &checlustercustomresource.CheCluster{
+func NewCheClusterCustomResource(cr *cloudnativev1alpha1.Workshop, name string, namespace string, cheImage string, cheImageTag string, tlsSupport bool, selfSignedCert bool, openShiftoAuth bool) *CheCluster {
+	return &CheCluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "CheCluster",
 			APIVersion: "v1",
@@ -16,10 +14,9 @@ func NewCheClusterCustomResource(cr *cloudnativev1alpha1.Workshop, name string, 
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
-			Labels:    labels,
 		},
-		Spec: checlustercustomresource.CheClusterSpec{
-			Server: checlustercustomresource.ServerSpec{
+		Spec: CheClusterSpec{
+			Server: ServerSpec{
 				CheFlavor:      "codeready",
 				CheImage:       cheImage,
 				CheImageTag:    cheImageTag,
@@ -31,11 +28,11 @@ func NewCheClusterCustomResource(cr *cloudnativev1alpha1.Workshop, name string, 
 				ProxyUser:      "",
 				ProxyPassword:  "",
 			},
-			Storage: checlustercustomresource.StorageSpec{
+			Storage: StorageSpec{
 				PvcStrategy:  "per-workspace",
 				PvcClaimSize: "1Gi",
 			},
-			Database: checlustercustomresource.DatabaseSpec{
+			Database: DatabaseSpec{
 				ExternalDb:          false,
 				ChePostgresHostName: "",
 				ChePostgresPort:     "",
@@ -43,7 +40,7 @@ func NewCheClusterCustomResource(cr *cloudnativev1alpha1.Workshop, name string, 
 				ChePostgresPassword: "",
 				ChePostgresDb:       "",
 			},
-			Auth: checlustercustomresource.AuthSpec{
+			Auth: AuthSpec{
 				OpenShiftoAuth:                openShiftoAuth,
 				ExternalIdentityProvider:      false,
 				IdentityProviderAdminUserName: "admin",

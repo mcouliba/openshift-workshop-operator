@@ -120,6 +120,9 @@ github.com/modern-go/concurrent
 github.com/modern-go/reflect2
 # github.com/openshift/api v3.9.0+incompatible
 github.com/openshift/api/route/v1
+github.com/openshift/api/image/v1
+github.com/openshift/api/image/docker10
+github.com/openshift/api/image/dockerpre012
 # github.com/operator-framework/operator-sdk v0.8.1-0.20190520230602-e9a6ee27551a => github.com/operator-framework/operator-sdk v0.8.0
 github.com/operator-framework/operator-sdk/pkg/leader
 github.com/operator-framework/operator-sdk/pkg/log/zap

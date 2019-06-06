@@ -40,6 +40,7 @@ require (
 	go.uber.org/zap v1.9.1 // indirect
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
 	k8s.io/api v0.0.0-20190515023547-db5a9d1c40eb
+	k8s.io/apiextensions-apiserver v0.0.0-20190228180357-d002e88f6236
 	k8s.io/apimachinery v0.0.0-20190515023456-b74e4c97951f
 	k8s.io/cli-runtime v0.0.0-20190515024640-178667528169 // indirect
 	k8s.io/client-go v2.0.0-alpha.0.0.20181126152608-d082d5923d3c+incompatible

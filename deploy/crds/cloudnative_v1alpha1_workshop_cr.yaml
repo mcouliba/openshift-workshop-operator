@@ -14,13 +14,13 @@ spec:
     enabled: false
     maistraVersion: "0.10"
   guide:
-    enabled: false
-    openshiftConsoleUrl: https://master.nextgenappdev-b61e.openshiftworkshop.com
+    enabled: true
+    openshiftConsoleUrl: https://master.nantes-53df.openshiftworkshop.com
     openshiftUserPassword: openshift
     gitRepositoryLabPath: mcouliba/cloud-native-labs
     gitRepositoryLabReference: ocp-3.11
     gitRepositoryGuidePath: mcouliba/cloud-native-guides
-    gitRepositoryGuideReference: ocp-3.11
+    gitRepositoryGuideReference: master
     gitRepositoryGuideContext:
     gitRepositoryGuideName: codeready
   workspaces:
