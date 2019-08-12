@@ -19,7 +19,7 @@ func NewDebuggingFactory(openshiftConsoleURL string, openshiftAPIURl string, app
 						DevMachine: DevMachine{
 							Env: map[string]string{
 								"MAVEN_OPTS":            "-Xmx512m",
-								"MAVEN_MIRROR_URL":      "http://nexus-repository.workshop-infra.svc:8081/repository/maven-all-public",
+								"MAVEN_MIRROR_URL":      "http://nexus.opentlc-shared.svc:8081/repository/maven-all-public",
 								"OPENSHIFT_CONSOLE_URL": openshiftConsoleURL,
 								"OPENSHIFT_API_URL":     openshiftAPIURl,
 								"APPS_HOSTNAME_SUFFIX":  appsHostnameSuffix,

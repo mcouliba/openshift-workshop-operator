@@ -1435,4 +1435,5 @@ func IstioUserRules() []rbac.PolicyRule {
 				"list",
 			},
 		},
+	}
 }
