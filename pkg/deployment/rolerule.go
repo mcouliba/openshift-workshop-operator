@@ -1409,5 +1409,30 @@ func IstioUserRules() []rbac.PolicyRule {
 				"list",
 			},
 		},
-	}
+		{
+			APIGroups: []string{
+				"config.istio.io",
+			},
+			Resources: []string{
+				"rules",
+				"quotaspecs",
+				"quotaspecbindings",
+			},
+			Verbs: []string{
+				"list",
+			},
+		},
+		{
+			APIGroups: []string{
+				"rbac.istio.io",
+			},
+			Resources: []string{
+				"serviceroles",
+				"rbacconfigs",
+				"servicerolebindings",
+			},
+			Verbs: []string{
+				"list",
+			},
+		},
 }
