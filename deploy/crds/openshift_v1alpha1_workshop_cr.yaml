@@ -1,0 +1,32 @@
+apiVersion: openshift.redhat.com/v1alpha1
+kind: Workshop
+metadata:
+  name: workshop-installation
+spec:
+  users: 5
+  etherpad:
+    enabled: true
+  gogs:
+    enabled: false
+  nexus:
+    enabled: false
+  servicemesh:
+    enabled: true
+    jaegerOperatorImage: "jaegertracing/jaeger-operator:1.13.1"
+    kialiOperatorImage: "quay.io/kiali/kiali-operator:v1.0.0"
+    istioOperatorImage: "registry.redhat.io/openshift-istio-tech-preview/istio-operator-rhel8:0.12.0"
+  guide:
+    enabled: true
+    openshiftConsoleUrl: https://console-openshift-console.apps.cluster-3ea4.3ea4.events.opentlc.com
+    openshiftApiUrl: https://api.cluster-3ea4.3ea4.events.opentlc.com
+    openshiftUserPassword: r3dh4t1!
+    gitRepositoryLabPath: mcouliba/cloud-native-labs
+    gitRepositoryLabReference: debugging
+    gitRepositoryGuidePath: dwojciec/debugging-lab-summit-2019
+    gitRepositoryGuideReference: master
+    gitRepositoryGuideContext: instructions
+    gitRepositoryGuideFile: _cloud-native-workshop-rhsummit-debugging.yml
+  workspaces:
+    enabled: true
+    openShiftoAuth: false
+  

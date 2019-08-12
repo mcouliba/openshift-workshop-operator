@@ -3,7 +3,7 @@ package deployment
 import (
 	"encoding/json"
 
-	cloudnativev1alpha1 "github.com/redhat/cloud-native-workshop-operator/pkg/apis/cloudnative/v1alpha1"
+	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -112,7 +112,7 @@ type (
 	}
 )
 
-func NewEtherpadSettingsJson(cr *cloudnativev1alpha1.Workshop, defaultPadText string) string {
+func NewEtherpadSettingsJson(cr *openshiftv1alpha1.Workshop, defaultPadText string) string {
 
 	settings := &EtherpadSettings{
 		Title:   "OpenShift Workshop Etherpad",
@@ -174,8 +174,8 @@ func NewEtherpadSettingsJson(cr *cloudnativev1alpha1.Workshop, defaultPadText st
 	return string(jsonResult)
 }
 
-func NewEtherpadDatabaseDeployment(cr *cloudnativev1alpha1.Workshop, name string, namespace string) *appsv1.Deployment {
-	etherpadDatabaseImage := "mysql:5.7"
+func NewEtherpadDatabaseDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string) *appsv1.Deployment {
+	etherpadDatabaseImage := "mysql:5.6"
 	labels := GetLabels(cr, name)
 
 	env := []corev1.EnvVar{
@@ -238,7 +238,7 @@ func NewEtherpadDatabaseDeployment(cr *cloudnativev1alpha1.Workshop, name string
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{MatchLabels: labels},
 			Strategy: appsv1.DeploymentStrategy{
-				Type: appsv1.RollingUpdateDeploymentStrategyType,
+				Type: appsv1.RecreateDeploymentStrategyType,
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
@@ -282,7 +282,7 @@ func NewEtherpadDatabaseDeployment(cr *cloudnativev1alpha1.Workshop, name string
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name:      name + "-data",
+									Name:      name + "-volume",
 									MountPath: "/var/lib/mysql",
 								},
 							},
@@ -291,7 +291,7 @@ func NewEtherpadDatabaseDeployment(cr *cloudnativev1alpha1.Workshop, name string
 					},
 					Volumes: []corev1.Volume{
 						{
-							Name: name + "-data",
+							Name: name + "-volume",
 							VolumeSource: corev1.VolumeSource{
 								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 									ClaimName: name,
@@ -305,7 +305,7 @@ func NewEtherpadDatabaseDeployment(cr *cloudnativev1alpha1.Workshop, name string
 	}
 }
 
-func NewEtherpadDeployment(cr *cloudnativev1alpha1.Workshop, name string, namespace string) *appsv1.Deployment {
+func NewEtherpadDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string) *appsv1.Deployment {
 	etherpadImage := "quay.io/wkulhanek/etherpad:1.7.5"
 	labels := GetLabels(cr, name)
 

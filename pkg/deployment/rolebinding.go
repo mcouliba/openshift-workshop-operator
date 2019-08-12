@@ -1,59 +1,74 @@
 package deployment
 
 import (
-	cloudnativev1alpha1 "github.com/redhat/cloud-native-workshop-operator/pkg/apis/cloudnative/v1alpha1"
 	rbac "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func NewRoleBindingForServiceAccount(cr *cloudnativev1alpha1.Workshop, name string, namespace string, serviceAccountName string, roleName string, roleKind string) *rbac.RoleBinding {
-	labels := GetLabels(cr, name)
+type NewRoleBindingSAParameters struct {
+	Name               string
+	Namespace          string
+	labels             map[string]string
+	ServiceAccountName string
+	RoleName           string
+	RoleKind           string
+}
+
+type NewRoleBindingUserParameters struct {
+	Name      string
+	Namespace string
+	labels    map[string]string
+	Username  string
+	RoleName  string
+	RoleKind  string
+}
+
+func NewRoleBindingSA(param NewRoleBindingSAParameters) *rbac.RoleBinding {
 	return &rbac.RoleBinding{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "RoleBinding",
 			APIVersion: rbac.SchemeGroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-			Labels:    labels,
+			Name:      param.Name,
+			Namespace: param.Namespace,
+			Labels:    param.labels,
 		},
 		Subjects: []rbac.Subject{
 			{
 				Kind:      rbac.ServiceAccountKind,
-				Name:      serviceAccountName,
-				Namespace: namespace,
+				Name:      param.ServiceAccountName,
+				Namespace: param.Namespace,
 			},
 		},
 		RoleRef: rbac.RoleRef{
-			Name:     roleName,
-			Kind:     roleKind,
+			Name:     param.RoleName,
+			Kind:     param.RoleKind,
 			APIGroup: "rbac.authorization.k8s.io",
 		},
 	}
 }
 
-func NewRoleBindingForUser(cr *cloudnativev1alpha1.Workshop, name string, namespace string, username string, roleName string, roleKind string) *rbac.RoleBinding {
-	labels := GetLabels(cr, name)
+func NewRoleBindingUser(param NewRoleBindingUserParameters) *rbac.RoleBinding {
 	return &rbac.RoleBinding{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "RoleBinding",
 			APIVersion: rbac.SchemeGroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-			Labels:    labels,
+			Name:      param.Name,
+			Namespace: param.Namespace,
+			Labels:    param.labels,
 		},
 		Subjects: []rbac.Subject{
 			{
 				Kind: rbac.UserKind,
-				Name: username,
+				Name: param.Username,
 			},
 		},
 		RoleRef: rbac.RoleRef{
-			Name:     roleName,
-			Kind:     roleKind,
+			Name:     param.RoleName,
+			Kind:     param.RoleKind,
 			APIGroup: "rbac.authorization.k8s.io",
 		},
 	}

@@ -1,4 +1,4 @@
-module github.com/redhat/cloud-native-workshop-operator
+module github.com/redhat/openshift-workshop-operator
 
 require (
 	contrib.go.opencensus.io/exporter/ocagent v0.4.9 // indirect

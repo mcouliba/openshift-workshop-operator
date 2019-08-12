@@ -1,13 +1,13 @@
 package deployment
 
 import (
-	cloudnativev1alpha1 "github.com/redhat/cloud-native-workshop-operator/pkg/apis/cloudnative/v1alpha1"
+	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func NewAnsibleOperatorDeployment(cr *cloudnativev1alpha1.Workshop, name string, namespace string, image string, serviceAccountName string) *appsv1.Deployment {
+func NewAnsibleOperatorDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string, image string, serviceAccountName string) *appsv1.Deployment {
 	labels := GetLabels(cr, name)
 
 	return &appsv1.Deployment{
@@ -90,8 +90,10 @@ func NewAnsibleOperatorDeployment(cr *cloudnativev1alpha1.Workshop, name string,
 	}
 }
 
-func NewOperatorDeployment(cr *cloudnativev1alpha1.Workshop, name string, namespace string, image string, serviceAccountName string, commands []string) *appsv1.Deployment {
-	labels := GetLabels(cr, name)
+func NewOperatorDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string, image string, serviceAccountName string, containerPort int32, commands []string, args []string, volumeMounts []corev1.VolumeMount, volumes []corev1.Volume) *appsv1.Deployment {
+	labels := map[string]string{
+		"name": name,
+	}
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -119,14 +121,16 @@ func NewOperatorDeployment(cr *cloudnativev1alpha1.Workshop, name string, namesp
 							Name:            "operator",
 							Image:           image,
 							ImagePullPolicy: corev1.PullAlways,
+							VolumeMounts:    volumeMounts,
 							Ports: []corev1.ContainerPort{
 								{
 									Name:          "metrics",
-									ContainerPort: 60000,
+									ContainerPort: containerPort,
 									Protocol:      "TCP",
 								},
 							},
 							Command: commands,
+							Args:    args,
 							Env: []corev1.EnvVar{
 								{
 									Name:  "WATCH_NAMESPACE",
@@ -147,6 +151,7 @@ func NewOperatorDeployment(cr *cloudnativev1alpha1.Workshop, name string, namesp
 							},
 						},
 					},
+					Volumes: volumes,
 				},
 			},
 		},

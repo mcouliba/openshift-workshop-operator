@@ -10,8 +10,8 @@ import (
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
-	"github.com/redhat/cloud-native-workshop-operator/pkg/apis"
-	"github.com/redhat/cloud-native-workshop-operator/pkg/controller"
+	"github.com/redhat/openshift-workshop-operator/pkg/apis"
+	"github.com/redhat/openshift-workshop-operator/pkg/controller"
 
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
@@ -77,7 +77,7 @@ func main() {
 	ctx := context.TODO()
 
 	// Become the leader before proceeding
-	err = leader.Become(ctx, "cloud-native-workshop-operator-lock")
+	err = leader.Become(ctx, "openshift-workshop-operator-lock")
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)

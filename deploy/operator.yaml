@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cloud-native-workshop-operator
+  name: openshift-workshop-operator
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: cloud-native-workshop-operator
+      name: openshift-workshop-operator
   template:
     metadata:
       labels:
-        name: cloud-native-workshop-operator
+        name: openshift-workshop-operator
     spec:
-      serviceAccountName: cloud-native-workshop-operator
+      serviceAccountName: openshift-workshop-operator
       containers:
-        - name: cloud-native-workshop-operator
+        - name: openshift-workshop-operator
           # Replace this with the built image name
-          image: quay.io/mcouliba/cloud-native-workshop-operator:v1
+          image: quay.io/mcouliba/openshift-workshop-operator:v1
           command:
-          - cloud-native-workshop-operator
+          - openshift-workshop-operator
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
@@ -30,4 +30,4 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
-              value: "cloud-native-workshop-operator"
+              value: "openshift-workshop-operator"

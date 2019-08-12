@@ -1,20 +1,20 @@
-package stack
+package codeready
 
 import (
-	cloudnativev1alpha1 "github.com/redhat/cloud-native-workshop-operator/pkg/apis/cloudnative/v1alpha1"
+	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 )
 
-func NewCloudNativeStack(cr *cloudnativev1alpha1.Workshop) *Stack {
+func NewCloudNativeStack(cr *openshiftv1alpha1.Workshop) *Stack {
 	return &Stack{
-		Name:        "Cloud-Native",
-		Description: "Stack for Cloud-Native Development",
+		Name:        "openshift",
+		Description: "Stack for openshift Development",
 		Scope:       "general",
 		WorkspaceConfig: WorkspaceConfig{
 			Environments: Environments{
 				Default: Environment{
 					Recipe: Recipe{
 						Type:    "dockerimage",
-						Content: "docker-registry.default.svc:5000/openshift/che-cloud-native:latest",
+						Content: "docker-registry.default.svc:5000/openshift/che-openshift:latest",
 					},
 					Machines: Machines{
 						DevMachine: DevMachine{
@@ -210,7 +210,7 @@ func NewCloudNativeStack(cr *cloudnativev1alpha1.Workshop) *Stack {
 	}
 }
 
-func NewCloudNativeStackPermission(cr *cloudnativev1alpha1.Workshop, stackID string) *StackPermission {
+func NewCloudNativeStackPermission(cr *openshiftv1alpha1.Workshop, stackID string) *StackPermission {
 	return &StackPermission{
 		UserID:     "*",
 		DomainID:   "stack",

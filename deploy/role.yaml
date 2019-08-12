@@ -2,7 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   creationTimestamp: null
-  name: cloud-native-workshop-operator
+  name: openshift-workshop-operator
 rules:
 - apiGroups:
   - ""
@@ -35,13 +35,13 @@ rules:
 - apiGroups:
   - apps
   resourceNames:
-  - cloud-native-workshop-operator
+  - openshift-workshop-operator
   resources:
   - deployments/finalizers
   verbs:
   - update
 - apiGroups:
-  - cloudnative.redhat.com
+  - openshift.redhat.com
   resources:
   - '*'
   verbs:

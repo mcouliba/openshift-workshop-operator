@@ -1,11 +1,11 @@
 package customresource
 
 import (
-	cloudnativev1alpha1 "github.com/redhat/cloud-native-workshop-operator/pkg/apis/cloudnative/v1alpha1"
+	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func NewGogsCustomResource(cr *cloudnativev1alpha1.Workshop, name string, namespace string) *Gogs {
+func NewGogsCustomResource(cr *openshiftv1alpha1.Workshop, name string, namespace string) *Gogs {
 	return &Gogs{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Gogs",

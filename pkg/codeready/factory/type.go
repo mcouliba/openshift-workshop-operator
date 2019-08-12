@@ -1,23 +1,33 @@
-package stack
+package codeready
 
-type Stack struct {
-	ID              string          `json:"id"`
-	Name            string          `json:"name"`
-	Description     string          `json:"description"`
-	Scope           string          `json:"scope"`
-	WorkspaceConfig WorkspaceConfig `json:"workspaceConfig"`
-	Components      []Component     `json:"components"`
-	Creator         string          `json:"creator"`
-	Tags            []string        `json:"tags"`
+type Factory struct {
+	V         string    `json:"v"`
+	Name      string    `json:"name"`
+	Workspace Workspace `json:"workspace"`
+	Creator   Creator   `json:"creator"`
 }
 
-type WorkspaceConfig struct {
+type Workspace struct {
 	Environments Environments `json:"environments"`
 	Commands     []Command    `json:"commands"`
-	Projects     []string     `json:"projects"`
+	Projects     []Project    `json:"projects"`
 	DefaultEnv   string       `json:"defaultEnv"`
 	Name         string       `json:"name"`
 	Links        []string     `json:"links"`
+}
+
+type Project struct {
+	Name   string `json:"name"`
+	Type   string `json:"type"`
+	Source Source `json:"source"`
+	Path   string `json:"path"`
+}
+
+type Source struct {
+	Location   string            `json:"location"`
+	Type       string            `json:"type"`
+	Parameters map[string]string `json:"parameters"`
+	Path       string            `json:"path"`
 }
 
 type Environments struct {
@@ -64,9 +74,7 @@ type Component struct {
 	Name    string `json:"name"`
 }
 
-type StackPermission struct {
-	UserID     string   `json:"userId"`
-	DomainID   string   `json:"domainId"`
-	InstanceID string   `json:"instanceId"`
-	Actions    []string `json:"actions"`
+type Creator struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }

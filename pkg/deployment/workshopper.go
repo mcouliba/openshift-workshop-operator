@@ -1,7 +1,7 @@
 package deployment
 
 import (
-	cloudnativev1alpha1 "github.com/redhat/cloud-native-workshop-operator/pkg/apis/cloudnative/v1alpha1"
+	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func NewWorkshopperDeployment(cr *cloudnativev1alpha1.Workshop, name string, namespace string, coolstoreProject string, infraProject string, username string, appsHostnameSuffix string) *appsv1.Deployment {
+func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string, coolstoreProject string, infraProject string, username string, appsHostnameSuffix string) *appsv1.Deployment {
 	workshopperImage := "quay.io/osevg/workshopper:latest"
 	labels := GetLabels(cr, name)
 
@@ -20,7 +20,7 @@ func NewWorkshopperDeployment(cr *cloudnativev1alpha1.Workshop, name string, nam
 		},
 		{
 			Name:  "WORKSHOPS_URLS",
-			Value: "https://raw.githubusercontent.com/" + cr.Spec.Guide.GitRepositoryGuidePath + "/" + cr.Spec.Guide.GitRepositoryGuideReference + "/" + cr.Spec.Guide.GitRepositoryGuideContext + "/_cloud-native-workshop-" + cr.Spec.Guide.GitRepositoryGuideName + ".yml",
+			Value: "https://raw.githubusercontent.com/" + cr.Spec.Guide.GitRepositoryGuidePath + "/" + cr.Spec.Guide.GitRepositoryGuideReference + "/" + cr.Spec.Guide.GitRepositoryGuideContext + "/" + cr.Spec.Guide.GitRepositoryGuideFile,
 		},
 		{
 			Name:  "COOLSTORE_PROJECT",

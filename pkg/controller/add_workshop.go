@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/redhat/cloud-native-workshop-operator/pkg/controller/workshop"
+	"github.com/redhat/openshift-workshop-operator/pkg/controller/workshop"
 )
 
 func init() {

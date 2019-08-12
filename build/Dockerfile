@@ -1,11 +1,11 @@
 FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
 
-ENV OPERATOR=/usr/local/bin/cloud-native-workshop-operator \
+ENV OPERATOR=/usr/local/bin/openshift-workshop-operator \
     USER_UID=1001 \
-    USER_NAME=cloud-native-workshop-operator
+    USER_NAME=openshift-workshop-operator
 
 # install operator binary
-COPY build/_output/bin/cloud-native-workshop-operator ${OPERATOR}
+COPY build/_output/bin/openshift-workshop-operator ${OPERATOR}
 
 COPY build/bin /usr/local/bin
 RUN  /usr/local/bin/user_setup

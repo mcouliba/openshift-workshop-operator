@@ -35,8 +35,10 @@ type WorkshopSpecNexus struct {
 }
 
 type WorkshopSpecServiceMesh struct {
-	Enabled        bool   `json:"enabled"`
-	MaistraVersion string `json:"maistraVersion"`
+	Enabled             bool   `json:"enabled"`
+	JaegerOperatorImage string `json:"jaegerOperatorImage"`
+	KialiOperatorImage  string `json:"kialiOperatorImage"`
+	IstioOperatorImage  string `json:"istioOperatorImage"`
 }
 
 type WorkshopSpecGuide struct {
@@ -48,7 +50,7 @@ type WorkshopSpecGuide struct {
 	GitRepositoryGuidePath      string `json:"gitRepositoryGuidePath"`
 	GitRepositoryGuideReference string `json:"gitRepositoryGuideReference"`
 	GitRepositoryGuideContext   string `json:"gitRepositoryGuideContext"`
-	GitRepositoryGuideName      string `json:"gitRepositoryGuideName"`
+	GitRepositoryGuideFile      string `json:"gitRepositoryGuideFile"`
 }
 
 type WorkshopSpecWorkspaces struct {

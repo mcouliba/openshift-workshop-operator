@@ -13,13 +13,13 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/redhat/cloud-native-workshop-operator/pkg/apis/cloudnative/v1alpha1.Workshop":       schema_pkg_apis_cloudnative_v1alpha1_Workshop(ref),
-		"github.com/redhat/cloud-native-workshop-operator/pkg/apis/cloudnative/v1alpha1.WorkshopSpec":   schema_pkg_apis_cloudnative_v1alpha1_WorkshopSpec(ref),
-		"github.com/redhat/cloud-native-workshop-operator/pkg/apis/cloudnative/v1alpha1.WorkshopStatus": schema_pkg_apis_cloudnative_v1alpha1_WorkshopStatus(ref),
+		"github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1.Workshop":       schema_pkg_apis_openshift_v1alpha1_Workshop(ref),
+		"github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1.WorkshopSpec":   schema_pkg_apis_openshift_v1alpha1_WorkshopSpec(ref),
+		"github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1.WorkshopStatus": schema_pkg_apis_openshift_v1alpha1_WorkshopStatus(ref),
 	}
 }
 
-func schema_pkg_apis_cloudnative_v1alpha1_Workshop(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_openshift_v1alpha1_Workshop(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -46,23 +46,23 @@ func schema_pkg_apis_cloudnative_v1alpha1_Workshop(ref common.ReferenceCallback)
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/redhat/cloud-native-workshop-operator/pkg/apis/cloudnative/v1alpha1.WorkshopSpec"),
+							Ref: ref("github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1.WorkshopSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/redhat/cloud-native-workshop-operator/pkg/apis/cloudnative/v1alpha1.WorkshopStatus"),
+							Ref: ref("github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1.WorkshopStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/redhat/cloud-native-workshop-operator/pkg/apis/cloudnative/v1alpha1.WorkshopSpec", "github.com/redhat/cloud-native-workshop-operator/pkg/apis/cloudnative/v1alpha1.WorkshopStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1.WorkshopSpec", "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1.WorkshopStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_cloudnative_v1alpha1_WorkshopSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_openshift_v1alpha1_WorkshopSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -74,7 +74,7 @@ func schema_pkg_apis_cloudnative_v1alpha1_WorkshopSpec(ref common.ReferenceCallb
 	}
 }
 
-func schema_pkg_apis_cloudnative_v1alpha1_WorkshopStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_openshift_v1alpha1_WorkshopStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{

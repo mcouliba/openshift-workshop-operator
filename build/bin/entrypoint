@@ -5,7 +5,7 @@
 
 if ! whoami &>/dev/null; then
   if [ -w /etc/passwd ]; then
-    echo "${USER_NAME:-cloud-native-workshop-operator}:x:$(id -u):$(id -g):${USER_NAME:-cloud-native-workshop-operator} user:${HOME}:/sbin/nologin" >> /etc/passwd
+    echo "${USER_NAME:-openshift-workshop-operator}:x:$(id -u):$(id -g):${USER_NAME:-openshift-workshop-operator} user:${HOME}:/sbin/nologin" >> /etc/passwd
   fi
 fi
 

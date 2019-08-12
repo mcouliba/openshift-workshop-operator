@@ -2,12 +2,12 @@ package deployment
 
 import (
 	routev1 "github.com/openshift/api/route/v1"
-	cloudnativev1alpha1 "github.com/redhat/cloud-native-workshop-operator/pkg/apis/cloudnative/v1alpha1"
+	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func NewRoute(cr *cloudnativev1alpha1.Workshop, name string, namespace string, serviceName string, port int32) *routev1.Route {
+func NewRoute(cr *openshiftv1alpha1.Workshop, name string, namespace string, serviceName string, port int32) *routev1.Route {
 	labels := GetLabels(cr, name)
 	targetPort := intstr.IntOrString{
 		Type:   intstr.Int,

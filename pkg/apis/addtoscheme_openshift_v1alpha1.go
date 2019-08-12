@@ -1,7 +1,7 @@
 package apis
 
 import (
-	"github.com/redhat/cloud-native-workshop-operator/pkg/apis/cloudnative/v1alpha1"
+	"github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 )
 
 func init() {
