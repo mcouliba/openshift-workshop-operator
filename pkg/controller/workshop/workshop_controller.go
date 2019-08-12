@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"reflect"
 	"regexp"
@@ -797,13 +796,8 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 			}
 
 			reqLogger.Info("Creating Etherpad ConfigMap")
-			defaultPadBytes, err := ioutil.ReadFile("template/etherpad.txt")
-			if err != nil {
-				return reconcile.Result{}, err
-			}
-			defaultPadText := strings.Replace(string(defaultPadBytes), "<USER_ENDPOINTS>", userEndpointStr.String(), 1)
 			settings := map[string]string{
-				"settings.json": deployment.NewEtherpadSettingsJson(instance, defaultPadText),
+				"settings.json": deployment.NewEtherpadSettingsJson(instance, userEndpointStr.String()),
 			}
 			etherpadConfigMap := deployment.NewConfigMap(instance, "etherpad-settings", instance.Namespace, settings)
 			if err := r.client.Create(context.TODO(), etherpadConfigMap); err != nil && !errors.IsAlreadyExists(err) {
@@ -999,7 +993,7 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 			reqLogger.Info("Created Workspaces Custom Resource")
 		}
 
-		openshiftStackImageStream := deployment.NewImageStream(instance, "che-cloud-native", "openshift", "quay.io/mcouliba/che-cloud-native", "ocp4")
+		openshiftStackImageStream := deployment.NewImageStream(instance, "che-cloud-native", "openshift", "quay.io/mcouliba/che-cloud-native:ocp4", "ocp4")
 		if err := r.client.Create(context.TODO(), openshiftStackImageStream); err != nil && !errors.IsAlreadyExists(err) {
 			return reconcile.Result{}, err
 		} else if err == nil {
