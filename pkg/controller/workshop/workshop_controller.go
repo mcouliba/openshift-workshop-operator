@@ -135,6 +135,14 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
+	err = c.Watch(&source.Kind{Type: &corev1.Namespace{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &openshiftv1alpha1.Workshop{},
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -372,7 +380,8 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 			}
 
 			// Guide
-			guideDeployment := deployment.NewWorkshopperDeployment(instance, "guide", infraNamespace.Name, coolstoreNamespace.Name, infraNamespace.Name, username, appsHostnameSuffix)
+			guideDeployment := deployment.NewWorkshopperDeployment(instance, "guide", infraNamespace.Name, coolstoreNamespace.Name,
+				infraNamespace.Name, username, appsHostnameSuffix, openshiftConsoleURL, openshiftAPIURL)
 			guideDeploymentFound := &appsv1.Deployment{}
 			guideDeploymentErr := r.client.Get(context.TODO(), types.NamespacedName{Name: guideDeployment.Name, Namespace: guideDeployment.Namespace}, guideDeploymentFound)
 
@@ -754,75 +763,75 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 		return reconcile.Result{}, err
 	}
 
-	enabledEtherpad := instance.Spec.Etherpad.Enabled
+	// enabledEtherpad := instance.Spec.Etherpad.Enabled
 
-	etherpadFound := &appsv1.Deployment{}
-	etherpadErr := r.client.Get(context.TODO(), types.NamespacedName{Name: "etherpad", Namespace: instance.Namespace}, etherpadFound)
+	// etherpadFound := &appsv1.Deployment{}
+	// etherpadErr := r.client.Get(context.TODO(), types.NamespacedName{Name: "etherpad", Namespace: instance.Namespace}, etherpadFound)
 
-	if etherpadErr != nil && !errors.IsNotFound(etherpadErr) {
-		return reconcile.Result{}, etherpadErr
-	}
+	// if etherpadErr != nil && !errors.IsNotFound(etherpadErr) {
+	// 	return reconcile.Result{}, etherpadErr
+	// }
 
-	if enabledEtherpad {
-		if etherpadErr != nil && errors.IsNotFound(etherpadErr) {
-			reqLogger.Info("Creating Etherpad SQL Secret")
-			databaseCredentials := map[string]string{
-				"database-name":          "sampledb",
-				"database-password":      "admin",
-				"database-root-password": "admin",
-				"database-user":          "admin",
-			}
-			etherpadDatabaseSecret := deployment.NewSecretStringData(instance, "etherpad-mysql", instance.Namespace, databaseCredentials)
-			if err := r.client.Create(context.TODO(), etherpadDatabaseSecret); err != nil && !errors.IsAlreadyExists(err) {
-				return reconcile.Result{}, err
-			}
+	// if enabledEtherpad {
+	// 	if etherpadErr != nil && errors.IsNotFound(etherpadErr) {
+	// 		reqLogger.Info("Creating Etherpad SQL Secret")
+	// 		databaseCredentials := map[string]string{
+	// 			"database-name":          "sampledb",
+	// 			"database-password":      "admin",
+	// 			"database-root-password": "admin",
+	// 			"database-user":          "admin",
+	// 		}
+	// 		etherpadDatabaseSecret := deployment.NewSecretStringData(instance, "etherpad-mysql", instance.Namespace, databaseCredentials)
+	// 		if err := r.client.Create(context.TODO(), etherpadDatabaseSecret); err != nil && !errors.IsAlreadyExists(err) {
+	// 			return reconcile.Result{}, err
+	// 		}
 
-			reqLogger.Info("Creating Etherpad SQL Persistent Volume Claim")
-			etherpadDatabasePersistentVolumeClaim := deployment.NewPersistentVolumeClaim(instance, "etherpad-mysql", instance.Namespace, "512Mi")
-			if err := r.client.Create(context.TODO(), etherpadDatabasePersistentVolumeClaim); err != nil && !errors.IsAlreadyExists(err) {
-				return reconcile.Result{}, err
-			}
+	// 		reqLogger.Info("Creating Etherpad SQL Persistent Volume Claim")
+	// 		etherpadDatabasePersistentVolumeClaim := deployment.NewPersistentVolumeClaim(instance, "etherpad-mysql", instance.Namespace, "512Mi")
+	// 		if err := r.client.Create(context.TODO(), etherpadDatabasePersistentVolumeClaim); err != nil && !errors.IsAlreadyExists(err) {
+	// 			return reconcile.Result{}, err
+	// 		}
 
-			reqLogger.Info("Creating Etherpad SQL Database")
-			etherpadDatabaseDeployment := deployment.NewEtherpadDatabaseDeployment(instance, "etherpad-mysql", instance.Namespace)
-			if err := r.client.Create(context.TODO(), etherpadDatabaseDeployment); err != nil && !errors.IsAlreadyExists(err) {
-				return reconcile.Result{}, err
-			}
+	// 		reqLogger.Info("Creating Etherpad SQL Database")
+	// 		etherpadDatabaseDeployment := deployment.NewEtherpadDatabaseDeployment(instance, "etherpad-mysql", instance.Namespace)
+	// 		if err := r.client.Create(context.TODO(), etherpadDatabaseDeployment); err != nil && !errors.IsAlreadyExists(err) {
+	// 			return reconcile.Result{}, err
+	// 		}
 
-			reqLogger.Info("Creating Etherpad SQL Service")
-			etherpadDatabaseService := deployment.NewService(instance, "etherpad-mysql", instance.Namespace, []string{"mysql"}, []int32{3306})
-			if err := r.client.Create(context.TODO(), etherpadDatabaseService); err != nil && !errors.IsAlreadyExists(err) {
-				return reconcile.Result{}, err
-			}
+	// 		reqLogger.Info("Creating Etherpad SQL Service")
+	// 		etherpadDatabaseService := deployment.NewService(instance, "etherpad-mysql", instance.Namespace, []string{"mysql"}, []int32{3306})
+	// 		if err := r.client.Create(context.TODO(), etherpadDatabaseService); err != nil && !errors.IsAlreadyExists(err) {
+	// 			return reconcile.Result{}, err
+	// 		}
 
-			reqLogger.Info("Creating Etherpad ConfigMap")
-			settings := map[string]string{
-				"settings.json": deployment.NewEtherpadSettingsJson(instance, userEndpointStr.String()),
-			}
-			etherpadConfigMap := deployment.NewConfigMap(instance, "etherpad-settings", instance.Namespace, settings)
-			if err := r.client.Create(context.TODO(), etherpadConfigMap); err != nil && !errors.IsAlreadyExists(err) {
-				return reconcile.Result{}, err
-			}
+	// 		reqLogger.Info("Creating Etherpad ConfigMap")
+	// 		settings := map[string]string{
+	// 			"settings.json": deployment.NewEtherpadSettingsJson(instance, userEndpointStr.String()),
+	// 		}
+	// 		etherpadConfigMap := deployment.NewConfigMap(instance, "etherpad-settings", instance.Namespace, settings)
+	// 		if err := r.client.Create(context.TODO(), etherpadConfigMap); err != nil && !errors.IsAlreadyExists(err) {
+	// 			return reconcile.Result{}, err
+	// 		}
 
-			reqLogger.Info("Creating Etherpad Deployment")
-			etherpadDeployment := deployment.NewEtherpadDeployment(instance, "etherpad", instance.Namespace)
-			if err := r.client.Create(context.TODO(), etherpadDeployment); err != nil && !errors.IsAlreadyExists(err) {
-				return reconcile.Result{}, err
-			}
+	// 		reqLogger.Info("Creating Etherpad Deployment")
+	// 		etherpadDeployment := deployment.NewEtherpadDeployment(instance, "etherpad", instance.Namespace)
+	// 		if err := r.client.Create(context.TODO(), etherpadDeployment); err != nil && !errors.IsAlreadyExists(err) {
+	// 			return reconcile.Result{}, err
+	// 		}
 
-			reqLogger.Info("Creating Etherpad Service")
-			etherpadService := deployment.NewService(instance, "etherpad", instance.Namespace, []string{"http"}, []int32{9001})
-			if err := r.client.Create(context.TODO(), etherpadService); err != nil && !errors.IsAlreadyExists(err) {
-				return reconcile.Result{}, err
-			}
+	// 		reqLogger.Info("Creating Etherpad Service")
+	// 		etherpadService := deployment.NewService(instance, "etherpad", instance.Namespace, []string{"http"}, []int32{9001})
+	// 		if err := r.client.Create(context.TODO(), etherpadService); err != nil && !errors.IsAlreadyExists(err) {
+	// 			return reconcile.Result{}, err
+	// 		}
 
-			reqLogger.Info("Creating Etherpad Route")
-			etherpadRoute := deployment.NewRoute(instance, "etherpad", instance.Namespace, "etherpad", 9001)
-			if err := r.client.Create(context.TODO(), etherpadRoute); err != nil && !errors.IsAlreadyExists(err) {
-				return reconcile.Result{}, err
-			}
-		}
-	}
+	// 		reqLogger.Info("Creating Etherpad Route")
+	// 		etherpadRoute := deployment.NewRoute(instance, "etherpad", instance.Namespace, "etherpad", 9001)
+	// 		if err := r.client.Create(context.TODO(), etherpadRoute); err != nil && !errors.IsAlreadyExists(err) {
+	// 			return reconcile.Result{}, err
+	// 		}
+	// 	}
+	// }
 
 	//////////////////////////
 	// Nexus
@@ -939,9 +948,9 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	//////////////////////////
 	enabledWorkspaces := instance.Spec.Workspaces.Enabled
 	enabledOpenShiftoAuth := instance.Spec.Workspaces.OpenShiftoAuth
+	workspacesNamespace := deployment.NewNamespace(instance, "workspaces")
 
 	if enabledWorkspaces {
-		workspacesNamespace := deployment.NewNamespace(instance, "workspaces")
 		if err := r.client.Create(context.TODO(), workspacesNamespace); err != nil && !errors.IsAlreadyExists(err) {
 			return reconcile.Result{}, err
 		} else if err == nil {
@@ -1044,7 +1053,7 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 		}
 
 		if !enabledOpenShiftoAuth {
-			openshiftUserPassword := instance.Spec.Guide.OpenshiftUserPassword
+			openshiftUserPassword := instance.Spec.UserPassword
 			for id := 1; id <= users; id++ {
 				username := fmt.Sprintf("user%d", id)
 				body, err = json.Marshal(codereadyuser.NewCodeReadyUser(instance, username, openshiftUserPassword))
@@ -1082,7 +1091,7 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 		}
 
 		// Workspaces Factory
-		body, err = json.Marshal(codereadyfactory.NewDebuggingFactory(openshiftConsoleURL, openshiftAPIURL, appsHostnameSuffix, instance.Spec.Guide.OpenshiftUserPassword))
+		body, err = json.Marshal(codereadyfactory.NewDebuggingFactory(openshiftConsoleURL, openshiftAPIURL, appsHostnameSuffix, instance.Spec.UserPassword))
 		if err != nil {
 			return reconcile.Result{}, err
 		}
@@ -1140,6 +1149,41 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 
 		}
 
+	}
+
+	//////////////////////////
+	// Squash
+	//////////////////////////
+	enabledSquash := instance.Spec.Squash.Enabled
+
+	if enabledSquash {
+		cheWorkspaceClusterRoleBinding := deployment.NewClusterRoleBindingForServiceAccount(instance, "cluster-admin-che-workspace",
+			workspacesNamespace.Name, "che-workspace", "cluster-admin", "ClusterRole")
+		if err := r.client.Create(context.TODO(), cheWorkspaceClusterRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
+			return reconcile.Result{}, err
+		} else if err == nil {
+			reqLogger.Info("Created 'che-workspace' Role Binding for Squash")
+		}
+
+		id := 1
+		for {
+			infraProjectName := fmt.Sprintf("infra%d", id)
+			squashPlankClusterRoleBinding := deployment.NewClusterRoleBindingForServiceAccount(instance,
+				"cluster-admin-squash-plank-"+infraProjectName, infraProjectName, "squash-plank", "cluster-admin", "ClusterRole")
+
+			if id <= users {
+				if err := r.client.Create(context.TODO(), squashPlankClusterRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
+					return reconcile.Result{}, err
+				} else if err == nil {
+					reqLogger.Info("Created Squash Plank Role Binding for Squash for project '" + infraProjectName + "'")
+				}
+			} else {
+				if err := r.client.Delete(context.TODO(), squashPlankClusterRoleBinding); err != nil {
+					break
+				}
+			}
+			id++
+		}
 	}
 
 	//Success

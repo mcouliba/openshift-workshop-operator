@@ -23,8 +23,9 @@ type ServerSpec struct {
 }
 
 type StorageSpec struct {
-	PvcStrategy  string `json:"pvcStrategy"`
-	PvcClaimSize string `json:"pvcClaimSize"`
+	PvcStrategy       string `json:"pvcStrategy"`
+	PvcClaimSize      string `json:"pvcClaimSize"`
+	PreCreateSubPaths bool   `json:"preCreateSubPaths"`
 }
 
 type DatabaseSpec struct {

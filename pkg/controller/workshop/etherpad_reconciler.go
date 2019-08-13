@@ -2,7 +2,6 @@ package workshop
 
 import (
 	"context"
-	"io/ioutil"
 	"strings"
 
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
@@ -39,7 +38,6 @@ func (r *ReconcileWorkshop) reconcileEtherpad(instance *openshiftv1alpha1.Worksh
 func (r *ReconcileWorkshop) addEtherpad(instance *openshiftv1alpha1.Workshop, userEndpointStr strings.Builder) error {
 	reqLogger := log.WithName("Etherpad")
 
-	reqLogger.Info("Creating Etherpad SQL Secret")
 	databaseCredentials := map[string]string{
 		"database-name":          "sampledb",
 		"database-password":      "admin",
@@ -49,56 +47,60 @@ func (r *ReconcileWorkshop) addEtherpad(instance *openshiftv1alpha1.Workshop, us
 	etherpadDatabaseSecret := deployment.NewSecretStringData(instance, "etherpad-mysql", instance.Namespace, databaseCredentials)
 	if err := r.client.Create(context.TODO(), etherpadDatabaseSecret); err != nil && !errors.IsAlreadyExists(err) {
 		return err
+	} else if err == nil {
+		reqLogger.Info("Created Etherpad SQL Secret")
 	}
 
-	reqLogger.Info("Creating Etherpad SQL Persistent Volume Claim")
 	etherpadDatabasePersistentVolumeClaim := deployment.NewPersistentVolumeClaim(instance, "etherpad-mysql", instance.Namespace, "512Mi")
 	if err := r.client.Create(context.TODO(), etherpadDatabasePersistentVolumeClaim); err != nil && !errors.IsAlreadyExists(err) {
 		return err
+	} else if err == nil {
+		reqLogger.Info("Created Etherpad SQL Persistent Volume Claim")
 	}
 
-	reqLogger.Info("Creating Etherpad SQL Database")
 	etherpadDatabaseDeployment := deployment.NewEtherpadDatabaseDeployment(instance, "etherpad-mysql", instance.Namespace)
 	if err := r.client.Create(context.TODO(), etherpadDatabaseDeployment); err != nil && !errors.IsAlreadyExists(err) {
 		return err
+	} else if err == nil {
+		reqLogger.Info("Created Etherpad SQL Database")
 	}
 
-	reqLogger.Info("Creating Etherpad SQL Service")
 	etherpadDatabaseService := deployment.NewService(instance, "etherpad-mysql", instance.Namespace, []string{"mysql"}, []int32{3306})
 	if err := r.client.Create(context.TODO(), etherpadDatabaseService); err != nil && !errors.IsAlreadyExists(err) {
 		return err
+	} else if err == nil {
+		reqLogger.Info("Created Etherpad SQL Service")
 	}
 
-	reqLogger.Info("Creating Etherpad ConfigMap")
-	defaultPadBytes, err := ioutil.ReadFile("template/etherpad.txt")
-	if err != nil {
-		return err
-	}
-	defaultPadText := strings.Replace(string(defaultPadBytes), "<USER_ENDPOINTS>", userEndpointStr.String(), 1)
 	settings := map[string]string{
-		"settings.json": deployment.NewEtherpadSettingsJson(instance, defaultPadText),
+		"settings.json": deployment.NewEtherpadSettingsJson(instance, userEndpointStr.String()),
 	}
 	etherpadConfigMap := deployment.NewConfigMap(instance, "etherpad-settings", instance.Namespace, settings)
 	if err := r.client.Create(context.TODO(), etherpadConfigMap); err != nil && !errors.IsAlreadyExists(err) {
 		return err
+	} else if err == nil {
+		reqLogger.Info("Created Etherpad ConfigMap")
 	}
 
-	reqLogger.Info("Creating Etherpad Deployment")
 	etherpadDeployment := deployment.NewEtherpadDeployment(instance, "etherpad", instance.Namespace)
 	if err := r.client.Create(context.TODO(), etherpadDeployment); err != nil && !errors.IsAlreadyExists(err) {
 		return err
+	} else if err == nil {
+		reqLogger.Info("Created Etherpad Deployment")
 	}
 
-	reqLogger.Info("Creating Etherpad Service")
 	etherpadService := deployment.NewService(instance, "etherpad", instance.Namespace, []string{"http"}, []int32{9001})
 	if err := r.client.Create(context.TODO(), etherpadService); err != nil && !errors.IsAlreadyExists(err) {
 		return err
+	} else if err == nil {
+		reqLogger.Info("Created Etherpad Service")
 	}
 
-	reqLogger.Info("Creating Etherpad Route")
 	etherpadRoute := deployment.NewRoute(instance, "etherpad", instance.Namespace, "etherpad", 9001)
 	if err := r.client.Create(context.TODO(), etherpadRoute); err != nil && !errors.IsAlreadyExists(err) {
 		return err
+	} else if err == nil {
+		reqLogger.Info("Created Etherpad Route")
 	}
 
 	//Success

@@ -29,8 +29,9 @@ func NewCheClusterCustomResource(cr *openshiftv1alpha1.Workshop, name string, na
 				ProxyPassword:  "",
 			},
 			Storage: StorageSpec{
-				PvcStrategy:  "per-workspace",
-				PvcClaimSize: "1Gi",
+				PvcStrategy:       "per-workspace",
+				PvcClaimSize:      "1Gi",
+				PreCreateSubPaths: true,
 			},
 			Database: DatabaseSpec{
 				ExternalDb:          false,

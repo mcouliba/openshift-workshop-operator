@@ -4,6 +4,7 @@ metadata:
   name: workshop-installation
 spec:
   users: 5
+  userPassword: r3dh4t1!
   etherpad:
     enabled: true
   gogs:
@@ -17,9 +18,6 @@ spec:
     istioOperatorImage: "registry.redhat.io/openshift-istio-tech-preview/istio-operator-rhel8:0.12.0"
   guide:
     enabled: true
-    openshiftConsoleUrl: https://console-openshift-console.apps.cluster-3ea4.3ea4.events.opentlc.com
-    openshiftApiUrl: https://api.cluster-3ea4.3ea4.events.opentlc.com
-    openshiftUserPassword: r3dh4t1!
     gitRepositoryLabPath: mcouliba/cloud-native-labs
     gitRepositoryLabReference: debugging
     gitRepositoryGuidePath: dwojciec/debugging-lab-summit-2019
@@ -29,4 +27,6 @@ spec:
   workspaces:
     enabled: true
     openShiftoAuth: false
+  squash:
+    enabled: true
   

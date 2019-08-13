@@ -13,38 +13,38 @@ type WorkshopSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
-	Users       int                     `json:"users"`
-	Etherpad    WorkshopSpecEtherpad    `json:"etherpad"`
-	Gogs        WorkshopSpecGogs        `json:"gogs"`
-	Nexus       WorkshopSpecNexus       `json:"nexus"`
-	ServiceMesh WorkshopSpecServiceMesh `json:"servicemesh"`
-	Guide       WorkshopSpecGuide       `json:"guide"`
-	Workspaces  WorkshopSpecWorkspaces  `json:"workspaces"`
+	Users        int             `json:"users"`
+	UserPassword string          `json:"userPassword"`
+	Etherpad     EtherpadSpec    `json:"etherpad"`
+	Gogs         GogsSpec        `json:"gogs"`
+	Nexus        NexusSpec       `json:"nexus"`
+	ServiceMesh  ServiceMeshSpec `json:"servicemesh"`
+	Guide        GuideSpec       `json:"guide"`
+	Workspaces   WorkspacesSpec  `json:"workspaces"`
+	Squash       SquashSpec      `json:"squash"`
 }
 
-type WorkshopSpecEtherpad struct {
+type EtherpadSpec struct {
 	Enabled bool `json:"enabled"`
 }
 
-type WorkshopSpecGogs struct {
+type GogsSpec struct {
 	Enabled bool `json:"enabled"`
 }
 
-type WorkshopSpecNexus struct {
+type NexusSpec struct {
 	Enabled bool `json:"enabled"`
 }
 
-type WorkshopSpecServiceMesh struct {
+type ServiceMeshSpec struct {
 	Enabled             bool   `json:"enabled"`
 	JaegerOperatorImage string `json:"jaegerOperatorImage"`
 	KialiOperatorImage  string `json:"kialiOperatorImage"`
 	IstioOperatorImage  string `json:"istioOperatorImage"`
 }
 
-type WorkshopSpecGuide struct {
+type GuideSpec struct {
 	Enabled                     bool   `json:"enabled"`
-	OpenshiftConsoleUrl         string `json:"openshiftConsoleUrl"`
-	OpenshiftUserPassword       string `json:"openshiftUserPassword"`
 	GitRepositoryLabPath        string `json:"gitRepositoryLabPath"`
 	GitRepositoryLabReference   string `json:"gitRepositoryLabReference"`
 	GitRepositoryGuidePath      string `json:"gitRepositoryGuidePath"`
@@ -53,9 +53,13 @@ type WorkshopSpecGuide struct {
 	GitRepositoryGuideFile      string `json:"gitRepositoryGuideFile"`
 }
 
-type WorkshopSpecWorkspaces struct {
+type WorkspacesSpec struct {
 	Enabled        bool `json:"enabled"`
 	OpenShiftoAuth bool `json:"openShiftoAuth"`
+}
+
+type SquashSpec struct {
+	Enabled bool `json:"enabled"`
 }
 
 // WorkshopStatus defines the observed state of Workshop

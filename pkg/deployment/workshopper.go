@@ -9,7 +9,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string, coolstoreProject string, infraProject string, username string, appsHostnameSuffix string) *appsv1.Deployment {
+func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string,
+	coolstoreProject string, infraProject string, username string, appsHostnameSuffix string,
+	openshiftConsoleURL string, openshiftAPIURL string) *appsv1.Deployment {
 	workshopperImage := "quay.io/osevg/workshopper:latest"
 	labels := GetLabels(cr, name)
 
@@ -32,7 +34,11 @@ func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, names
 		},
 		{
 			Name:  "OPENSHIFT_CONSOLE_URL",
-			Value: cr.Spec.Guide.OpenshiftConsoleUrl,
+			Value: openshiftConsoleURL,
+		},
+		{
+			Name:  "APPS_HOSTNAME_SUFFIX",
+			Value: openshiftAPIURL,
 		},
 		{
 			Name:  "OPENSHIFT_USER",
@@ -40,7 +46,7 @@ func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, names
 		},
 		{
 			Name:  "OPENSHIFT_PASSWORD",
-			Value: cr.Spec.Guide.OpenshiftUserPassword,
+			Value: cr.Spec.UserPassword,
 		},
 		{
 			Name:  "APPS_HOSTNAME_SUFFIX",
@@ -72,11 +78,11 @@ func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, names
 		},
 		{
 			Name:  "NEXUS_URL",
-			Value: "http://nexus-" + cr.Namespace + "." + appsHostnameSuffix,
+			Value: "http://nexus-opentlc-shared" + appsHostnameSuffix,
 		},
 		{
 			Name:  "KIALI_URL",
-			Value: "https://kiali-" + cr.Namespace + "." + appsHostnameSuffix,
+			Value: "https://kiali-istio-system." + appsHostnameSuffix,
 		},
 		{
 			Name:  "JAEGER_URL",
@@ -84,7 +90,7 @@ func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, names
 		},
 		{
 			Name:  "KIBANA_URL",
-			Value: "https://kibana." + appsHostnameSuffix,
+			Value: "https://kibana-openshift-logging." + appsHostnameSuffix,
 		},
 	}
 
