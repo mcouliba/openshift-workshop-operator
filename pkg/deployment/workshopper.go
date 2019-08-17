@@ -37,7 +37,7 @@ func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, names
 			Value: openshiftConsoleURL,
 		},
 		{
-			Name:  "APPS_HOSTNAME_SUFFIX",
+			Name:  "OPENSHIFT_API_URL",
 			Value: openshiftAPIURL,
 		},
 		{

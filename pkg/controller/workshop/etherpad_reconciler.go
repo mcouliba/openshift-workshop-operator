@@ -6,28 +6,16 @@ import (
 
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	deployment "github.com/redhat/openshift-workshop-operator/pkg/deployment"
-	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 // Reconciling Etherpad
 func (r *ReconcileWorkshop) reconcileEtherpad(instance *openshiftv1alpha1.Workshop, userEndpointStr strings.Builder) error {
-	var err error
 	enabledEtherpad := instance.Spec.Etherpad.Enabled
 
-	found := &appsv1.Deployment{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: "etherpad", Namespace: instance.Namespace}, found)
-
-	if err != nil && !errors.IsNotFound(err) {
-		return err
-	}
-
 	if enabledEtherpad {
-		if err != nil && errors.IsNotFound(err) {
-			if err = r.addEtherpad(instance, userEndpointStr); err != nil {
-				return err
-			}
+		if err := r.addEtherpad(instance, userEndpointStr); err != nil {
+			return err
 		}
 	}
 

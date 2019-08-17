@@ -117,21 +117,21 @@ func NewDefaultPadText(userEndpointStr string) string {
 
 	defaultPadText := `Welcome to the Cloud Native Workshop.
 
-	If this is your first time using an Etherpad, it allows EVERYONE to edit
-	documents collaboratively in real-time, much like a live multi-player editor
-	that runs in your browser. To-do lists, notes, questions, follow ups; we can
-	all work on the same document at the same time.
-	
-	To start using this collaboration tool, we are going to identify some logistics.
-	
-	Find an open user login and assign yourself one. Remember it, you will use it
-	to login:
-	
-	<USER_ENDPOINTS>
-	
-	Parking Lot
-	-----------
-	If there is anything we do not have time to cover, record it here.`
+If this is your first time using an Etherpad, it allows EVERYONE to edit
+documents collaboratively in real-time, much like a live multi-player editor
+that runs in your browser. To-do lists, notes, questions, follow ups; we can
+all work on the same document at the same time.
+
+To start using this collaboration tool, we are going to identify some logistics.
+
+Find an open user login and assign yourself one. Remember it, you will use it
+to login:
+
+<USER_ENDPOINTS>
+
+Parking Lot
+-----------
+If there is anything we do not have time to cover, record it here.`
 
 	return strings.Replace(defaultPadText, "<USER_ENDPOINTS>", userEndpointStr, 1)
 }
