@@ -16,6 +16,7 @@ import (
 	smmr "github.com/redhat/openshift-workshop-operator/pkg/deployment/maistra/servicemeshmemberroll"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbac "k8s.io/api/rbac/v1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -131,6 +132,69 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
+	if err = c.Watch(&source.Kind{Type: &corev1.Secret{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &openshiftv1alpha1.Workshop{},
+	}); err != nil {
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &corev1.ConfigMap{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &openshiftv1alpha1.Workshop{},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &rbac.Role{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &openshiftv1alpha1.Workshop{},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &rbac.ClusterRole{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &openshiftv1alpha1.Workshop{},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &rbac.ClusterRoleBinding{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &openshiftv1alpha1.Workshop{},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &rbac.RoleBinding{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &openshiftv1alpha1.Workshop{},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &corev1.ServiceAccount{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &openshiftv1alpha1.Workshop{},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &corev1.PersistentVolumeClaim{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &openshiftv1alpha1.Workshop{},
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -236,8 +300,8 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	//////////////////////////
 	// Service Mesh
 	//////////////////////////
-	if err := r.reconcileServiceMesh(instance, users); err != nil {
-		return reconcile.Result{}, err
+	if result, err := r.reconcileServiceMesh(instance, users); err != nil {
+		return result, err
 	}
 
 	//////////////////////////
