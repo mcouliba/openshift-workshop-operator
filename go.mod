@@ -9,7 +9,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/docker/docker v1.13.1 // indirect
 	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
-	github.com/eclipse/che-operator v0.0.0-20190522140705-dd013c9cb651 // indirect
+	github.com/eclipse/che-operator v0.0.0-20190522140705-dd013c9cb651
 	github.com/emicklei/go-restful v2.8.1+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
 	github.com/go-logr/logr v0.1.0 // indirect
@@ -33,6 +33,7 @@ require (
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/russross/blackfriday v2.0.0+incompatible // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
+	github.com/sirupsen/logrus v1.2.0
 	github.com/spf13/pflag v1.0.3
 	go.opencensus.io v0.19.2 // indirect
 	go.uber.org/atomic v1.3.2 // indirect

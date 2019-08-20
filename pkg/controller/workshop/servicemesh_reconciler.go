@@ -16,6 +16,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+var (
+	k8sclient = GetK8Client()
+)
+
 // Reconciling ServiceMesh
 func (r *ReconcileWorkshop) reconcileServiceMesh(instance *openshiftv1alpha1.Workshop, users int) (reconcile.Result, error) {
 	enabledServiceMesh := instance.Spec.ServiceMesh.Enabled
@@ -265,6 +269,21 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 		return reconcile.Result{}, err
 	} else if err == nil {
 		reqLogger.Info("Created Istio Operator")
+	}
+
+	// Wait for Istio Operator to be running
+	time.Sleep(time.Duration(1) * time.Second)
+	istioOperatorDeployment, err := r.GetEffectiveDeployment(instance, istioOperator.Name, istioOperatorNamespace.Name)
+	if err != nil {
+		reqLogger.Error(err, "Failed to get"+istioOperator.Name+"deployment")
+		return reconcile.Result{}, err
+	}
+
+	if istioOperatorDeployment.Status.AvailableReplicas != 1 {
+		scaled := k8sclient.GetDeploymentStatus("istio-operator", istioOperatorNamespace.Name)
+		if !scaled {
+			return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, err
+		}
 	}
 
 	// ISTIO-SYSTEM

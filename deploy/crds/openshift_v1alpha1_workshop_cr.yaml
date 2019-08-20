@@ -1,7 +1,7 @@
 apiVersion: openshift.redhat.com/v1alpha1
 kind: Workshop
 metadata:
-  name: workshop-installation
+  name: debugging-workshop
 spec:
   users: 5
   userPassword: r3dh4t1!
@@ -10,7 +10,7 @@ spec:
   gogs:
     enabled: false
   nexus:
-    enabled: true
+    enabled: false
   servicemesh:
     enabled: true
     jaegerOperatorImage: "jaegertracing/jaeger-operator:1.13.1"

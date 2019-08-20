@@ -234,31 +234,6 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 		return reconcile.Result{}, err
 	}
 
-	// // Define a new Pod object
-	// pod := newPodForCR(instance)
-
-	// // Set Workshop instance as the owner and controller
-	// if err := controllerutil.SetControllerReference(instance, pod, r.scheme); err != nil {
-	// 	return reconcile.Result{}, err
-	// }
-
-	// // Check if this Pod already exists
-	// found := &corev1.Pod{}
-	// err = r.client.Get(context.TODO(), types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, found)
-	// if err != nil && errors.IsNotFound(err) {
-	// 	reqLogger.Info("Creating a new Pod", "Pod.Namespace", pod.Namespace, "Pod.Name", pod.Name)
-	// 	err = r.client.Create(context.TODO(), pod)
-	// 	if err != nil {
-	// 		return reconcile.Result{}, err
-	// 	}
-
-	// 	// Pod created successfully - don't requeue
-	// 	return reconcile.Result{}, nil
-	// } else if err != nil {
-	// 	return reconcile.Result{}, err
-	// }
-	//
-
 	//////////////////////////
 	// Variables
 	//////////////////////////
@@ -328,9 +303,9 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	//////////////////////////
 	// CodeReady Workspaces
 	//////////////////////////
-	if err := r.reconcileWorkspaces(instance, users, appsHostnameSuffix,
+	if result, err := r.reconcileWorkspaces(instance, users, appsHostnameSuffix,
 		openshiftConsoleURL, openshiftAPIURL); err != nil {
-		return reconcile.Result{}, err
+		return result, err
 	}
 
 	//////////////////////////
