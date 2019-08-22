@@ -3,17 +3,20 @@ package workshop
 import (
 	"context"
 	"regexp"
-	"strings"
 
+	che "github.com/eclipse/che-operator/pkg/apis/org/v1"
 	imagev1 "github.com/openshift/api/image/v1"
 	routev1 "github.com/openshift/api/route/v1"
 	securityv1 "github.com/openshift/api/security/v1"
+	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
+	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	ompv1 "github.com/operator-framework/operator-marketplace/pkg/apis/operators/v1"
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
-	checlustercustomresource "github.com/redhat/openshift-workshop-operator/pkg/customresource/checluster"
 	gogscustomresource "github.com/redhat/openshift-workshop-operator/pkg/customresource/gogs"
 	nexuscustomresource "github.com/redhat/openshift-workshop-operator/pkg/customresource/nexus"
 	smcp "github.com/redhat/openshift-workshop-operator/pkg/deployment/maistra/servicemeshcontrolplane"
 	smmr "github.com/redhat/openshift-workshop-operator/pkg/deployment/maistra/servicemeshmemberroll"
+	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
@@ -56,6 +59,21 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
+	// register CatalogSourceConfig in the scheme
+	if err := ompv1.SchemeBuilder.AddToScheme(mgr.GetScheme()); err != nil {
+		return err
+	}
+
+	// register OperatorGroup in the scheme
+	if err := olmv1.AddToScheme(mgr.GetScheme()); err != nil {
+		return err
+	}
+
+	// register Subscription in the scheme
+	if err := olmv1alpha1.AddToScheme(mgr.GetScheme()); err != nil {
+		return err
+	}
+
 	// register OpenShift Routes in the scheme
 	if err := routev1.AddToScheme(mgr.GetScheme()); err != nil {
 		return err
@@ -81,7 +99,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	if err := gogscustomresource.AddToScheme(mgr.GetScheme()); err != nil {
 		return err
 	}
-	if err := checlustercustomresource.AddToScheme(mgr.GetScheme()); err != nil {
+	if err := che.SchemeBuilder.AddToScheme(mgr.GetScheme()); err != nil {
 		return err
 	}
 
@@ -234,36 +252,11 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 		return reconcile.Result{}, err
 	}
 
-	// // Define a new Pod object
-	// pod := newPodForCR(instance)
-
-	// // Set Workshop instance as the owner and controller
-	// if err := controllerutil.SetControllerReference(instance, pod, r.scheme); err != nil {
-	// 	return reconcile.Result{}, err
-	// }
-
-	// // Check if this Pod already exists
-	// found := &corev1.Pod{}
-	// err = r.client.Get(context.TODO(), types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, found)
-	// if err != nil && errors.IsNotFound(err) {
-	// 	reqLogger.Info("Creating a new Pod", "Pod.Namespace", pod.Namespace, "Pod.Name", pod.Name)
-	// 	err = r.client.Create(context.TODO(), pod)
-	// 	if err != nil {
-	// 		return reconcile.Result{}, err
-	// 	}
-
-	// 	// Pod created successfully - don't requeue
-	// 	return reconcile.Result{}, nil
-	// } else if err != nil {
-	// 	return reconcile.Result{}, err
-	// }
-	//
-
 	//////////////////////////
 	// Variables
 	//////////////////////////
 	var (
-		userEndpointStr     strings.Builder
+		// userEndpointStr     strings.Builder
 		openshiftConsoleURL string
 		openshiftAPIURL     string
 		appsHostnameSuffix  string
@@ -271,7 +264,7 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	// extract app route suffix from openshift-console
 	openshiftConsoleRouteFound := &routev1.Route{}
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "console", Namespace: "openshift-console"}, openshiftConsoleRouteFound); err != nil {
-		reqLogger.Error(err, "Failed to get OpenShift Console")
+		logrus.Errorf("Failed to get OpenShift Console: %s", err)
 		return reconcile.Result{}, err
 	}
 	openshiftConsoleURL = "https://" + openshiftConsoleRouteFound.Spec.Host
@@ -289,56 +282,56 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 		users = 0
 	}
 
-	//////////////////////////
-	// Projects
-	//////////////////////////
-	if err := r.reconcileProject(instance, users, &userEndpointStr, appsHostnameSuffix,
-		openshiftConsoleURL, openshiftAPIURL); err != nil {
-		return reconcile.Result{}, err
-	}
+	// //////////////////////////
+	// // Projects
+	// //////////////////////////
+	// if err := r.reconcileProject(instance, users, &userEndpointStr, appsHostnameSuffix,
+	// 	openshiftConsoleURL, openshiftAPIURL); err != nil {
+	// 	return reconcile.Result{}, err
+	// }
+
+	// //////////////////////////
+	// // Service Mesh
+	// //////////////////////////
+	// if result, err := r.reconcileServiceMesh(instance, users); err != nil {
+	// 	return result, err
+	// }
+
+	// //////////////////////////
+	// // Etherpad
+	// //////////////////////////
+	// if err := r.reconcileEtherpad(instance, userEndpointStr); err != nil {
+	// 	return reconcile.Result{}, err
+	// }
+
+	// //////////////////////////
+	// // Nexus
+	// //////////////////////////
+	// if err := r.reconcileNexus(instance); err != nil {
+	// 	return reconcile.Result{}, err
+	// }
+
+	// //////////////////////////
+	// // Gogs
+	// //////////////////////////
+	// if err := r.reconcileGogs(instance); err != nil {
+	// 	return reconcile.Result{}, err
+	// }
 
 	//////////////////////////
-	// Service Mesh
+	// Che
 	//////////////////////////
-	if result, err := r.reconcileServiceMesh(instance, users); err != nil {
+	if result, err := r.reconcileChe(instance, users, appsHostnameSuffix,
+		openshiftConsoleURL, openshiftAPIURL); err != nil {
 		return result, err
 	}
 
-	//////////////////////////
-	// Etherpad
-	//////////////////////////
-	if err := r.reconcileEtherpad(instance, userEndpointStr); err != nil {
-		return reconcile.Result{}, err
-	}
-
-	//////////////////////////
-	// Nexus
-	//////////////////////////
-	if err := r.reconcileNexus(instance); err != nil {
-		return reconcile.Result{}, err
-	}
-
-	//////////////////////////
-	// Gogs
-	//////////////////////////
-	if err := r.reconcileGogs(instance); err != nil {
-		return reconcile.Result{}, err
-	}
-
-	//////////////////////////
-	// CodeReady Workspaces
-	//////////////////////////
-	if err := r.reconcileWorkspaces(instance, users, appsHostnameSuffix,
-		openshiftConsoleURL, openshiftAPIURL); err != nil {
-		return reconcile.Result{}, err
-	}
-
-	//////////////////////////
-	// Squash
-	//////////////////////////
-	if err := r.reconcileSquash(instance, users); err != nil {
-		return reconcile.Result{}, err
-	}
+	// //////////////////////////
+	// // Squash
+	// //////////////////////////
+	// if err := r.reconcileSquash(instance, users); err != nil {
+	// 	return reconcile.Result{}, err
+	// }
 
 	//Success
 	return reconcile.Result{}, nil

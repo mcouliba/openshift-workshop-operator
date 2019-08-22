@@ -20,7 +20,7 @@ type WorkshopSpec struct {
 	Nexus        NexusSpec       `json:"nexus"`
 	ServiceMesh  ServiceMeshSpec `json:"servicemesh"`
 	Guide        GuideSpec       `json:"guide"`
-	Workspaces   WorkspacesSpec  `json:"workspaces"`
+	Che          CheSpec         `json:"che"`
 	Squash       SquashSpec      `json:"squash"`
 }
 
@@ -53,9 +53,8 @@ type GuideSpec struct {
 	GitRepositoryGuideFile      string `json:"gitRepositoryGuideFile"`
 }
 
-type WorkspacesSpec struct {
-	Enabled        bool `json:"enabled"`
-	OpenShiftoAuth bool `json:"openShiftoAuth"`
+type CheSpec struct {
+	Enabled bool `json:"enabled"`
 }
 
 type SquashSpec struct {
@@ -68,7 +67,7 @@ type WorkshopStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
-	WorkspacesRunning string `json:"workspacesRunning"`
+	CheRunning string `json:"cheRunning"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
