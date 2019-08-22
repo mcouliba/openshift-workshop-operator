@@ -16,10 +16,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-var (
-	k8sclient = GetK8Client()
-)
-
 // Reconciling ServiceMesh
 func (r *ReconcileWorkshop) reconcileServiceMesh(instance *openshiftv1alpha1.Workshop, users int) (reconcile.Result, error) {
 	enabledServiceMesh := instance.Spec.ServiceMesh.Enabled

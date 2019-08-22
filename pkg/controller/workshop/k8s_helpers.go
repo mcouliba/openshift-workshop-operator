@@ -190,8 +190,4 @@ func (cl *k8s) GetDeploymentPod(name string, namespace string) (podName string, 
 	// todo maybe add a unique label to deployments?
 	podName = podListItems[0].Name
 	return podName, nil
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 295b052cce5bf790336a30c5d70ff6abaca2164b
