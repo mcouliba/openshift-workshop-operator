@@ -119,4 +119,8 @@ func (r *ReconcileWorkshop) GetDeploymentEnvVarSource(deployment *appsv1.Deploym
 		}
 	}
 	return valueFrom
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 295b052cce5bf790336a30c5d70ff6abaca2164b

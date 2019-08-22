@@ -62,44 +62,6 @@ func (r *ReconcileWorkshop) addChe(instance *openshiftv1alpha1.Workshop, users i
 		logrus.Infof("Created %s Subscription", cheSubscription.Name)
 	}
 
-	// cheCustomResourceDefinition := deployment.NewCustomResourceDefinition(instance, "checlusters.org.eclipse.che", "org.eclipse.che", "CheCluster", "CheClusterList", "checlusters", "checluster", "v1", nil, nil)
-	// if err := r.client.Create(context.TODO(), cheCustomResourceDefinition); err != nil && !errors.IsAlreadyExists(err) {
-	// 	return reconcile.Result{}, err
-	// } else if err == nil {
-	// 	reqLogger.Info("Created Che Custom Resource Definition")
-	// }
-
-	// cheServiceAccount := deployment.NewServiceAccount(instance, "che-operator", cheNamespace.Name)
-	// if err := r.client.Create(context.TODO(), cheServiceAccount); err != nil && !errors.IsAlreadyExists(err) {
-	// 	return reconcile.Result{}, err
-	// } else if err == nil {
-	// 	reqLogger.Info("Created Che Service Account")
-	// }
-
-	// cheClusterRole := deployment.NewClusterRole(instance, "che-operator", cheNamespace.Name, che.CheRules())
-	// if err := r.client.Create(context.TODO(), cheClusterRole); err != nil && !errors.IsAlreadyExists(err) {
-	// 	return reconcile.Result{}, err
-	// } else if err == nil {
-	// 	reqLogger.Info("Created Che Cluster Role")
-	// }
-
-	// cheClusterRoleBinding := deployment.NewClusterRoleBindingForServiceAccount(instance, "che-operator", cheNamespace.Name, "che-operator", "che-operator", "ClusterRole")
-	// if err := r.client.Create(context.TODO(), cheClusterRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
-	// 	return reconcile.Result{}, err
-	// } else if err == nil {
-	// 	reqLogger.Info("Created Che Cluster Role Binding")
-	// }
-
-	// commands := []string{
-	// 	"/usr/local/bin/che-operator",
-	// }
-	// cheOperator := deployment.NewOperatorDeployment(instance, "che-operator", cheNamespace.Name, instance.Spec.Che.OperatorImage, "che-operator", 60000, commands, nil, nil, nil)
-	// if err := r.client.Create(context.TODO(), cheOperator); err != nil && !errors.IsAlreadyExists(err) {
-	// 	return reconcile.Result{}, err
-	// } else if err == nil {
-	// 	reqLogger.Info("Created Che Operator")
-	// }
-
 	cheCustomResource := deployment.NewCheClusterCustomResource(instance, "eclipse-che", cheNamespace.Name)
 	if err := r.client.Create(context.TODO(), cheCustomResource); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
