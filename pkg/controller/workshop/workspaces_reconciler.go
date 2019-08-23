@@ -11,7 +11,6 @@ import (
 
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	codereadyfactory "github.com/redhat/openshift-workshop-operator/pkg/codeready/factory"
-	codereadystack "github.com/redhat/openshift-workshop-operator/pkg/codeready/stack"
 	codereadyuser "github.com/redhat/openshift-workshop-operator/pkg/codeready/user"
 	checlustercustomresource "github.com/redhat/openshift-workshop-operator/pkg/customresource/checluster"
 	deployment "github.com/redhat/openshift-workshop-operator/pkg/deployment"
@@ -76,6 +75,21 @@ func (r *ReconcileWorkshop) addWorkspaces(instance *openshiftv1alpha1.Workshop, 
 		reqLogger.Info("Created Workspaces Cluster Role Binding")
 	}
 
+	configMapData := map[string]string{
+		"CHE_INFRA_KUBERNETES_PVC_WAIT__BOUND":                  "false",
+		"CHE_INFRA_KUBERNETES_SERVICE__ACCOUNT__NAME":           "che-workspace",
+		"CHE_INFRA_KUBERNETES_WORKSPACE__UNRECOVERABLE__EVENTS": "FailedMount,FailedScheduling,MountVolume.SetUp failed,Failed to pull image",
+		"CHE_PREDEFINED_STACKS_RELOAD__ON__START":               "true",
+		"CHE_WORKSPACE_AGENT_DEV_INACTIVE__STOP__TIMEOUT__MS":   "-1",
+		"CHE_WORKSPACE_AUTO_START":                              "true",
+	}
+	workspacesCustomConfigMap := deployment.NewConfigMap(instance, "custom", workspacesNamespace.Name, configMapData)
+	if err := r.client.Create(context.TODO(), workspacesCustomConfigMap); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created Workspaces Custom ConfigMap")
+	}
+
 	commands := []string{
 		"che-operator",
 	}
@@ -100,27 +114,32 @@ func (r *ReconcileWorkshop) addWorkspaces(instance *openshiftv1alpha1.Workshop, 
 		reqLogger.Info("Created Cloud Native Stack Image Stream (OCP4)")
 	}
 
+	// Variables
 	var (
-		body           []byte
-		err            error
-		url            string
-		httpResponse   *http.Response
-		httpRequest    *http.Request
-		codereadyToken util.Token
-		masterToken    util.Token
-		client         = &http.Client{}
-		stackResponse  = codereadystack.Stack{}
-		timeout        = 100
+		body                  []byte
+		err                   error
+		url                   string
+		httpResponse          *http.Response
+		httpRequest           *http.Request
+		masterToken           util.Token
+		codereadyURL          = "http://codeready-workspaces." + appsHostnameSuffix
+		keycloakTokenURL      = "http://keycloak-workspaces." + appsHostnameSuffix + "/auth/realms/codeready/protocol/openid-connect/token"
+		codereadyToken        util.Token
+		codereadyFactoryURL   = codereadyURL + "/api/factory"
+		codereadyWorkspaceURL = codereadyURL + "/api/workspace"
+		client                = &http.Client{}
+		timeout               = 100
+		debuggingFactory      = codereadyfactory.NewDebuggingFactory(openshiftConsoleURL, openshiftAPIURL, appsHostnameSuffix, instance.Spec.UserPassword)
+		// codereadyDebuggingWorkspaceURL = codereadyURL + "/f?name=" + debuggingFactory.Name + "&user=admin"
 	)
 
 	// Wait for CodeReady Workspaces to be running
-	logrus.Infof("Waiting for CodeReady Workspaces Operator to build resources (%v seconds)", timeout)
-	time.Sleep(time.Duration(timeout) * time.Second)
 
 	workspacesDeployment, err := r.GetEffectiveDeployment(instance, "codeready", workspacesNamespace.Name)
 	if err != nil {
-		reqLogger.Error(err, "Failed to get codeready deployment")
-		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 30}, err
+		logrus.Errorf("Failed to get codeready deployment: %s", err)
+		logrus.Infof("Waiting for CodeReady Workspaces Operator to build resources (%v seconds)", timeout)
+		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * time.Duration(timeout)}, err
 	}
 
 	if workspacesDeployment.Status.AvailableReplicas != 1 {
@@ -130,6 +149,40 @@ func (r *ReconcileWorkshop) addWorkspaces(instance *openshiftv1alpha1.Workshop, 
 		}
 	}
 
+	// Create Factory with admin user
+	httpRequest, err = http.NewRequest("POST", keycloakTokenURL, strings.NewReader("username=admin&password=admin&grant_type=password&client_id=admin-cli"))
+	httpRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	httpResponse, err = client.Do(httpRequest)
+	if err != nil {
+		reqLogger.Info("Error when getting Workspaces Access Token")
+		return reconcile.Result{}, err
+	}
+	defer httpResponse.Body.Close()
+	if httpResponse.StatusCode == http.StatusOK {
+		if err := json.NewDecoder(httpResponse.Body).Decode(&codereadyToken); err != nil {
+			return reconcile.Result{}, err
+		}
+	}
+
+	body, err = json.Marshal(debuggingFactory)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	httpRequest, err = http.NewRequest("POST", codereadyFactoryURL, bytes.NewBuffer(body))
+	httpRequest.Header.Set("Authorization", "Bearer "+codereadyToken.AccessToken)
+	httpRequest.Header.Set("Content-Type", "application/json")
+
+	httpResponse, err = client.Do(httpRequest)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	defer httpResponse.Body.Close()
+	if httpResponse.StatusCode == http.StatusCreated || httpResponse.StatusCode == http.StatusOK {
+		logrus.Infof("Created %s Factory", debuggingFactory.Workspace.Name)
+	}
+
+	// Create CodeReady Users and Workspaces
 	url = "http://keycloak-workspaces." + appsHostnameSuffix + "/auth/realms/master/protocol/openid-connect/token"
 	httpRequest, err = http.NewRequest("POST", url, strings.NewReader("username=admin&password=admin&grant_type=password&client_id=admin-cli"))
 	httpRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -142,10 +195,14 @@ func (r *ReconcileWorkshop) addWorkspaces(instance *openshiftv1alpha1.Workshop, 
 		if err := json.NewDecoder(httpResponse.Body).Decode(&masterToken); err != nil {
 			return reconcile.Result{}, err
 		}
+	} else {
+		logrus.Warnf("Cannot get Keycloak Access Token because of %d HTTP error", httpResponse.StatusCode)
 	}
 
 	if !enabledOpenShiftoAuth {
 		openshiftUserPassword := instance.Spec.UserPassword
+		var userToken util.Token
+
 		for id := 1; id <= users; id++ {
 			username := fmt.Sprintf("user%d", id)
 			body, err = json.Marshal(codereadyuser.NewCodeReadyUser(instance, username, openshiftUserPassword))
@@ -163,82 +220,83 @@ func (r *ReconcileWorkshop) addWorkspaces(instance *openshiftv1alpha1.Workshop, 
 				return reconcile.Result{}, err
 			}
 			if httpResponse.StatusCode == http.StatusCreated {
-				reqLogger.Info("Created " + username + " for CodeReady Workspaces")
+				logrus.Infof("Created %s for CodeReady Workspaces", username)
+			}
+
+			// Create Workspace
+			httpRequest, err = http.NewRequest("POST", keycloakTokenURL,
+				strings.NewReader("username="+username+"&password="+openshiftUserPassword+"&grant_type=password&client_id=codeready-public"))
+			httpRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			httpResponse, err = client.Do(httpRequest)
+			if err != nil {
+				reqLogger.Info("Error when getting Workspaces Access Token")
+				return reconcile.Result{}, err
+			}
+			defer httpResponse.Body.Close()
+			if httpResponse.StatusCode == http.StatusOK {
+				if err := json.NewDecoder(httpResponse.Body).Decode(&userToken); err != nil {
+					return reconcile.Result{}, err
+				}
+			}
+
+			httpRequest, err = http.NewRequest("GET", codereadyWorkspaceURL+"/"+username+":"+debuggingFactory.Workspace.Name+"?includeInternalServers=false", nil)
+			httpRequest.Header.Set("Authorization", "Bearer "+userToken.AccessToken)
+			httpRequest.Header.Set("Content-Type", "application/json")
+			httpResponse, err = client.Do(httpRequest)
+			if err != nil {
+				return reconcile.Result{}, err
+			}
+			defer httpResponse.Body.Close()
+
+			if httpResponse.StatusCode != http.StatusOK {
+				body, err = json.Marshal(debuggingFactory.Workspace)
+				if err != nil {
+					return reconcile.Result{}, err
+				}
+
+				httpRequest, err = http.NewRequest("POST", codereadyWorkspaceURL, bytes.NewBuffer(body))
+				httpRequest.Header.Set("Authorization", "Bearer "+userToken.AccessToken)
+				httpRequest.Header.Set("Content-Type", "application/json")
+
+				httpResponse, err = client.Do(httpRequest)
+				if err != nil {
+					return reconcile.Result{}, err
+				}
+				defer httpResponse.Body.Close()
+				if httpResponse.StatusCode == http.StatusCreated || httpResponse.StatusCode == http.StatusOK {
+					logrus.Infof("Created %s Workspace for %s", debuggingFactory.Workspace.Name, username)
+				} else {
+					logrus.Warnf("Cannot create %s Workspace for %s because of %d HTTP error", debuggingFactory.Workspace.Name, username, httpResponse.StatusCode)
+				}
+			}
+
+			// Start the Workspace
+			workspaceResponse := struct {
+				ID     string `json:"id"`
+				Status string `json:"Status"`
+			}{}
+
+			if err := json.NewDecoder(httpResponse.Body).Decode(&workspaceResponse); err != nil {
+				return reconcile.Result{}, err
+			}
+
+			if workspaceResponse.Status != "RUNNING" {
+				httpRequest, err = http.NewRequest("POST", codereadyWorkspaceURL+"/"+workspaceResponse.ID+"/runtime", nil)
+				httpRequest.Header.Set("Authorization", "Bearer "+userToken.AccessToken)
+				httpRequest.Header.Set("Content-Type", "application/json")
+
+				httpResponse, err = client.Do(httpRequest)
+				if err != nil {
+					return reconcile.Result{}, err
+				}
+				defer httpResponse.Body.Close()
+				if httpResponse.StatusCode == http.StatusCreated || httpResponse.StatusCode == http.StatusOK {
+					logrus.Infof("Starting %s Workspace for %s", debuggingFactory.Workspace.Name, username)
+				} else {
+					logrus.Warnf("Cannot start %s Workspace for %s because of %d HTTP error", debuggingFactory.Workspace.Name, username, httpResponse.StatusCode)
+				}
 			}
 		}
-	}
-
-	httpRequest, err = http.NewRequest("POST", "http://keycloak-workspaces."+appsHostnameSuffix+"/auth/realms/codeready/protocol/openid-connect/token", strings.NewReader("username=admin&password=admin&grant_type=password&client_id=admin-cli"))
-	httpRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	httpResponse, err = client.Do(httpRequest)
-	if err != nil {
-		reqLogger.Info("Error when getting Workspaces Access Token")
-		return reconcile.Result{}, err
-	}
-	defer httpResponse.Body.Close()
-	if httpResponse.StatusCode == http.StatusOK {
-		if err := json.NewDecoder(httpResponse.Body).Decode(&codereadyToken); err != nil {
-			return reconcile.Result{}, err
-		}
-	}
-
-	// Workspaces Factory
-	body, err = json.Marshal(codereadyfactory.NewDebuggingFactory(openshiftConsoleURL, openshiftAPIURL, appsHostnameSuffix, instance.Spec.UserPassword))
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	httpRequest, err = http.NewRequest("POST", "http://codeready-workspaces."+appsHostnameSuffix+"/api/factory", bytes.NewBuffer(body))
-	httpRequest.Header.Set("Authorization", "Bearer "+codereadyToken.AccessToken)
-	httpRequest.Header.Set("Content-Type", "application/json")
-
-	httpResponse, err = client.Do(httpRequest)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	defer httpResponse.Body.Close()
-	if httpResponse.StatusCode == http.StatusCreated || httpResponse.StatusCode == http.StatusOK {
-		reqLogger.Info("Created Debugging Factory")
-	}
-
-	body, err = json.Marshal(codereadystack.NewCloudNativeStack(instance))
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	httpRequest, err = http.NewRequest("POST", "http://codeready-workspaces."+appsHostnameSuffix+"/api/stack", bytes.NewBuffer(body))
-	httpRequest.Header.Set("Authorization", "Bearer "+codereadyToken.AccessToken)
-	httpRequest.Header.Set("Content-Type", "application/json")
-
-	httpResponse, err = client.Do(httpRequest)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	defer httpResponse.Body.Close()
-	if httpResponse.StatusCode == http.StatusCreated || httpResponse.StatusCode == http.StatusOK {
-		reqLogger.Info("Created Cloud Native Stack")
-
-		if err := json.NewDecoder(httpResponse.Body).Decode(&stackResponse); err != nil {
-			return reconcile.Result{}, err
-		}
-
-		body, err = json.Marshal(codereadystack.NewCloudNativeStackPermission(instance, stackResponse.ID))
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-
-		httpRequest, err = http.NewRequest("POST", "http://codeready-workspaces."+appsHostnameSuffix+"/api/permissions", bytes.NewBuffer(body))
-		httpRequest.Header.Set("Authorization", "Bearer "+codereadyToken.AccessToken)
-		httpRequest.Header.Set("Content-Type", "application/json")
-
-		httpResponse, err = client.Do(httpRequest)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-		if httpResponse.StatusCode == http.StatusCreated {
-			reqLogger.Info("Granted Cloud Native Stack")
-		}
-
 	}
 
 	//Success

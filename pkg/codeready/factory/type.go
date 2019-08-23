@@ -14,6 +14,7 @@ type Workspace struct {
 	DefaultEnv   string       `json:"defaultEnv"`
 	Name         string       `json:"name"`
 	Links        []string     `json:"links"`
+	ID           string       `json:"id"`
 }
 
 type Project struct {

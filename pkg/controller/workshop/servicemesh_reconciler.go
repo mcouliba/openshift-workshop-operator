@@ -3,21 +3,20 @@ package workshop
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	deployment "github.com/redhat/openshift-workshop-operator/pkg/deployment"
 	smcp "github.com/redhat/openshift-workshop-operator/pkg/deployment/maistra/servicemeshcontrolplane"
 	smmr "github.com/redhat/openshift-workshop-operator/pkg/deployment/maistra/servicemeshmemberroll"
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-)
-
-var (
-	k8sclient = GetK8Client()
 )
 
 // Reconciling ServiceMesh
@@ -319,6 +318,45 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 30}, err
 	} else if err == nil {
 		reqLogger.Info("Created ServiceMeshControlPlane Custom Resource")
+	}
+
+	// Fixed Jaeger URL in Kiali
+	// Wait for Kiali to be running
+	timeout := 100
+	time.Sleep(time.Duration(1) * time.Second)
+	kialiDeployment, err := r.GetEffectiveDeployment(instance, "kiali", istioSystemNamespace.Name)
+	if err != nil {
+		logrus.Errorf("Failed to get kiali deployment: %s", err)
+		logrus.Infof("Waiting for Istio Operator to build Kiali Deployment (%v seconds)", timeout)
+		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * time.Duration(timeout)}, err
+	}
+
+	if kialiDeployment.Status.AvailableReplicas != 1 {
+		scaled := k8sclient.GetDeploymentStatus("kiali", istioSystemNamespace.Name)
+		if !scaled {
+			return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, err
+		}
+	}
+
+	kialiConfigMap := r.GetEffectiveConfigMap(instance, "kiali", istioSystemNamespace.Name)
+	kialiConfigMap.Data["config.yaml"] =
+		strings.Replace(kialiConfigMap.Data["config.yaml"], "jaeger-istio-system", "tracing-istio-system", 1)
+	if err := r.client.Update(context.TODO(), kialiConfigMap); err != nil {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Updated Kiali ConfigMap for Tracing URL (Fix)")
+
+		kialipod, err := k8sclient.GetDeploymentPod("kiali", istioSystemNamespace.Name)
+		if err == nil {
+			found := &corev1.Pod{}
+			err = r.client.Get(context.TODO(), types.NamespacedName{Name: kialipod, Namespace: istioSystemNamespace.Name}, found)
+			if err == nil {
+				if err := r.client.Delete(context.TODO(), found); err != nil {
+					return reconcile.Result{}, err
+				}
+				logrus.Infof("Restarted a new Kiali Pod (Fix)")
+			}
+		}
 	}
 
 	//Success

@@ -10,7 +10,7 @@ spec:
   gogs:
     enabled: false
   nexus:
-    enabled: false
+    enabled: true
   servicemesh:
     enabled: true
     jaegerOperatorImage: "jaegertracing/jaeger-operator:1.13.1"
