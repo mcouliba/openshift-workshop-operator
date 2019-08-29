@@ -26,6 +26,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
+var (
+	k8sclient = GetK8Client()
+)
+
 type k8s struct {
 	clientset kubernetes.Interface
 }
@@ -178,7 +182,7 @@ func (cl *k8s) GetPodLogs(podName string, namespace string) {
 func (cl *k8s) GetDeploymentPod(name string, namespace string) (podName string, err error) {
 	api := cl.clientset.CoreV1()
 	listOptions := metav1.ListOptions{
-		LabelSelector: "component=" + name,
+		LabelSelector: "app=" + name,
 	}
 	podList, _ := api.Pods(namespace).List(listOptions)
 	podListItems := podList.Items

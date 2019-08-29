@@ -3,6 +3,7 @@ package workshop
 import (
 	"context"
 	"regexp"
+	"strings"
 
 	che "github.com/eclipse/che-operator/pkg/apis/org/v1"
 	imagev1 "github.com/openshift/api/image/v1"
@@ -256,7 +257,7 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	// Variables
 	//////////////////////////
 	var (
-		// userEndpointStr     strings.Builder
+		userEndpointStr     strings.Builder
 		openshiftConsoleURL string
 		openshiftAPIURL     string
 		appsHostnameSuffix  string
@@ -282,34 +283,34 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 		users = 0
 	}
 
-	// //////////////////////////
-	// // Projects
-	// //////////////////////////
-	// if err := r.reconcileProject(instance, users, &userEndpointStr, appsHostnameSuffix,
-	// 	openshiftConsoleURL, openshiftAPIURL); err != nil {
-	// 	return reconcile.Result{}, err
-	// }
+	//////////////////////////
+	// Projects
+	//////////////////////////
+	if err := r.reconcileProject(instance, users, &userEndpointStr, appsHostnameSuffix,
+		openshiftConsoleURL, openshiftAPIURL); err != nil {
+		return reconcile.Result{}, err
+	}
 
-	// //////////////////////////
-	// // Service Mesh
-	// //////////////////////////
-	// if result, err := r.reconcileServiceMesh(instance, users); err != nil {
-	// 	return result, err
-	// }
+	//////////////////////////
+	// Service Mesh
+	//////////////////////////
+	if result, err := r.reconcileServiceMesh(instance, users); err != nil {
+		return result, err
+	}
 
-	// //////////////////////////
-	// // Etherpad
-	// //////////////////////////
-	// if err := r.reconcileEtherpad(instance, userEndpointStr); err != nil {
-	// 	return reconcile.Result{}, err
-	// }
+	//////////////////////////
+	// Etherpad
+	//////////////////////////
+	if err := r.reconcileEtherpad(instance, userEndpointStr); err != nil {
+		return reconcile.Result{}, err
+	}
 
-	// //////////////////////////
-	// // Nexus
-	// //////////////////////////
-	// if err := r.reconcileNexus(instance); err != nil {
-	// 	return reconcile.Result{}, err
-	// }
+	//////////////////////////
+	// Nexus
+	//////////////////////////
+	if err := r.reconcileNexus(instance); err != nil {
+		return reconcile.Result{}, err
+	}
 
 	// //////////////////////////
 	// // Gogs
@@ -326,12 +327,12 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 		return result, err
 	}
 
-	// //////////////////////////
-	// // Squash
-	// //////////////////////////
-	// if err := r.reconcileSquash(instance, users); err != nil {
-	// 	return reconcile.Result{}, err
-	// }
+	//////////////////////////
+	// Squash
+	//////////////////////////
+	if err := r.reconcileSquash(instance, users); err != nil {
+		return reconcile.Result{}, err
+	}
 
 	//Success
 	return reconcile.Result{}, nil
