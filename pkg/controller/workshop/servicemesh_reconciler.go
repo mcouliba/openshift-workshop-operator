@@ -339,26 +339,28 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 	}
 
 	kialiConfigMap := r.GetEffectiveConfigMap(instance, "kiali", istioSystemNamespace.Name)
-	kialiConfigMap.Data["config.yaml"] =
-		strings.Replace(kialiConfigMap.Data["config.yaml"], "jaeger-istio-system", "tracing-istio-system", 1)
-	if err := r.client.Update(context.TODO(), kialiConfigMap); err != nil {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Updated Kiali ConfigMap for Tracing URL (Fix)")
 
-		kialipod, err := k8sclient.GetDeploymentPod("kiali", istioSystemNamespace.Name)
-		if err == nil {
-			found := &corev1.Pod{}
-			err = r.client.Get(context.TODO(), types.NamespacedName{Name: kialipod, Namespace: istioSystemNamespace.Name}, found)
+	if strings.Contains(kialiConfigMap.Data["config.yaml"], "jaeger-istio-system") {
+		kialiConfigMap.Data["config.yaml"] =
+			strings.Replace(kialiConfigMap.Data["config.yaml"], "jaeger-istio-system", "tracing-istio-system", 1)
+		if err := r.client.Update(context.TODO(), kialiConfigMap); err != nil {
+			return reconcile.Result{}, err
+		} else if err == nil {
+			logrus.Infof("Updated Kiali ConfigMap for Tracing URL (Fix)")
+
+			kialipod, err := k8sclient.GetDeploymentPod("kiali", istioSystemNamespace.Name)
 			if err == nil {
-				if err := r.client.Delete(context.TODO(), found); err != nil {
-					return reconcile.Result{}, err
+				found := &corev1.Pod{}
+				err = r.client.Get(context.TODO(), types.NamespacedName{Name: kialipod, Namespace: istioSystemNamespace.Name}, found)
+				if err == nil {
+					if err := r.client.Delete(context.TODO(), found); err != nil {
+						return reconcile.Result{}, err
+					}
+					logrus.Infof("Restarted a new Kiali Pod (Fix)")
 				}
-				logrus.Infof("Restarted a new Kiali Pod (Fix)")
 			}
 		}
 	}
-
 	//Success
 	return reconcile.Result{}, nil
 }

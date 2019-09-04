@@ -69,12 +69,8 @@ func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, names
 			Value: "https://github.com/" + cr.Spec.Guide.GitRepositoryLabPath + "/tree/" + cr.Spec.Guide.GitRepositoryLabReference + "/catalog-go",
 		},
 		{
-			Name:  "CODEREADY_WORKSPACES_URL",
-			Value: "http://codeready-workspaces." + appsHostnameSuffix,
-		},
-		{
-			Name:  "GIT_URL",
-			Value: "http://gogs-" + cr.Namespace + "." + appsHostnameSuffix,
+			Name:  "CHE_URL",
+			Value: "http://che-eclipse-che." + appsHostnameSuffix,
 		},
 		{
 			Name:  "NEXUS_URL",
@@ -86,7 +82,7 @@ func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, names
 		},
 		{
 			Name:  "JAEGER_URL",
-			Value: "https://jaeger-query-istio-system." + appsHostnameSuffix,
+			Value: "https://tracing-istio-system." + appsHostnameSuffix,
 		},
 		{
 			Name:  "KIBANA_URL",

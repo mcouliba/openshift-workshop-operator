@@ -16,6 +16,7 @@ import (
 
 	oauth "github.com/openshift/api/oauth/v1"
 	routev1 "github.com/openshift/api/route/v1"
+	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
@@ -77,6 +78,17 @@ func (r *ReconcileWorkshop) GetEffectiveSecretResourceVersion(instance *openshif
 		return ""
 	}
 	return secret.ResourceVersion
+}
+
+func (r *ReconcileWorkshop) GetEffectiveCSV(instance *openshiftv1alpha1.Workshop, name string, namespace string) (clusterServiceVersion *olmv1alpha1.ClusterServiceVersion, err error) {
+	clusterServiceVersion = &olmv1alpha1.ClusterServiceVersion{}
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, clusterServiceVersion)
+	if err != nil {
+		logrus.Errorf("Failed to get %s cluster service version: %s", name, err)
+		return nil, err
+	}
+	return clusterServiceVersion, nil
+
 }
 
 func (r *ReconcileWorkshop) GetCR(request reconcile.Request) (instance *openshiftv1alpha1.Workshop, err error) {

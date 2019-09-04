@@ -330,8 +330,8 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	//////////////////////////
 	// Squash
 	//////////////////////////
-	if err := r.reconcileSquash(instance, users); err != nil {
-		return reconcile.Result{}, err
+	if result, err := r.reconcileSquash(instance, users); err != nil {
+		return result, err
 	}
 
 	//Success
