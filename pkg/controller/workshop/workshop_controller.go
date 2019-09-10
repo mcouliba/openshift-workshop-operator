@@ -14,9 +14,9 @@ import (
 	ompv1 "github.com/operator-framework/operator-marketplace/pkg/apis/operators/v1"
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	gogscustomresource "github.com/redhat/openshift-workshop-operator/pkg/customresource/gogs"
-	nexuscustomresource "github.com/redhat/openshift-workshop-operator/pkg/customresource/nexus"
 	smcp "github.com/redhat/openshift-workshop-operator/pkg/deployment/maistra/servicemeshcontrolplane"
 	smmr "github.com/redhat/openshift-workshop-operator/pkg/deployment/maistra/servicemeshmemberroll"
+	nexus "github.com/redhat/openshift-workshop-operator/pkg/deployment/nexus"
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -94,7 +94,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	if err := apiextensionsv1beta1.AddToScheme(mgr.GetScheme()); err != nil {
 		return err
 	}
-	if err := nexuscustomresource.AddToScheme(mgr.GetScheme()); err != nil {
+	if err := nexus.AddToScheme(mgr.GetScheme()); err != nil {
 		return err
 	}
 	if err := gogscustomresource.AddToScheme(mgr.GetScheme()); err != nil {

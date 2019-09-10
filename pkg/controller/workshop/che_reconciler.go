@@ -1,18 +1,12 @@
 package workshop
 
 import (
-	"bytes"
 	"context"
-	"crypto/tls"
-	"encoding/json"
-	"net/http"
-	"strings"
 	"time"
 
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	deployment "github.com/redhat/openshift-workshop-operator/pkg/deployment"
 	che "github.com/redhat/openshift-workshop-operator/pkg/deployment/che"
-	"github.com/redhat/openshift-workshop-operator/pkg/util"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -57,7 +51,7 @@ func (r *ReconcileWorkshop) addChe(instance *openshiftv1alpha1.Workshop, users i
 		logrus.Infof("Created %s OperatorGroup", cheOperatorGroup.Name)
 	}
 
-	cheSubscription := deployment.NewSubscription(instance, "eclipse-che", cheNamespace.Name, "eclipse-che.v7.0.0")
+	cheSubscription := deployment.NewSubscription(instance, "eclipse-che", cheNamespace.Name, "eclipse-che.v7.1.0")
 	if err := r.client.Create(context.TODO(), cheSubscription); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
@@ -84,49 +78,49 @@ func (r *ReconcileWorkshop) addChe(instance *openshiftv1alpha1.Workshop, users i
 		// 	body         []byte
 		// 	err          error
 		// url          string
-		httpResponse *http.Response
-		httpRequest  *http.Request
+		// httpResponse *http.Response
+		// httpRequest  *http.Request
 		// 	retries      = 60
 		// 	// codereadyToken util.Token
-		keycloakMasterTokenURL   = "http://keycloak-" + cheNamespace.Name + "." + appsHostnameSuffix + "/auth/realms/master/protocol/openid-connect/token"
-		keycloakTokenExchangeURL = "http://keycloak-" + cheNamespace.Name + "." + appsHostnameSuffix + "/auth/admin/realms/che/identity-provider/instances/openshift-v4/management/permissions"
+		// keycloakMasterTokenURL   = "http://keycloak-" + cheNamespace.Name + "." + appsHostnameSuffix + "/auth/realms/master/protocol/openid-connect/token"
+		// keycloakTokenExchangeURL = "http://keycloak-" + cheNamespace.Name + "." + appsHostnameSuffix + "/auth/admin/realms/che/identity-provider/instances/openshift-v4/management/permissions"
 		// oauthOpenShiftURL        = "https://oauth-openshift." + appsHostnameSuffix + "/oauth/authorize?client_id=openshift-challenging-client&response_type=token"
 
-		masterToken util.Token
-		client      = &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			}}
+		// masterToken util.Token
+		// client      = &http.Client{
+		// 	Transport: &http.Transport{
+		// 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		// 	}}
 		// 	// stackResponse  = codereadystack.Stack{}
 		reqLogger = log.WithName("Che")
 		timeout   = 120
 	)
 
-	// FIX - Enabled Keycloak Token Exchange
-	operatorImageFixed := "quay.io/dfestal/che-operator:enable-token-exchange"
-	time.Sleep(time.Duration(1) * time.Second)
-	cheCSV, err := r.GetEffectiveCSV(instance, "eclipse-che.v7.0.0", cheNamespace.Name)
-	if err != nil {
-		logrus.Errorf("Failed to get ClusterServiceVersion : %s", "eclipse-che.v7.0.0")
-		logrus.Infof("Waiting for %s ClusterServiceVersion to be created (%v seconds)", "eclipse-che.v7.0.0", timeout)
-		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * time.Duration(timeout)}, err
-	}
+	// // FIX - Enabled Keycloak Token Exchange
+	// operatorImageFixed := "quay.io/dfestal/che-operator:enable-token-exchange"
+	// time.Sleep(time.Duration(1) * time.Second)
+	// cheCSV, err := r.GetEffectiveCSV(instance, "eclipse-che.v7.0.0", cheNamespace.Name)
+	// if err != nil {
+	// 	logrus.Errorf("Failed to get ClusterServiceVersion : %s", "eclipse-che.v7.0.0")
+	// 	logrus.Infof("Waiting for %s ClusterServiceVersion to be created (%v seconds)", "eclipse-che.v7.0.0", timeout)
+	// 	return reconcile.Result{Requeue: true, RequeueAfter: time.Second * time.Duration(timeout)}, err
+	// }
 
-	var strategySpecJSON map[string][]interface{}
-	json.Unmarshal(cheCSV.Spec.InstallStrategy.StrategySpecRaw, &strategySpecJSON)
+	// var strategySpecJSON map[string][]interface{}
+	// json.Unmarshal(cheCSV.Spec.InstallStrategy.StrategySpecRaw, &strategySpecJSON)
 
-	if cheCSV.ObjectMeta.Annotations["containerImage"] != operatorImageFixed ||
-		strategySpecJSON["deployments"][0].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["image"] != operatorImageFixed {
-		cheCSV.ObjectMeta.Annotations["containerImage"] = operatorImageFixed
-		strategySpecJSON["deployments"][0].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["image"] = operatorImageFixed
-		cheCSV.Spec.InstallStrategy.StrategySpecRaw, _ = json.Marshal(strategySpecJSON)
+	// if cheCSV.ObjectMeta.Annotations["containerImage"] != operatorImageFixed ||
+	// 	strategySpecJSON["deployments"][0].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["image"] != operatorImageFixed {
+	// 	cheCSV.ObjectMeta.Annotations["containerImage"] = operatorImageFixed
+	// 	strategySpecJSON["deployments"][0].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["image"] = operatorImageFixed
+	// 	cheCSV.Spec.InstallStrategy.StrategySpecRaw, _ = json.Marshal(strategySpecJSON)
 
-		if err := r.client.Update(context.TODO(), cheCSV); err != nil {
-			return reconcile.Result{}, err
-		} else if err == nil {
-			logrus.Infof("Updated '%s' ClusterServiceVersion (Fix)", "eclipse-che.v7.0.0")
-		}
-	}
+	// 	if err := r.client.Update(context.TODO(), cheCSV); err != nil {
+	// 		return reconcile.Result{}, err
+	// 	} else if err == nil {
+	// 		logrus.Infof("Updated '%s' ClusterServiceVersion (Fix)", "eclipse-che.v7.0.0")
+	// 	}
+	// }
 
 	// Wait for Che Operator to be running
 	time.Sleep(time.Duration(1) * time.Second)
@@ -167,42 +161,42 @@ func (r *ReconcileWorkshop) addChe(instance *openshiftv1alpha1.Workshop, users i
 		}
 	}
 
-	// Get Keycloak Admin Token
-	httpRequest, err = http.NewRequest("POST", keycloakMasterTokenURL, strings.NewReader("username=admin&password=gstd9f9oDDhN&grant_type=password&client_id=admin-cli"))
-	httpRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	httpResponse, err = client.Do(httpRequest)
-	if err != nil {
-		logrus.Errorf("Error to get the master token from che keycloak (%v)", err)
-		return reconcile.Result{}, err
-	}
-	defer httpResponse.Body.Close()
-	if httpResponse.StatusCode == http.StatusOK {
-		if err := json.NewDecoder(httpResponse.Body).Decode(&masterToken); err != nil {
-			logrus.Errorf("Error to get the master token from che keycloak (%v)", err)
-			return reconcile.Result{}, err
-		}
-		logrus.Infof("Got Keycloak Master Token")
-	} else {
-		logrus.Errorf("Error to get the master token from che keycloak (%d)", httpResponse.StatusCode)
-		return reconcile.Result{}, err
-	}
+	// // Get Keycloak Admin Token
+	// httpRequest, err = http.NewRequest("POST", keycloakMasterTokenURL, strings.NewReader("username=admin&password=gstd9f9oDDhN&grant_type=password&client_id=admin-cli"))
+	// httpRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	// httpResponse, err = client.Do(httpRequest)
+	// if err != nil {
+	// 	logrus.Errorf("Error to get the master token from che keycloak (%v)", err)
+	// 	return reconcile.Result{}, err
+	// }
+	// defer httpResponse.Body.Close()
+	// if httpResponse.StatusCode == http.StatusOK {
+	// 	if err := json.NewDecoder(httpResponse.Body).Decode(&masterToken); err != nil {
+	// 		logrus.Errorf("Error to get the master token from che keycloak (%v)", err)
+	// 		return reconcile.Result{}, err
+	// 	}
+	// 	logrus.Infof("Got Keycloak Master Token")
+	// } else {
+	// 	logrus.Errorf("Error to get the master token from che keycloak (%d)", httpResponse.StatusCode)
+	// 	return reconcile.Result{}, err
+	// }
 
-	// Enable Token Exchange
-	httpRequest, err = http.NewRequest("PUT", keycloakTokenExchangeURL, bytes.NewBuffer([]byte("{\"enabled\" : true}")))
-	httpRequest.Header.Set("Authorization", "Bearer "+masterToken.AccessToken)
-	httpRequest.Header.Set("Content-Type", "application/json")
+	// // Enable Token Exchange
+	// httpRequest, err = http.NewRequest("PUT", keycloakTokenExchangeURL, bytes.NewBuffer([]byte("{\"enabled\" : true}")))
+	// httpRequest.Header.Set("Authorization", "Bearer "+masterToken.AccessToken)
+	// httpRequest.Header.Set("Content-Type", "application/json")
 
-	httpResponse, err = client.Do(httpRequest)
-	if err != nil {
-		logrus.Errorf("Error when enabling Keycloak Token Exchange (%v)", err)
-		return reconcile.Result{}, err
-	}
-	if httpResponse.StatusCode == http.StatusOK {
-		logrus.Infof("Enabled Keycloak Token Exchange")
-	} else {
-		logrus.Errorf("Error when enabling Keycloak Token Exchange (%d)", httpResponse.StatusCode)
-		return reconcile.Result{}, err
-	}
+	// httpResponse, err = client.Do(httpRequest)
+	// if err != nil {
+	// 	logrus.Errorf("Error when enabling Keycloak Token Exchange (%v)", err)
+	// 	return reconcile.Result{}, err
+	// }
+	// if httpResponse.StatusCode == http.StatusOK {
+	// 	logrus.Infof("Enabled Keycloak Token Exchange")
+	// } else {
+	// 	logrus.Errorf("Error when enabling Keycloak Token Exchange (%d)", httpResponse.StatusCode)
+	// 	return reconcile.Result{}, err
+	// }
 
 	// TODO - Add Policy and link to che-public
 
@@ -230,110 +224,6 @@ func (r *ReconcileWorkshop) addChe(instance *openshiftv1alpha1.Workshop, users i
 	// 		logrus.Errorf("Error when getting Token Exchange for %s (%d)", username, httpResponse.StatusCode)
 	// 		return reconcile.Result{}, err
 	// 	}
-	// }
-
-	// openshiftStackImageStream := deployment.NewImageStream(instance, "che-cloud-native", "openshift", "quay.io/mcouliba/che-cloud-native:ocp4", "ocp4")
-	// if err := r.client.Create(context.TODO(), openshiftStackImageStream); err != nil && !errors.IsAlreadyExists(err) {
-	// 	return reconcile.Result{}, err
-	// } else if err == nil {
-	// 	reqLogger.Info("Created Cloud Native Stack Image Stream (OCP4)")
-	// }
-
-	// if !instance.Spec.Che.OpenShiftoAuth {
-	// 	openshiftUserPassword := instance.Spec.UserPassword
-	// 	for id := 1; id <= users; id++ {
-	// 		username := fmt.Sprintf("user%d", id)
-	// 		body, err = json.Marshal(codereadyuser.NewCodeReadyUser(instance, username, openshiftUserPassword))
-	// 		if err != nil {
-	// 			return reconcile.Result{}, err
-	// 		}
-
-	// 		httpRequest, err = http.NewRequest("POST", "http://keycloak-che."+appsHostnameSuffix+"/auth/admin/realms/codeready/users", bytes.NewBuffer(body))
-	// 		httpRequest.Header.Set("Authorization", "Bearer "+masterToken.AccessToken)
-	// 		httpRequest.Header.Set("Content-Type", "application/json")
-
-	// 		httpResponse, err = client.Do(httpRequest)
-	// 		if err != nil {
-	// 			reqLogger.Info("Error when creating " + username + " for CodeReady Che")
-	// 			return reconcile.Result{}, err
-	// 		}
-	// 		if httpResponse.StatusCode == http.StatusCreated {
-	// 			reqLogger.Info("Created " + username + " for CodeReady Che")
-	// 		}
-	// 	}
-	// }
-
-	// httpRequest, err = http.NewRequest("POST", "http://keycloak-che."+appsHostnameSuffix+"/auth/realms/codeready/protocol/openid-connect/token", strings.NewReader("username=admin&password=admin&grant_type=password&client_id=admin-cli"))
-	// httpRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	// httpResponse, err = client.Do(httpRequest)
-	// if err != nil {
-	// 	reqLogger.Info("Error when getting Che Access Token")
-	// 	return reconcile.Result{}, err
-	// }
-	// defer httpResponse.Body.Close()
-	// if httpResponse.StatusCode == http.StatusOK {
-	// 	if err := json.NewDecoder(httpResponse.Body).Decode(&codereadyToken); err != nil {
-	// 		return reconcile.Result{}, err
-	// 	}
-	// }
-
-	// // Che Factory
-	// body, err = json.Marshal(codereadyfactory.NewDebuggingFactory(openshiftConsoleURL, openshiftAPIURL, appsHostnameSuffix, instance.Spec.UserPassword))
-	// if err != nil {
-	// 	return reconcile.Result{}, err
-	// }
-
-	// httpRequest, err = http.NewRequest("POST", "http://codeready-che."+appsHostnameSuffix+"/api/factory", bytes.NewBuffer(body))
-	// httpRequest.Header.Set("Authorization", "Bearer "+codereadyToken.AccessToken)
-	// httpRequest.Header.Set("Content-Type", "application/json")
-
-	// httpResponse, err = client.Do(httpRequest)
-	// if err != nil {
-	// 	return reconcile.Result{}, err
-	// }
-	// defer httpResponse.Body.Close()
-	// if httpResponse.StatusCode == http.StatusCreated || httpResponse.StatusCode == http.StatusOK {
-	// 	reqLogger.Info("Created Debugging Factory")
-	// }
-
-	// body, err = json.Marshal(codereadystack.NewCloudNativeStack(instance))
-	// if err != nil {
-	// 	return reconcile.Result{}, err
-	// }
-
-	// httpRequest, err = http.NewRequest("POST", "http://codeready-che."+appsHostnameSuffix+"/api/stack", bytes.NewBuffer(body))
-	// httpRequest.Header.Set("Authorization", "Bearer "+codereadyToken.AccessToken)
-	// httpRequest.Header.Set("Content-Type", "application/json")
-
-	// httpResponse, err = client.Do(httpRequest)
-	// if err != nil {
-	// 	return reconcile.Result{}, err
-	// }
-	// defer httpResponse.Body.Close()
-	// if httpResponse.StatusCode == http.StatusCreated || httpResponse.StatusCode == http.StatusOK {
-	// 	reqLogger.Info("Created Cloud Native Stack")
-
-	// 	if err := json.NewDecoder(httpResponse.Body).Decode(&stackResponse); err != nil {
-	// 		return reconcile.Result{}, err
-	// 	}
-
-	// 	body, err = json.Marshal(codereadystack.NewCloudNativeStackPermission(instance, stackResponse.ID))
-	// 	if err != nil {
-	// 		return reconcile.Result{}, err
-	// 	}
-
-	// 	httpRequest, err = http.NewRequest("POST", "http://codeready-che."+appsHostnameSuffix+"/api/permissions", bytes.NewBuffer(body))
-	// 	httpRequest.Header.Set("Authorization", "Bearer "+codereadyToken.AccessToken)
-	// 	httpRequest.Header.Set("Content-Type", "application/json")
-
-	// 	httpResponse, err = client.Do(httpRequest)
-	// 	if err != nil {
-	// 		return reconcile.Result{}, err
-	// 	}
-	// 	if httpResponse.StatusCode == http.StatusCreated {
-	// 		reqLogger.Info("Granted Cloud Native Stack")
-	// 	}
-
 	// }
 
 	//Success

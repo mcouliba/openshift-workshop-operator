@@ -1,0 +1,86 @@
+#!/bin/bash
+
+GUID=$1
+OPENSHIFT_API_URL="https://api.cluster-${GUID}.${GUID}.events.opentlc.com:6443"
+KEYCLOAK_MASTER_URL="http://keycloak-eclipse-che.apps.cluster-${GUID}.${GUID}.events.opentlc.com/auth/realms/master/protocol/openid-connect/token"
+KEYCLOAK_CHE_URL="http://keycloak-eclipse-che.apps.cluster-${GUID}.${GUID}.events.opentlc.com/auth/realms/che/protocol/openid-connect/token"
+KEYCLOAK_USER_URL="http://keycloak-eclipse-che.apps.cluster-${GUID}.${GUID}.events.opentlc.com/auth/admin/realms/che/users"
+WORKSHOP_DEVFILE_URL="https://raw.githubusercontent.com/mcouliba/debugging-workshop/master/devfile.yaml"
+WORKSPACE_URL="http://che-eclipse-che.apps.cluster-${GUID}.${GUID}.events.opentlc.com/api/workspace"
+DEBUGGING_WORKSPACE_URL="${WORKSPACE_URL}/%3Awksp-debugging?includeInternalServers=false"
+
+oc login -u "opentlc-mgr" -p 'r3dh4t1!' "${OPENSHIFT_API_URL}"
+
+for i in {1..5};
+do
+    
+    che_user="user$i"
+    subject_token=$(oc login -u "$che_user" -p 'r3dh4t1!' "${OPENSHIFT_API_URL}" &> /dev/null &&\
+        oc whoami --show-token)
+
+    echo ">>>>> Subject Token: $subject_token"
+        
+    access_token=$(curl -X POST \
+        -d "client_id=che-public" \
+        --data-urlencode "grant_type=urn:ietf:params:oauth:grant-type:token-exchange" \
+        -d "subject_token=${subject_token}" \
+        -d "subject_issuer=openshift-v4" \
+        --data-urlencode "subject_token_type=urn:ietf:params:oauth:token-type:access_token" \
+      ${KEYCLOAK_CHE_URL} | jq -r '.access_token')
+
+    echo ">>>>> Access Token: $access_token"
+
+    if [ ! -z "$access_token" ];
+    then 
+        
+        # Start Workspaces
+        master_access_token=$(curl -X POST \
+                -d "client_id=admin-cli" \
+                -d "username=admin" \
+                -d "password=admin" \
+                -d "grant_type=password" \
+                ${KEYCLOAK_MASTER_URL} | jq -r '.access_token')
+
+        echo ">>>>> Master Access Token: $master_access_token"
+
+        userid=$(curl -X GET \
+            --header "Authorization: Bearer $master_access_token"\
+            "${KEYCLOAK_USER_URL}?username=${che_user}" | jq -r '.[0].id')
+        
+        echo ">>>>> User ID: ${userid}"
+
+        curl -X PUT  "${KEYCLOAK_USER_URL}/${userid}" \
+            --header "Content-Type: application/json" \
+            --header "Authorization: Bearer $master_access_token" \
+            -d "{\"email\":\"${che_user}@none.com\"}"
+
+        echo ">>>>> Creating Eclipse Che workspace for user $che_user"
+        
+        oc logout &> /dev/null
+        oc login -u "opentlc-mgr" -p 'r3dh4t1!' "${OPENSHIFT_API_URL}"
+
+        chectl workspace:start \
+            --chenamespace="eclipse-che" \
+            --devfile="${WORKSHOP_DEVFILE_URL}" \
+            --access-token="$access_token"
+
+        sleep 30
+
+        workspaceid=$(curl -X GET \
+            --header "Authorization: Bearer $access_token"\
+            "${DEBUGGING_WORKSPACE_URL}" | jq -r '.id')
+
+        if [ ! -z "$workspaceid" ];
+        then 
+            echo ">>>>> Workspace ID: $workspaceid"
+
+            curl -X POST \
+            --header "Authorization: Bearer $access_token"\
+            "${WORKSPACE_URL}/${workspaceid}/runtime" 
+
+            # Grant Squash Role to SA
+            oc adm policy add-cluster-role-to-user cluster-admin -z che-workspace -n $workspaceid
+        fi
+    fi 
+done
+
