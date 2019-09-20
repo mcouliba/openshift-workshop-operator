@@ -3,7 +3,6 @@ package workshop
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
@@ -11,11 +10,7 @@ import (
 	smcp "github.com/redhat/openshift-workshop-operator/pkg/deployment/maistra/servicemeshcontrolplane"
 	smmr "github.com/redhat/openshift-workshop-operator/pkg/deployment/maistra/servicemeshmemberroll"
 	"github.com/sirupsen/logrus"
-	corev1 "k8s.io/api/core/v1"
-	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -36,253 +31,45 @@ func (r *ReconcileWorkshop) reconcileServiceMesh(instance *openshiftv1alpha1.Wor
 func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop, users int) (reconcile.Result, error) {
 	reqLogger := log.WithName("ServiceMesh")
 
-	jaegerOperatorImage := instance.Spec.ServiceMesh.JaegerOperatorImage
-	kialiOperatorImage := instance.Spec.ServiceMesh.KialiOperatorImage
-	istioOperatorImage := instance.Spec.ServiceMesh.IstioOperatorImage
-
-	// JAEGER OPERATOR
-	jaegerOperatorNamespace := deployment.NewNamespace(instance, "observability")
-	if err := r.client.Create(context.TODO(), jaegerOperatorNamespace); err != nil && !errors.IsAlreadyExists(err) {
-		reqLogger.Error(err, "Failed to create Namespace", "Resource.name", jaegerOperatorNamespace.Name)
+	// ElasticSearch from OperatorHub
+	serviceMeshCatalogSourceConfig := deployment.NewCatalogSourceConfig(instance, "installed-service-mesh",
+		"openshift-operators", "elasticsearch-operator,jaeger-product,kiali-ossm,servicemeshoperator")
+	if err := r.client.Create(context.TODO(), serviceMeshCatalogSourceConfig); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
-		reqLogger.Info("Created Jaeger Operator Project")
+		logrus.Infof("Created %s CatalogSourceConfig", serviceMeshCatalogSourceConfig.Name)
 	}
 
-	jaegerOperatorCustomResourceDefinition := deployment.NewCustomResourceDefinition(instance, "jaegers.jaegertracing.io", "jaegertracing.io", "Jaeger", "JaegerList", "jaegers", "jaeger", "v1", nil, nil)
-	if err := r.client.Create(context.TODO(), jaegerOperatorCustomResourceDefinition); err != nil && !errors.IsAlreadyExists(err) {
+	elasticSubscription := deployment.NewSubscription(instance, "elasticsearch-operator", "openshift-operators", serviceMeshCatalogSourceConfig.Name,
+		"preview", "elasticsearch-operator.4.1.15-201909041605")
+	if err := r.client.Create(context.TODO(), elasticSubscription); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
-		reqLogger.Info("Created  Jaeger Operator Custom Resource Definition")
+		logrus.Infof("Created %s Subscription", elasticSubscription.Name)
 	}
 
-	jaegerOperatorServiceAccount := deployment.NewServiceAccount(instance, "jaeger-operator", jaegerOperatorNamespace.Name)
-	if err := r.client.Create(context.TODO(), jaegerOperatorServiceAccount); err != nil && !errors.IsAlreadyExists(err) {
+	jaegerSubscription := deployment.NewSubscription(instance, "jaeger-product", "openshift-operators", serviceMeshCatalogSourceConfig.Name,
+		"stable", "jaeger-operator.v1.13.1")
+	if err := r.client.Create(context.TODO(), jaegerSubscription); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
-		reqLogger.Info("Created Jaeger Operator Service Account")
+		logrus.Infof("Created %s Subscription", jaegerSubscription.Name)
 	}
 
-	jaegerOperatorClusterRole := deployment.NewClusterRole(instance, "jaeger-operator", jaegerOperatorNamespace.Name, deployment.JaegerRules())
-	if err := r.client.Create(context.TODO(), jaegerOperatorClusterRole); err != nil && !errors.IsAlreadyExists(err) {
+	kialiSubscription := deployment.NewSubscription(instance, "kiali-ossm", "openshift-operators", serviceMeshCatalogSourceConfig.Name,
+		"stable", "kiali-operator.v1.0.5")
+	if err := r.client.Create(context.TODO(), kialiSubscription); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
-		reqLogger.Info("Created Jaeger Operator Cluster Role")
+		logrus.Infof("Created %s Subscription", kialiSubscription.Name)
 	}
 
-	jaegerOperatorClusterRoleBinding := deployment.NewClusterRoleBindingForServiceAccount(instance, "jaeger-operator", jaegerOperatorNamespace.Name, "jaeger-operator", "jaeger-operator", "ClusterRole")
-	if err := r.client.Create(context.TODO(), jaegerOperatorClusterRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
+	servicemeshSubscription := deployment.NewSubscription(instance, "servicemeshoperator", "openshift-operators", serviceMeshCatalogSourceConfig.Name,
+		"1.0", "servicemeshoperator.v1.0.0")
+	if err := r.client.Create(context.TODO(), servicemeshSubscription); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
-		reqLogger.Info("Created Jaeger Operator Cluster Role Binding")
-	}
-
-	args := []string{
-		"start",
-	}
-	jaegerOperator := deployment.NewOperatorDeployment(instance, "jaeger-operator", jaegerOperatorNamespace.Name, jaegerOperatorImage, "jaeger-operator", 8383, nil, args, nil, nil)
-	if err := r.client.Create(context.TODO(), jaegerOperator); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Jaeger Operator")
-	}
-
-	// KIALI-OPERATOR
-	kialiOperatorNamespace := deployment.NewNamespace(instance, "kiali-operator")
-	if err := r.client.Create(context.TODO(), kialiOperatorNamespace); err != nil && !errors.IsAlreadyExists(err) {
-		reqLogger.Error(err, "Failed to create Namespace", "Resource.name", kialiOperatorNamespace.Name)
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Kiali Operator Project (kiali-operator)")
-	}
-
-	kialiOperatorCustomResourceDefinition := deployment.NewCustomResourceDefinition(instance, "kialis.kiali.io", "kiali.io", "Kiali", "KialiList", "kialis", "kiali", "v1alpha1", nil, nil)
-	if err := r.client.Create(context.TODO(), kialiOperatorCustomResourceDefinition); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Kiali Operator Custom Resource Definition (kialis.kiali.io)")
-	}
-
-	kialiOperatorCustomResourceDefinition2 := deployment.NewCustomResourceDefinition(instance, "monitoringdashboards.monitoring.kiali.io", "monitoring.kiali.io", "MonitoringDashboard", "MonitoringDashboardList", "monitoringdashboards", "monitoringdashboard", "v1alpha1", nil, nil)
-	if err := r.client.Create(context.TODO(), kialiOperatorCustomResourceDefinition2); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Kiali Operator Custom Resource Definition (monitoringdashboards.monitoring.kiali.io)")
-	}
-
-	kialiOperatorServiceAccount := deployment.NewServiceAccount(instance, "kiali-operator", kialiOperatorNamespace.Name)
-	if err := r.client.Create(context.TODO(), kialiOperatorServiceAccount); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Kiali Operator Service Account")
-	}
-
-	kialiOperatorClusterRole := deployment.NewClusterRole(instance, "kiali-operator", kialiOperatorNamespace.Name, deployment.KialiRules())
-	if err := r.client.Create(context.TODO(), kialiOperatorClusterRole); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Kiali Operator Cluster Role")
-	}
-
-	kialiOperatorClusterRoleBinding := deployment.NewClusterRoleBindingForServiceAccount(instance, "kiali-operator", kialiOperatorNamespace.Name, "kiali-operator", "kiali-operator", "ClusterRole")
-	if err := r.client.Create(context.TODO(), kialiOperatorClusterRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Kiali Operator Cluster Role Binding")
-	}
-
-	kialiOperator := deployment.NewAnsibleOperatorDeployment(instance, "kiali-operator", kialiOperatorNamespace.Name, kialiOperatorImage, "kiali-operator")
-	if err := r.client.Create(context.TODO(), kialiOperator); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Kiali Operator")
-	}
-
-	// ISTIO-OPERATOR
-	istioOperatorNamespace := deployment.NewNamespace(instance, "istio-operator")
-	if err := r.client.Create(context.TODO(), istioOperatorNamespace); err != nil && !errors.IsAlreadyExists(err) {
-		reqLogger.Error(err, "Failed to create Namespace", "Resource.name", istioOperatorNamespace.Name)
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Istio Project (istio-operator)")
-	}
-
-	istioOperatorCustomResourceDefinition := deployment.NewCustomResourceDefinition(instance, "controlplanes.istio.openshift.com", "istio.openshift.com", "ControlPlane", "ControlPlaneList", "controlplanes", "controlplane", "v1alpha3", nil, nil)
-	if err := r.client.Create(context.TODO(), istioOperatorCustomResourceDefinition); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Istio Custom Resource Definition (controlplanes.istio.openshift.com)")
-	}
-
-	istioOperatorCustomResourceDefinition2 := deployment.NewCustomResourceDefinition(instance, "servicemeshcontrolplanes.maistra.io", "maistra.io", "ServiceMeshControlPlane", "ServiceMeshControlPlaneList", "servicemeshcontrolplanes", "servicemeshcontrolplane", "v1", []string{"smcp"}, nil)
-	if err := r.client.Create(context.TODO(), istioOperatorCustomResourceDefinition2); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Istio Custom Resource Definition (servicemeshcontrolplanes.maistra.io)")
-	}
-
-	additionalPrinterColumns := []apiextensionsv1beta1.CustomResourceColumnDefinition{
-		{
-			JSONPath:    ".spec.members",
-			Description: "Namespaces that are members of this Control Plane",
-			Name:        "Members",
-			Type:        "string",
-		},
-	}
-	istioOperatorCustomResourceDefinition3 := deployment.NewCustomResourceDefinition(instance, "servicemeshmemberrolls.maistra.io", "maistra.io", "ServiceMeshMemberRoll", "ServiceMeshMemberRollList", "servicemeshmemberrolls", "servicemeshmemberroll", "v1", []string{"smmr"}, additionalPrinterColumns)
-	if err := r.client.Create(context.TODO(), istioOperatorCustomResourceDefinition3); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Istio Custom Resource Definition (servicemeshmemberrolls.maistra.io)")
-	}
-
-	istioOperatorServiceAccount := deployment.NewServiceAccount(instance, "istio-operator", istioOperatorNamespace.Name)
-	if err := r.client.Create(context.TODO(), istioOperatorServiceAccount); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Istio Operator Service Account")
-	}
-
-	istioOperatorClusterRole := deployment.NewClusterRole(instance, "maistra-admin", istioOperatorNamespace.Name, deployment.MaistraAdminRules())
-	if err := r.client.Create(context.TODO(), istioOperatorClusterRole); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Istio Operator Cluster Role (maistra-admin)")
-	}
-
-	istioOperatorClusterRole2 := deployment.NewClusterRole(instance, "istio-admin", istioOperatorNamespace.Name, deployment.IstioAdminRules())
-	if err := r.client.Create(context.TODO(), istioOperatorClusterRole2); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Istio Operator Cluster Role (istio-admin)")
-	}
-
-	istioOperatorClusterRole3 := deployment.NewClusterRole(instance, "istio-operator", istioOperatorNamespace.Name, deployment.IstioRules())
-	if err := r.client.Create(context.TODO(), istioOperatorClusterRole3); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("CreatedIstio Operator Cluster Role (istio-operator)")
-	}
-
-	istioOperatorClusterRoleBinding := deployment.NewClusterRoleBinding(instance, "maistra-admin", istioOperatorNamespace.Name, "maistra-admin", "ClusterRole")
-	if err := r.client.Create(context.TODO(), istioOperatorClusterRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Istio Operator Cluster Role Binding (maistra-admin)")
-	}
-
-	istioOperatorClusterRoleBinding2 := deployment.NewClusterRoleBinding(instance, "istio-admin", istioOperatorNamespace.Name, "istio-admin", "ClusterRole")
-	if err := r.client.Create(context.TODO(), istioOperatorClusterRoleBinding2); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Istio Operator Cluster Role Binding (istio-admin)")
-	}
-
-	istioOperatorClusterRoleBinding3 := deployment.NewClusterRoleBindingForServiceAccount(instance, "istio-operator", istioOperatorNamespace.Name, "istio-operator", "istio-operator", "ClusterRole")
-	if err := r.client.Create(context.TODO(), istioOperatorClusterRoleBinding3); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Istio Operator Cluster Role Binding (istio-operator)")
-	}
-
-	istioValidatingWebhookConfiguration := deployment.NewValidatingWebhookConfiguration(instance, "istio-operator.servicemesh-resources.maistra.io", deployment.IstioWebHook())
-	if err := r.client.Create(context.TODO(), istioValidatingWebhookConfiguration); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Istio Operator Validating Webhook Configuration")
-	}
-
-	targetPort := intstr.IntOrString{
-		IntVal: 11999,
-	}
-	adminControllerService := deployment.NewCustomService(instance, "admission-controller", instance.Namespace, []string{"admin"}, []int32{443}, []intstr.IntOrString{targetPort})
-	if err := r.client.Create(context.TODO(), adminControllerService); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Admin Controller Service")
-	}
-
-	commands := []string{
-		"istio-operator",
-		"--discoveryCacheDir",
-		"/home/istio-operator/.kube/cache/discovery",
-	}
-	volumeMounts := []corev1.VolumeMount{
-		{
-			Name:      "discovery-cache",
-			MountPath: "/home/istio-operator/.kube/cache/discovery",
-		},
-	}
-	volumes := []corev1.Volume{
-		{
-			Name: "discovery-cache",
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{
-					Medium: corev1.StorageMediumMemory,
-				},
-			},
-		},
-	}
-	istioOperator := deployment.NewOperatorDeployment(instance, "istio-operator", istioOperatorNamespace.Name, istioOperatorImage, "istio-operator", 60000, commands, nil, volumeMounts, volumes)
-	if err := r.client.Create(context.TODO(), istioOperator); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		reqLogger.Info("Created Istio Operator")
-	}
-
-	// Wait for Istio Operator to be running
-	time.Sleep(time.Duration(1) * time.Second)
-	istioOperatorDeployment, err := r.GetEffectiveDeployment(instance, istioOperator.Name, istioOperatorNamespace.Name)
-	if err != nil {
-		reqLogger.Error(err, "Failed to get"+istioOperator.Name+"deployment")
-		return reconcile.Result{}, err
-	}
-
-	if istioOperatorDeployment.Status.AvailableReplicas != 1 {
-		scaled := k8sclient.GetDeploymentStatus("istio-operator", istioOperatorNamespace.Name)
-		if !scaled {
-			return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, err
-		}
+		logrus.Infof("Created %s Subscription", servicemeshSubscription.Name)
 	}
 
 	// ISTIO-SYSTEM
@@ -320,47 +107,6 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 		reqLogger.Info("Created ServiceMeshControlPlane Custom Resource")
 	}
 
-	// Fixed Jaeger URL in Kiali
-	// Wait for Kiali to be running
-	timeout := 100
-	time.Sleep(time.Duration(1) * time.Second)
-	kialiDeployment, err := r.GetEffectiveDeployment(instance, "kiali", istioSystemNamespace.Name)
-	if err != nil {
-		logrus.Errorf("Failed to get kiali deployment: %s", err)
-		logrus.Infof("Waiting for Istio Operator to build Kiali Deployment (%v seconds)", timeout)
-		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * time.Duration(timeout)}, err
-	}
-
-	if kialiDeployment.Status.AvailableReplicas != 1 {
-		scaled := k8sclient.GetDeploymentStatus("kiali", istioSystemNamespace.Name)
-		if !scaled {
-			return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, err
-		}
-	}
-
-	kialiConfigMap := r.GetEffectiveConfigMap(instance, "kiali", istioSystemNamespace.Name)
-
-	if strings.Contains(kialiConfigMap.Data["config.yaml"], "jaeger-istio-system") {
-		kialiConfigMap.Data["config.yaml"] =
-			strings.Replace(kialiConfigMap.Data["config.yaml"], "jaeger-istio-system", "tracing-istio-system", 1)
-		if err := r.client.Update(context.TODO(), kialiConfigMap); err != nil {
-			return reconcile.Result{}, err
-		} else if err == nil {
-			logrus.Infof("Updated Kiali ConfigMap for Tracing URL (Fix)")
-
-			kialipod, err := k8sclient.GetDeploymentPod("kiali", istioSystemNamespace.Name)
-			if err == nil {
-				found := &corev1.Pod{}
-				err = r.client.Get(context.TODO(), types.NamespacedName{Name: kialipod, Namespace: istioSystemNamespace.Name}, found)
-				if err == nil {
-					if err := r.client.Delete(context.TODO(), found); err != nil {
-						return reconcile.Result{}, err
-					}
-					logrus.Infof("Restarted a new Kiali Pod (Fix)")
-				}
-			}
-		}
-	}
 	//Success
 	return reconcile.Result{}, nil
 }

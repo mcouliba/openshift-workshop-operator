@@ -13,11 +13,6 @@ DEBUGGING_WORKSPACE_URL="${WORKSPACE_URL}/%3Awksp-debugging?includeInternalServe
 DEVFILE_WORKSPACE_URL="${WORKSPACE_URL}/devfile?start-after-create=true"
 PERMISSIONS_URL="${CHE_URL}/api/permissions"
 
-# oc login -u "opentlc-mgr" -p 'r3dh4t1!' "${OPENSHIFT_API_URL}"
-# oc get clusterserviceversions  -n eclipse-che eclipse-che.v7.1.0 -o yaml | yq w - 'metadata.annotations.containerImage' 'quay.io/dfestal/che-operator:enable-token-exchange' | yq w - 'spec.install.spec.deployments[0].spec.template.spec.containers[0].image' quay.io/dfestal/che-operator:enable-token-exchange | oc apply -n eclipse-che -f -
-# echo "Waiting 120 seconds"
-# sleep 120
-
 for i in {1..5};
 do
     
@@ -54,7 +49,7 @@ do
             --header "Authorization: Bearer $master_access_token"\
             "${KEYCLOAK_USER_URL}?username=${che_user}" | jq -r '.[0].id')
         
-        echo ">>>>> User ID: ${userid}"
+        # echo ">>>>> User ID: ${userid}"
 
         curl -s -X PUT "${KEYCLOAK_USER_URL}/${userid}" \
             --header "Content-Type: application/json" \

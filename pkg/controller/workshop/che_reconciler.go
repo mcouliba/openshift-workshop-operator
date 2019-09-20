@@ -38,7 +38,7 @@ func (r *ReconcileWorkshop) addChe(instance *openshiftv1alpha1.Workshop, users i
 		logrus.Infof("Created %s Project", cheNamespace.Name)
 	}
 
-	cheCatalogSourceConfig := deployment.NewCatalogSourceConfig(instance, "eclipse-che", cheNamespace.Name)
+	cheCatalogSourceConfig := deployment.NewCatalogSourceConfig(instance, "installed-eclipse-che", cheNamespace.Name, "eclipse-che")
 	if err := r.client.Create(context.TODO(), cheCatalogSourceConfig); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
@@ -52,7 +52,7 @@ func (r *ReconcileWorkshop) addChe(instance *openshiftv1alpha1.Workshop, users i
 		logrus.Infof("Created %s OperatorGroup", cheOperatorGroup.Name)
 	}
 
-	cheSubscription := deployment.NewSubscription(instance, "eclipse-che", cheNamespace.Name, "eclipse-che.v7.1.0")
+	cheSubscription := deployment.NewSubscription(instance, "eclipse-che", cheNamespace.Name, cheCatalogSourceConfig.Name, "stable", "eclipse-che.v7.1.0")
 	if err := r.client.Create(context.TODO(), cheSubscription); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {

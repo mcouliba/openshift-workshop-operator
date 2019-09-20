@@ -35,6 +35,7 @@ type IstioSpec struct {
 	Mixer    MixerSpec    `json:"mixer"`
 	Pilot    PilotSpec    `json:"pilot"`
 	Kiali    KialiSpec    `json:"kiali"`
+	Grafana  GrafanaSpec  `json:"grafana"`
 	Tracing  TracingSpec  `json:"tracing"`
 }
 
@@ -79,10 +80,12 @@ type PilotSpec struct {
 	TraceSampling    float32 `json:"traceSampling"`
 }
 
+type GrafanaSpec struct {
+	Enabled bool `json:"enabled"`
+}
+
 type KialiSpec struct {
-	Enabled bool   `json:"enabled"`
-	Hub     string `json:"hub"`
-	Tag     string `json:"tag"`
+	Enabled bool `json:"enabled"`
 }
 
 type TracingSpec struct {
@@ -91,7 +94,6 @@ type TracingSpec struct {
 }
 
 type JaegerSpec struct {
-	Tag      string `json:"tag"`
 	Template string `json:"template"`
 }
 

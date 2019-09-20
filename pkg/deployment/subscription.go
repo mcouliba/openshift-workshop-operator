@@ -7,7 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func NewSubscription(cr *openshiftv1alpha1.Workshop, name string, namespace string, startingCSV string) *olmv1alpha1.Subscription {
+func NewSubscription(cr *openshiftv1alpha1.Workshop, name string, namespace string, catalogSource string, channel string, startingCSV string) *olmv1alpha1.Subscription {
 	return &olmv1alpha1.Subscription{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Subscription",
@@ -16,18 +16,18 @@ func NewSubscription(cr *openshiftv1alpha1.Workshop, name string, namespace stri
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
-			Labels: map[string]string {
-				"csc-owner-name": "installed-"+name,
-    			"csc-owner-namespace": "openshift-marketplace",
+			Labels: map[string]string{
+				"csc-owner-name":      catalogSource,
+				"csc-owner-namespace": "openshift-marketplace",
 			},
 		},
 		Spec: &olmv1alpha1.SubscriptionSpec{
-			Channel: "stable",
-			CatalogSource:  "installed-"+name,
+			Channel:                channel,
+			CatalogSource:          catalogSource,
 			CatalogSourceNamespace: namespace,
-			StartingCSV: startingCSV,
-			InstallPlanApproval: olmv1alpha1.ApprovalAutomatic,
-			Package: name,
+			StartingCSV:            startingCSV,
+			InstallPlanApproval:    olmv1alpha1.ApprovalAutomatic,
+			Package:                name,
 		},
 	}
 }

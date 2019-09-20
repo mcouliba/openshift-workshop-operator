@@ -10,7 +10,7 @@ func NewServiceMeshControlPlaneCR(param NewServiceMeshControlPlaneCRParameters) 
 	return &ServiceMeshControlPlane{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ServiceMeshControlPlane",
-			APIVersion: "istio.openshift.com/v1",
+			APIVersion: "maistra.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      param.Name,
@@ -65,13 +65,13 @@ func NewServiceMeshControlPlaneCR(param NewServiceMeshControlPlaneCRParameters) 
 				},
 				Kiali: KialiSpec{
 					Enabled: true,
-					Hub:     "quay.io/kiali",
-					Tag:     "v1.0.0",
+				},
+				Grafana: GrafanaSpec{
+					Enabled: true,
 				},
 				Tracing: TracingSpec{
 					Enabled: true,
 					Jaeger: JaegerSpec{
-						Tag:      "1.13.1",
 						Template: "all-in-one",
 					},
 				},
