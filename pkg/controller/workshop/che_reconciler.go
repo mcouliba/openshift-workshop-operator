@@ -2,6 +2,7 @@ package workshop
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
@@ -92,35 +93,34 @@ func (r *ReconcileWorkshop) addChe(instance *openshiftv1alpha1.Workshop, users i
 		// 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		// 	}}
 		// 	// stackResponse  = codereadystack.Stack{}
-		reqLogger = log.WithName("Che")
-		timeout   = 120
+		timeout = 120
 	)
 
-	// // FIX - Enabled Keycloak Token Exchange
-	// operatorImageFixed := "quay.io/dfestal/che-operator:enable-token-exchange"
-	// time.Sleep(time.Duration(1) * time.Second)
-	// cheCSV, err := r.GetEffectiveCSV(instance, "eclipse-che.v7.0.0", cheNamespace.Name)
-	// if err != nil {
-	// 	logrus.Errorf("Failed to get ClusterServiceVersion : %s", "eclipse-che.v7.0.0")
-	// 	logrus.Infof("Waiting for %s ClusterServiceVersion to be created (%v seconds)", "eclipse-che.v7.0.0", timeout)
-	// 	return reconcile.Result{Requeue: true, RequeueAfter: time.Second * time.Duration(timeout)}, err
-	// }
+	// FIX - Enabled Keycloak Token Exchange
+	operatorImageFixed := "quay.io/dfestal/che-operator:enable-token-exchange"
+	time.Sleep(time.Duration(1) * time.Second)
+	cheCSV, err := r.GetEffectiveCSV(instance, "eclipse-che.v7.1.0", cheNamespace.Name)
+	if err != nil {
+		logrus.Errorf("Failed to get ClusterServiceVersion : %s", "eclipse-che.v7.1.0")
+		logrus.Infof("Waiting for %s ClusterServiceVersion to be created (%v seconds)", "eclipse-che.v7.1.0", timeout)
+		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * time.Duration(timeout)}, err
+	}
 
-	// var strategySpecJSON map[string][]interface{}
-	// json.Unmarshal(cheCSV.Spec.InstallStrategy.StrategySpecRaw, &strategySpecJSON)
+	var strategySpecJSON map[string][]interface{}
+	json.Unmarshal(cheCSV.Spec.InstallStrategy.StrategySpecRaw, &strategySpecJSON)
 
-	// if cheCSV.ObjectMeta.Annotations["containerImage"] != operatorImageFixed ||
-	// 	strategySpecJSON["deployments"][0].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["image"] != operatorImageFixed {
-	// 	cheCSV.ObjectMeta.Annotations["containerImage"] = operatorImageFixed
-	// 	strategySpecJSON["deployments"][0].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["image"] = operatorImageFixed
-	// 	cheCSV.Spec.InstallStrategy.StrategySpecRaw, _ = json.Marshal(strategySpecJSON)
+	if cheCSV.ObjectMeta.Annotations["containerImage"] != operatorImageFixed ||
+		strategySpecJSON["deployments"][0].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["image"] != operatorImageFixed {
+		cheCSV.ObjectMeta.Annotations["containerImage"] = operatorImageFixed
+		strategySpecJSON["deployments"][0].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["image"] = operatorImageFixed
+		cheCSV.Spec.InstallStrategy.StrategySpecRaw, _ = json.Marshal(strategySpecJSON)
 
-	// 	if err := r.client.Update(context.TODO(), cheCSV); err != nil {
-	// 		return reconcile.Result{}, err
-	// 	} else if err == nil {
-	// 		logrus.Infof("Updated '%s' ClusterServiceVersion (Fix)", "eclipse-che.v7.0.0")
-	// 	}
-	// }
+		if err := r.client.Update(context.TODO(), cheCSV); err != nil {
+			return reconcile.Result{}, err
+		} else if err == nil {
+			logrus.Infof("Updated '%s' ClusterServiceVersion (Fix)", "eclipse-che.v7.1.0")
+		}
+	}
 
 	// Wait for Che Operator to be running
 	time.Sleep(time.Duration(1) * time.Second)
@@ -148,7 +148,6 @@ func (r *ReconcileWorkshop) addChe(instance *openshiftv1alpha1.Workshop, users i
 	// Wait for CodeReady Workspaces to be running
 	workspacesDeployment, err := r.GetEffectiveDeployment(instance, "che", cheNamespace.Name)
 	if err != nil {
-		reqLogger.Error(err, "Failed to get codeready deployment")
 		logrus.Infof("Waiting for Che Operator to build resources (%v seconds)", timeout)
 		time.Sleep(time.Duration(timeout) * time.Second)
 		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, err

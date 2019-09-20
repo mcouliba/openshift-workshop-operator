@@ -292,13 +292,6 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	}
 
 	//////////////////////////
-	// Service Mesh
-	//////////////////////////
-	if result, err := r.reconcileServiceMesh(instance, users); err != nil {
-		return result, err
-	}
-
-	//////////////////////////
 	// Etherpad
 	//////////////////////////
 	if err := r.reconcileEtherpad(instance, userEndpointStr); err != nil {
@@ -331,6 +324,13 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	// Squash
 	//////////////////////////
 	if result, err := r.reconcileSquash(instance, users); err != nil {
+		return result, err
+	}
+
+	//////////////////////////
+	// Service Mesh
+	//////////////////////////
+	if result, err := r.reconcileServiceMesh(instance, users); err != nil {
 		return result, err
 	}
 

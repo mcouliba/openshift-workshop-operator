@@ -20,7 +20,7 @@ func NewCustomResource(cr *openshiftv1alpha1.Workshop, name string, namespace st
 			Server: che.CheClusterSpecServer{
 				CheImageTag:          "",
 				DevfileRegistryImage: "",
-				PluginRegistryImage:  "quay.io/mcouliba/che-plugin-registry:7.0.x",
+				PluginRegistryImage:  "quay.io/mcouliba/che-plugin-registry:7.1.x",
 				TlsSupport:           false,
 				SelfSignedCert:       false,
 			},

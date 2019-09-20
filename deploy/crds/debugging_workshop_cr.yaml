@@ -1,0 +1,30 @@
+apiVersion: openshift.redhat.com/v1alpha1
+kind: Workshop
+metadata:
+  name: debugging-workshop
+spec:
+  users: 5
+  userPassword: r3dh4t1!
+  che:
+    enabled: true
+  etherpad:
+    enabled: true
+  gogs:
+    enabled: false
+  nexus:
+    enabled: true
+  servicemesh:
+    enabled: true
+    jaegerOperatorImage: "jaegertracing/jaeger-operator:1.13.1"
+    kialiOperatorImage: "quay.io/kiali/kiali-operator:v1.0.0"
+    istioOperatorImage: "registry.redhat.io/openshift-istio-tech-preview/istio-operator-rhel8:0.12.0"
+  guide:
+    enabled: true
+    gitRepositoryLabPath: mcouliba/cloud-native-labs
+    gitRepositoryLabReference: debugging
+    gitRepositoryGuidePath: dwojciec/debugging-lab-summit-2019
+    gitRepositoryGuideReference: master
+    gitRepositoryGuideContext: instructions
+    gitRepositoryGuideFile: _debugging-workshop.yml
+  squash:
+    enabled: true
