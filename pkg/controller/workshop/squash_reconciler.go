@@ -16,7 +16,7 @@ import (
 
 // Reconciling Squash
 func (r *ReconcileWorkshop) reconcileSquash(instance *openshiftv1alpha1.Workshop, users int) (reconcile.Result, error) {
-	enabledSquash := instance.Spec.Squash.Enabled
+	enabledSquash := instance.Spec.Infrastructure.Squash.Enabled
 
 	if enabledSquash {
 		if result, err := r.addSquash(instance); err != nil {

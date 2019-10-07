@@ -3,28 +3,50 @@ kind: Workshop
 metadata:
   name: cloud-native-workshop
 spec:
-  users: 20
-  userPassword: openshift
-  che:
-    enabled: true
-  etherpad:
-    enabled: true
-  gogs:
-    enabled: false
-  nexus:
-    enabled: true
-  servicemesh:
-    enabled: false
-    jaegerOperatorImage: "jaegertracing/jaeger-operator:1.13.1"
-    kialiOperatorImage: "quay.io/kiali/kiali-operator:v1.0.0"
-    istioOperatorImage: "registry.redhat.io/openshift-istio-tech-preview/istio-operator-rhel8:0.12.0"
-  guide:
-    enabled: true
-    gitRepositoryLabPath: openshift-labs/cloud-native-labs
-    gitRepositoryLabReference: ocp-3.11
-    gitRepositoryGuidePath: openshift-labs/cloud-native-guides
-    gitRepositoryGuideReference: ocp-3.11
-    gitRepositoryGuideContext: 
-    gitRepositoryGuideFile: _cloud-native-workshop-codeready.yml
-  squash:
-    enabled: false
+  user: 
+    number: 5
+    password: openshift
+  source:
+    gitURL: https://github.com/mcouliba/cloud-native-workshop
+    gitBranch: master
+  infrastructure:
+    che:
+      enabled: true
+      operatorHub:
+        channel: stable
+        clusterServiceVersion: eclipse-che.v7.2.0
+    etherpad:
+      enabled: false
+    gogs:
+      enabled: false
+      image:
+        name: quay.io/wkulhanek/gogs-operator
+        tag: v0.9.0
+    nexus:
+      enabled: false
+    pipeline:
+      enabled: false
+      operatorHub:
+        channel: dev-preview
+        clusterServiceVersion: openshift-pipelines-operator.v0.5.2
+    project:
+      enabled: true
+      name: cn-project
+    serviceMesh:
+      enabled: false
+      elasticSearchOperatorHub:
+        channel: preview
+        clusterServiceVersion: elasticsearch-operator.4.1.15-201909041605
+      jaegerOperatorHub:
+        channel: stable
+        clusterServiceVersion: jaeger-operator.v1.13.1
+      kialiOperatorHub:
+        channel: stable
+        clusterServiceVersion: kiali-operator.v1.0.5
+      serviceMeshOperatorHub:
+        channel: "1.0"
+        clusterServiceVersion: servicemeshoperator.v1.0.0
+    squash:
+      enabled: false
+    workshopper:
+      enabled: true

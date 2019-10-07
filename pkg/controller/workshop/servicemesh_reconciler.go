@@ -16,7 +16,7 @@ import (
 
 // Reconciling ServiceMesh
 func (r *ReconcileWorkshop) reconcileServiceMesh(instance *openshiftv1alpha1.Workshop, users int) (reconcile.Result, error) {
-	enabledServiceMesh := instance.Spec.ServiceMesh.Enabled
+	enabledServiceMesh := instance.Spec.Infrastructure.ServiceMesh.Enabled
 
 	if enabledServiceMesh {
 		if result, err := r.addServiceMesh(instance, users); err != nil {
@@ -29,8 +29,6 @@ func (r *ReconcileWorkshop) reconcileServiceMesh(instance *openshiftv1alpha1.Wor
 }
 
 func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop, users int) (reconcile.Result, error) {
-	reqLogger := log.WithName("ServiceMesh")
-
 	// ElasticSearch from OperatorHub
 	serviceMeshCatalogSourceConfig := deployment.NewCatalogSourceConfig(instance, "installed-service-mesh",
 		"openshift-operators", "elasticsearch-operator,jaeger-product,kiali-ossm,servicemeshoperator")
@@ -41,7 +39,8 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 	}
 
 	elasticSubscription := deployment.NewSubscription(instance, "elasticsearch-operator", "openshift-operators", serviceMeshCatalogSourceConfig.Name,
-		"preview", "elasticsearch-operator.4.1.15-201909041605")
+		instance.Spec.Infrastructure.ServiceMesh.ElasticSearchOperatorHub.Channel,
+		instance.Spec.Infrastructure.ServiceMesh.ElasticSearchOperatorHub.ClusterServiceVersion)
 	if err := r.client.Create(context.TODO(), elasticSubscription); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
@@ -49,7 +48,8 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 	}
 
 	jaegerSubscription := deployment.NewSubscription(instance, "jaeger-product", "openshift-operators", serviceMeshCatalogSourceConfig.Name,
-		"stable", "jaeger-operator.v1.13.1")
+		instance.Spec.Infrastructure.ServiceMesh.JaegerOperatorHub.Channel,
+		instance.Spec.Infrastructure.ServiceMesh.JaegerOperatorHub.ClusterServiceVersion)
 	if err := r.client.Create(context.TODO(), jaegerSubscription); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
@@ -57,7 +57,8 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 	}
 
 	kialiSubscription := deployment.NewSubscription(instance, "kiali-ossm", "openshift-operators", serviceMeshCatalogSourceConfig.Name,
-		"stable", "kiali-operator.v1.0.5")
+		instance.Spec.Infrastructure.ServiceMesh.KialiOperatorHub.Channel,
+		instance.Spec.Infrastructure.ServiceMesh.KialiOperatorHub.ClusterServiceVersion)
 	if err := r.client.Create(context.TODO(), kialiSubscription); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
@@ -65,7 +66,8 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 	}
 
 	servicemeshSubscription := deployment.NewSubscription(instance, "servicemeshoperator", "openshift-operators", serviceMeshCatalogSourceConfig.Name,
-		"1.0", "servicemeshoperator.v1.0.0")
+		instance.Spec.Infrastructure.ServiceMesh.ServiceMeshOperatorHub.Channel,
+		instance.Spec.Infrastructure.ServiceMesh.ServiceMeshOperatorHub.ClusterServiceVersion)
 	if err := r.client.Create(context.TODO(), servicemeshSubscription); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
@@ -75,10 +77,9 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 	// ISTIO-SYSTEM
 	istioSystemNamespace := deployment.NewNamespace(instance, "istio-system")
 	if err := r.client.Create(context.TODO(), istioSystemNamespace); err != nil && !errors.IsAlreadyExists(err) {
-		reqLogger.Error(err, "Failed to create Namespace", "Resource.name", istioSystemNamespace.Name)
 		return reconcile.Result{}, err
 	} else if err == nil {
-		reqLogger.Info("Created Istio Project (istio-system)")
+		logrus.Infof("Created %s Namespace", istioSystemNamespace.Name)
 	}
 
 	serviceMeshControlPlaneCR := smcp.NewServiceMeshControlPlaneCR(smcp.NewServiceMeshControlPlaneCRParameters{
@@ -88,12 +89,12 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 	if err := r.client.Create(context.TODO(), serviceMeshControlPlaneCR); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 30}, err
 	} else if err == nil {
-		reqLogger.Info("Created ServiceMeshControlPlane Custom Resource")
+		logrus.Infof("Created %s Custom Resource", serviceMeshControlPlaneCR.Name)
 	}
 
 	istioMembers := []string{}
 	for id := 1; id <= users; id++ {
-		istioMembers = append(istioMembers, fmt.Sprintf("coolstore%d", id))
+		istioMembers = append(istioMembers, fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.Name, id))
 	}
 
 	serviceMeshMemberRollCR := smmr.NewServiceMeshMemberRollCR(smmr.NewServiceMeshMemberRollCRParameters{
@@ -104,7 +105,7 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 	if err := r.client.Create(context.TODO(), serviceMeshMemberRollCR); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 30}, err
 	} else if err == nil {
-		reqLogger.Info("Created ServiceMeshControlPlane Custom Resource")
+		logrus.Infof("Created %s Custom Resource", serviceMeshMemberRollCR.Name)
 	}
 
 	//Success

@@ -3,7 +3,6 @@ package workshop
 import (
 	"context"
 	"regexp"
-	"strings"
 
 	che "github.com/eclipse/che-operator/pkg/apis/org/v1"
 	imagev1 "github.com/openshift/api/image/v1"
@@ -257,7 +256,6 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	// Variables
 	//////////////////////////
 	var (
-		userEndpointStr     strings.Builder
 		openshiftConsoleURL string
 		openshiftAPIURL     string
 		appsHostnameSuffix  string
@@ -278,7 +276,7 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	match = re.FindStringSubmatch(openshiftConsoleRouteFound.Spec.Host)
 	appsHostnameSuffix = match[1]
 
-	users := instance.Spec.Users
+	users := instance.Spec.User.Number
 	if users < 0 {
 		users = 0
 	}
@@ -286,15 +284,22 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	//////////////////////////
 	// Projects
 	//////////////////////////
-	if err := r.reconcileProject(instance, users, &userEndpointStr, appsHostnameSuffix,
+	if result, err := r.reconcileProject(instance, users); err != nil {
+		return result, err
+	}
+
+	//////////////////////////
+	// Workshopper
+	//////////////////////////
+	if result, err := r.reconcileWorkshopper(instance, users, appsHostnameSuffix,
 		openshiftConsoleURL, openshiftAPIURL); err != nil {
-		return reconcile.Result{}, err
+		return result, err
 	}
 
 	//////////////////////////
 	// Etherpad
 	//////////////////////////
-	if err := r.reconcileEtherpad(instance, userEndpointStr); err != nil {
+	if err := r.reconcileEtherpad(instance, users, appsHostnameSuffix); err != nil {
 		return reconcile.Result{}, err
 	}
 
@@ -305,12 +310,19 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 		return reconcile.Result{}, err
 	}
 
-	// //////////////////////////
-	// // Gogs
-	// //////////////////////////
-	// if err := r.reconcileGogs(instance); err != nil {
-	// 	return reconcile.Result{}, err
-	// }
+	//////////////////////////
+	// Pipeline
+	//////////////////////////
+	if result, err := r.reconcilePipeline(instance); err != nil {
+		return result, err
+	}
+
+	//////////////////////////
+	// Gogs
+	//////////////////////////
+	if result, err := r.reconcileGogs(instance); err != nil {
+		return result, err
+	}
 
 	//////////////////////////
 	// Che

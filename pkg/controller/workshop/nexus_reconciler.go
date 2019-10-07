@@ -11,7 +11,7 @@ import (
 
 // Reconciling Nexus
 func (r *ReconcileWorkshop) reconcileNexus(instance *openshiftv1alpha1.Workshop) error {
-	enabledNexus := instance.Spec.Nexus.Enabled
+	enabledNexus := instance.Spec.Infrastructure.Nexus.Enabled
 
 	if enabledNexus {
 		if err := r.addNexus(instance); err != nil {

@@ -1,6 +1,8 @@
 package deployment
 
 import (
+	"strings"
+
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -10,27 +12,30 @@ import (
 )
 
 func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string,
-	coolstoreProject string, infraProject string, username string, appsHostnameSuffix string,
+	projectName string, infraProjectName string, username string, appsHostnameSuffix string,
 	openshiftConsoleURL string, openshiftAPIURL string) *appsv1.Deployment {
 	workshopperImage := "quay.io/osevg/workshopper:latest"
 	labels := GetLabels(cr, name)
 
+	guidePath := strings.TrimPrefix(cr.Spec.Source.GitURL, "https://github.com/")
+	guideBranch := cr.Spec.Source.GitBranch
+
 	workshopperEnv := []corev1.EnvVar{
 		{
 			Name:  "CONTENT_URL_PREFIX",
-			Value: "https://raw.githubusercontent.com/" + cr.Spec.Guide.GitRepositoryGuidePath + "/" + cr.Spec.Guide.GitRepositoryGuideReference + "/" + cr.Spec.Guide.GitRepositoryGuideContext,
+			Value: "https://raw.githubusercontent.com/" + guidePath + "/" + guideBranch + "/guide",
 		},
 		{
 			Name:  "WORKSHOPS_URLS",
-			Value: "https://raw.githubusercontent.com/" + cr.Spec.Guide.GitRepositoryGuidePath + "/" + cr.Spec.Guide.GitRepositoryGuideReference + "/" + cr.Spec.Guide.GitRepositoryGuideContext + "/" + cr.Spec.Guide.GitRepositoryGuideFile,
+			Value: "https://raw.githubusercontent.com/" + guidePath + "/" + guideBranch + "/guide/_workshop.yml",
 		},
 		{
-			Name:  "COOLSTORE_PROJECT",
-			Value: coolstoreProject,
+			Name:  "PROJECT",
+			Value: projectName,
 		},
 		{
 			Name:  "INFRA_PROJECT",
-			Value: infraProject,
+			Value: infraProjectName,
 		},
 		{
 			Name:  "OPENSHIFT_CONSOLE_URL",
@@ -46,7 +51,7 @@ func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, names
 		},
 		{
 			Name:  "OPENSHIFT_PASSWORD",
-			Value: cr.Spec.UserPassword,
+			Value: cr.Spec.User.Password,
 		},
 		{
 			Name:  "APPS_HOSTNAME_SUFFIX",
@@ -54,19 +59,19 @@ func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, names
 		},
 		{
 			Name:  "LABS_GIT_REPO",
-			Value: "https://github.com/" + cr.Spec.Guide.GitRepositoryLabPath + ".git#" + cr.Spec.Guide.GitRepositoryLabReference,
+			Value: "https://github.com/" + guidePath + ".git#" + guideBranch,
 		},
 		{
 			Name:  "LABS_DOWNLOAD_URL",
-			Value: "https://github.com/" + cr.Spec.Guide.GitRepositoryLabPath + "/archive/" + cr.Spec.Guide.GitRepositoryLabReference + ".zip",
+			Value: "https://github.com/" + guidePath + "/archive/" + guideBranch + ".zip",
 		},
 		{
 			Name:  "WEB_NODEJS_GIT_REPO",
-			Value: "https://github.com/" + cr.Spec.Guide.GitRepositoryLabPath + "/tree/" + cr.Spec.Guide.GitRepositoryLabReference + "/web-nodejs",
+			Value: "https://github.com/" + guidePath + "/tree/" + guideBranch + "/labs/web-nodejs",
 		},
 		{
 			Name:  "CATALOG_GO_GIT_REPO",
-			Value: "https://github.com/" + cr.Spec.Guide.GitRepositoryLabPath + "/tree/" + cr.Spec.Guide.GitRepositoryLabReference + "/catalog-go",
+			Value: "https://github.com/" + guidePath + "/tree/" + guideBranch + "/labs/catalog-go",
 		},
 		{
 			Name:  "CHE_URL",

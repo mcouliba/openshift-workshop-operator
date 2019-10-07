@@ -2,6 +2,7 @@ package workshop
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
@@ -10,11 +11,11 @@ import (
 )
 
 // Reconciling Etherpad
-func (r *ReconcileWorkshop) reconcileEtherpad(instance *openshiftv1alpha1.Workshop, userEndpointStr strings.Builder) error {
-	enabledEtherpad := instance.Spec.Etherpad.Enabled
+func (r *ReconcileWorkshop) reconcileEtherpad(instance *openshiftv1alpha1.Workshop, users int, appsHostnameSuffix string) error {
+	enabledEtherpad := instance.Spec.Infrastructure.Etherpad.Enabled
 
 	if enabledEtherpad {
-		if err := r.addEtherpad(instance, userEndpointStr); err != nil {
+		if err := r.addEtherpad(instance, users, appsHostnameSuffix); err != nil {
 			return err
 		}
 	}
@@ -23,8 +24,13 @@ func (r *ReconcileWorkshop) reconcileEtherpad(instance *openshiftv1alpha1.Worksh
 	return nil
 }
 
-func (r *ReconcileWorkshop) addEtherpad(instance *openshiftv1alpha1.Workshop, userEndpointStr strings.Builder) error {
+func (r *ReconcileWorkshop) addEtherpad(instance *openshiftv1alpha1.Workshop, users int, appsHostnameSuffix string) error {
 	reqLogger := log.WithName("Etherpad")
+
+	var userEndpointStr strings.Builder
+	for id := 1; id <= users; id++ {
+		userEndpointStr.WriteString(fmt.Sprintf("You are user%d\t|\thttp://guide-infra%d.%s\t|\t<INSERT_YOUR_NAME>\n", id, id, appsHostnameSuffix))
+	}
 
 	databaseCredentials := map[string]string{
 		"database-name":          "sampledb",
