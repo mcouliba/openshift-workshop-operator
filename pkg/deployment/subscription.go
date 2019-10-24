@@ -7,7 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func NewSubscription(cr *openshiftv1alpha1.Workshop, name string, namespace string, catalogSource string, channel string, startingCSV string) *olmv1alpha1.Subscription {
+func NewCertifiedSubscription(cr *openshiftv1alpha1.Workshop, name string, namespace string, packageName string, channel string, startingCSV string) *olmv1alpha1.Subscription {
 	return &olmv1alpha1.Subscription{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Subscription",
@@ -17,17 +17,67 @@ func NewSubscription(cr *openshiftv1alpha1.Workshop, name string, namespace stri
 			Name:      name,
 			Namespace: namespace,
 			Labels: map[string]string{
-				"csc-owner-name":      catalogSource,
+				"csc-owner-name":      "certified-operators",
 				"csc-owner-namespace": "openshift-marketplace",
 			},
 		},
 		Spec: &olmv1alpha1.SubscriptionSpec{
 			Channel:                channel,
-			CatalogSource:          catalogSource,
-			CatalogSourceNamespace: namespace,
+			CatalogSource:          "certified-operators",
+			CatalogSourceNamespace: "openshift-marketplace",
 			StartingCSV:            startingCSV,
 			InstallPlanApproval:    olmv1alpha1.ApprovalAutomatic,
-			Package:                name,
+			Package:                packageName,
+		},
+	}
+}
+
+func NewCommunitySubscription(cr *openshiftv1alpha1.Workshop, name string, namespace string, packageName string, channel string, startingCSV string) *olmv1alpha1.Subscription {
+	return &olmv1alpha1.Subscription{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Subscription",
+			APIVersion: "operators.coreos.com/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"csc-owner-name":      "community-operators",
+				"csc-owner-namespace": "openshift-marketplace",
+			},
+		},
+		Spec: &olmv1alpha1.SubscriptionSpec{
+			Channel:                channel,
+			CatalogSource:          "community-operators",
+			CatalogSourceNamespace: "openshift-marketplace",
+			StartingCSV:            startingCSV,
+			InstallPlanApproval:    olmv1alpha1.ApprovalAutomatic,
+			Package:                packageName,
+		},
+	}
+}
+
+func NewRedHatSubscription(cr *openshiftv1alpha1.Workshop, name string, namespace string, packageName string, channel string, startingCSV string) *olmv1alpha1.Subscription {
+	return &olmv1alpha1.Subscription{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Subscription",
+			APIVersion: "operators.coreos.com/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"csc-owner-name":      "redhat-operators",
+				"csc-owner-namespace": "openshift-marketplace",
+			},
+		},
+		Spec: &olmv1alpha1.SubscriptionSpec{
+			Channel:                channel,
+			CatalogSource:          "redhat-operators",
+			CatalogSourceNamespace: "openshift-marketplace",
+			StartingCSV:            startingCSV,
+			InstallPlanApproval:    olmv1alpha1.ApprovalAutomatic,
+			Package:                packageName,
 		},
 	}
 }

@@ -30,42 +30,42 @@ func (r *ReconcileWorkshop) reconcileServiceMesh(instance *openshiftv1alpha1.Wor
 
 func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop, users int) (reconcile.Result, error) {
 	// ElasticSearch from OperatorHub
-	serviceMeshCatalogSourceConfig := deployment.NewCatalogSourceConfig(instance, "installed-service-mesh",
-		"openshift-operators", "elasticsearch-operator,jaeger-product,kiali-ossm,servicemeshoperator")
-	if err := r.client.Create(context.TODO(), serviceMeshCatalogSourceConfig); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s CatalogSourceConfig", serviceMeshCatalogSourceConfig.Name)
-	}
+	// serviceMeshCatalogSourceConfig := deployment.NewCatalogSourceConfig(instance, "installed-service-mesh",
+	// 	"openshift-operators", "elasticsearch-operator,jaeger-product,kiali-ossm,servicemeshoperator")
+	// if err := r.client.Create(context.TODO(), serviceMeshCatalogSourceConfig); err != nil && !errors.IsAlreadyExists(err) {
+	// 	return reconcile.Result{}, err
+	// } else if err == nil {
+	// 	logrus.Infof("Created %s CatalogSourceConfig", serviceMeshCatalogSourceConfig.Name)
+	// }
 
-	elasticSubscription := deployment.NewSubscription(instance, "elasticsearch-operator", "openshift-operators", serviceMeshCatalogSourceConfig.Name,
-		instance.Spec.Infrastructure.ServiceMesh.ElasticSearchOperatorHub.Channel,
-		instance.Spec.Infrastructure.ServiceMesh.ElasticSearchOperatorHub.ClusterServiceVersion)
-	if err := r.client.Create(context.TODO(), elasticSubscription); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s Subscription", elasticSubscription.Name)
-	}
+	// elasticSubscription := deployment.NewCertifiedSubscription(instance, "elasticsearch-operator", "openshift-operators",
+	// 	instance.Spec.Infrastructure.ServiceMesh.ElasticSearchOperatorHub.Channel,
+	// 	instance.Spec.Infrastructure.ServiceMesh.ElasticSearchOperatorHub.ClusterServiceVersion)
+	// if err := r.client.Create(context.TODO(), elasticSubscription); err != nil && !errors.IsAlreadyExists(err) {
+	// 	return reconcile.Result{}, err
+	// } else if err == nil {
+	// 	logrus.Infof("Created %s Subscription", elasticSubscription.Name)
+	// }
 
-	jaegerSubscription := deployment.NewSubscription(instance, "jaeger-product", "openshift-operators", serviceMeshCatalogSourceConfig.Name,
-		instance.Spec.Infrastructure.ServiceMesh.JaegerOperatorHub.Channel,
-		instance.Spec.Infrastructure.ServiceMesh.JaegerOperatorHub.ClusterServiceVersion)
-	if err := r.client.Create(context.TODO(), jaegerSubscription); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s Subscription", jaegerSubscription.Name)
-	}
+	// jaegerSubscription := deployment.NewCommunitySubscription(instance, "jaeger-workshop", "openshift-operators", "jaeger",
+	// 	instance.Spec.Infrastructure.ServiceMesh.JaegerOperatorHub.Channel,
+	// 	instance.Spec.Infrastructure.ServiceMesh.JaegerOperatorHub.ClusterServiceVersion)
+	// if err := r.client.Create(context.TODO(), jaegerSubscription); err != nil && !errors.IsAlreadyExists(err) {
+	// 	return reconcile.Result{}, err
+	// } else if err == nil {
+	// 	logrus.Infof("Created %s Subscription", jaegerSubscription.Name)
+	// }
 
-	kialiSubscription := deployment.NewSubscription(instance, "kiali-ossm", "openshift-operators", serviceMeshCatalogSourceConfig.Name,
-		instance.Spec.Infrastructure.ServiceMesh.KialiOperatorHub.Channel,
-		instance.Spec.Infrastructure.ServiceMesh.KialiOperatorHub.ClusterServiceVersion)
-	if err := r.client.Create(context.TODO(), kialiSubscription); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s Subscription", kialiSubscription.Name)
-	}
+	// kialiSubscription := deployment.NewCommunitySubscription(instance, "kiali-workshop", "openshift-operators", "kiali",
+	// 	instance.Spec.Infrastructure.ServiceMesh.KialiOperatorHub.Channel,
+	// 	instance.Spec.Infrastructure.ServiceMesh.KialiOperatorHub.ClusterServiceVersion)
+	// if err := r.client.Create(context.TODO(), kialiSubscription); err != nil && !errors.IsAlreadyExists(err) {
+	// 	return reconcile.Result{}, err
+	// } else if err == nil {
+	// 	logrus.Infof("Created %s Subscription", kialiSubscription.Name)
+	// }
 
-	servicemeshSubscription := deployment.NewSubscription(instance, "servicemeshoperator", "openshift-operators", serviceMeshCatalogSourceConfig.Name,
+	servicemeshSubscription := deployment.NewRedHatSubscription(instance, "servicemeshoperator", "openshift-operators", "servicemeshoperator",
 		instance.Spec.Infrastructure.ServiceMesh.ServiceMeshOperatorHub.Channel,
 		instance.Spec.Infrastructure.ServiceMesh.ServiceMeshOperatorHub.ClusterServiceVersion)
 	if err := r.client.Create(context.TODO(), servicemeshSubscription); err != nil && !errors.IsAlreadyExists(err) {

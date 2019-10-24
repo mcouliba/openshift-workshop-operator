@@ -49,12 +49,12 @@ func (r *ReconcileWorkshop) addChe(instance *openshiftv1alpha1.Workshop, users i
 		logrus.Infof("Created %s Project", cheNamespace.Name)
 	}
 
-	cheCatalogSourceConfig := deployment.NewCatalogSourceConfig(instance, "installed-eclipse-che", cheNamespace.Name, "eclipse-che")
-	if err := r.client.Create(context.TODO(), cheCatalogSourceConfig); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s CatalogSourceConfig", cheCatalogSourceConfig.Name)
-	}
+	// cheCatalogSourceConfig := deployment.NewCatalogSourceConfig(instance, "installed-eclipse-che", cheNamespace.Name, "eclipse-che")
+	// if err := r.client.Create(context.TODO(), cheCatalogSourceConfig); err != nil && !errors.IsAlreadyExists(err) {
+	// 	return reconcile.Result{}, err
+	// } else if err == nil {
+	// 	logrus.Infof("Created %s CatalogSourceConfig", cheCatalogSourceConfig.Name)
+	// }
 
 	cheOperatorGroup := deployment.NewOperatorGroup(instance, "eclipse-che", cheNamespace.Name)
 	if err := r.client.Create(context.TODO(), cheOperatorGroup); err != nil && !errors.IsAlreadyExists(err) {
@@ -63,7 +63,7 @@ func (r *ReconcileWorkshop) addChe(instance *openshiftv1alpha1.Workshop, users i
 		logrus.Infof("Created %s OperatorGroup", cheOperatorGroup.Name)
 	}
 
-	cheSubscription := deployment.NewSubscription(instance, "eclipse-che", cheNamespace.Name, cheCatalogSourceConfig.Name,
+	cheSubscription := deployment.NewCommunitySubscription(instance, "eclipse-che", cheNamespace.Name, "eclipse-che",
 		instance.Spec.Infrastructure.Che.OperatorHub.Channel,
 		cheClusterServiceVersion)
 	if err := r.client.Create(context.TODO(), cheSubscription); err != nil && !errors.IsAlreadyExists(err) {
@@ -139,12 +139,12 @@ func (r *ReconcileWorkshop) addChe(instance *openshiftv1alpha1.Workshop, users i
 	for id := 1; id <= users; id++ {
 		username := fmt.Sprintf("user%d", id)
 
-		if result, err := updateUserEmail(instance, username, cheNamespace.Name, appsHostnameSuffix); err != nil {
+		userAccessToken, result, err := getUserToken(instance, username, cheNamespace.Name, appsHostnameSuffix)
+		if err != nil {
 			return result, err
 		}
 
-		userAccessToken, result, err := getUserToken(instance, username, cheNamespace.Name, appsHostnameSuffix)
-		if err != nil {
+		if result, err := updateUserEmail(instance, username, cheNamespace.Name, appsHostnameSuffix); err != nil {
 			return result, err
 		}
 

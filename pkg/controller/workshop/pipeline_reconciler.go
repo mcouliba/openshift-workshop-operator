@@ -26,15 +26,15 @@ func (r *ReconcileWorkshop) reconcilePipeline(instance *openshiftv1alpha1.Worksh
 
 func (r *ReconcileWorkshop) addPipeline(instance *openshiftv1alpha1.Workshop) (reconcile.Result, error) {
 
-	pipelineCatalogSourceConfig := deployment.NewCatalogSourceConfig(instance, "installed-pipeline",
-		"openshift-operators", "openshift-pipelines-operator")
-	if err := r.client.Create(context.TODO(), pipelineCatalogSourceConfig); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s CatalogSourceConfig", pipelineCatalogSourceConfig.Name)
-	}
+	// pipelineCatalogSourceConfig := deployment.NewCatalogSourceConfig(instance, "installed-pipeline",
+	// 	"openshift-operators", "openshift-pipelines-operator")
+	// if err := r.client.Create(context.TODO(), pipelineCatalogSourceConfig); err != nil && !errors.IsAlreadyExists(err) {
+	// 	return reconcile.Result{}, err
+	// } else if err == nil {
+	// 	logrus.Infof("Created %s CatalogSourceConfig", pipelineCatalogSourceConfig.Name)
+	// }
 
-	pipelineSubscription := deployment.NewSubscription(instance, "openshift-pipelines-operator", "openshift-operators", pipelineCatalogSourceConfig.Name,
+	pipelineSubscription := deployment.NewCommunitySubscription(instance, "openshift-pipelines-operator", "openshift-operators", "openshift-pipelines-operator",
 		instance.Spec.Infrastructure.Pipeline.OperatorHub.Channel,
 		instance.Spec.Infrastructure.Pipeline.OperatorHub.ClusterServiceVersion)
 	if err := r.client.Create(context.TODO(), pipelineSubscription); err != nil && !errors.IsAlreadyExists(err) {

@@ -142,6 +142,14 @@ func (r *ReconcileWorkshop) addProject(instance *openshiftv1alpha1.Workshop, pro
 		}
 	}
 
+	// Explicitly allows traffic from the OpenShift ingress to the project
+	networkPolicy := deployment.NewNetworkPolicyAllowFromOpenShfitIngress("allow-from-openshift-ingress", projectNamespace.Name)
+	if err := r.client.Create(context.TODO(), networkPolicy); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Network Policy for %s", networkPolicy.Name, projectNamespace.Name)
+	}
+
 	//Success
 	return reconcile.Result{}, nil
 }

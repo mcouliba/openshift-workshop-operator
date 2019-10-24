@@ -11,9 +11,9 @@ CHE_URL="http://che-eclipse-che.apps.cluster-${GUID}.${GUID}.events.opentlc.com"
 WORKSPACE_URL="${CHE_URL}/api/workspace"
 DEBUGGING_WORKSPACE_URL="${WORKSPACE_URL}/%3Awksp-debugging?includeInternalServers=false"
 DEVFILE_WORKSPACE_URL="${WORKSPACE_URL}/devfile?start-after-create=true"
-PERMISSIONS_URL="${CHE_URL}/api/permissions"
 
-for i in {1..5};
+# for i in {1..18};
+for i in {18..35};
 do
     
     che_user="user$i"
@@ -50,30 +50,32 @@ do
             "${KEYCLOAK_USER_URL}?username=${che_user}" | jq -r '.[0].id')
         
         # echo ">>>>> User ID: ${userid}"
-
+    
         curl -s -X PUT "${KEYCLOAK_USER_URL}/${userid}" \
             --header "Content-Type: application/json" \
             --header "Authorization: Bearer $master_access_token" \
             -d "{\"email\":\"${che_user}@none.com\"}"
 
-        echo ">>>>> Creating Eclipse Che workspace for user $che_user"
         
-        curl -s  -X POST  "${DEVFILE_WORKSPACE_URL}" \
+        
+        curl -s -X POST  "${DEVFILE_WORKSPACE_URL}&namespace=$che_user" \
             --header "Content-Type: application/json" \
             --header "Accept: application/json" \
             --header "Authorization: Bearer $access_token" \
-            -d "${WORKSHOP_DEVFILE}" &> /dev/null
+            -d "${WORKSHOP_DEVFILE}"
 
         workspaceid=$(curl -s  -X GET \
             --header "Authorization: Bearer $access_token"\
             "${DEBUGGING_WORKSPACE_URL}" | jq -r '.id')
 
+        echo ">>>>> Creating Eclipse Che ${workspaceid} for user $che_user"
+
         if [ ! -z "$workspaceid" ];
         then 
             # Grant Squash Role to SA
-            oc login -u "opentlc-mgr" -p 'r3dh4t1!' "${OPENSHIFT_API_URL}"
+            oc login -u "opentlc-mgr" -p 'r3dh4t1!' "${OPENSHIFT_API_URL}" &> /dev/null
             oc adm policy add-cluster-role-to-user cluster-admin -z che-workspace -n $workspaceid
         fi
-    fi 
+    fi
 done
 

@@ -14,18 +14,18 @@ spec:
       enabled: true
       operatorHub:
         channel: stable
-        clusterServiceVersion: eclipse-che.v7.2.0
+        clusterServiceVersion: eclipse-che.v7.3.0
     etherpad:
-      enabled: false
+      enabled: true
     gogs:
-      enabled: false
+      enabled: true
       image:
         name: quay.io/wkulhanek/gogs-operator
         tag: v0.9.0
     nexus:
-      enabled: false
+      enabled: true
     pipeline:
-      enabled: false
+      enabled: true
       operatorHub:
         channel: dev-preview
         clusterServiceVersion: openshift-pipelines-operator.v0.5.2
@@ -33,19 +33,19 @@ spec:
       enabled: true
       name: cn-project
     serviceMesh:
-      enabled: false
+      enabled: true
       elasticSearchOperatorHub:
         channel: preview
         clusterServiceVersion: elasticsearch-operator.4.1.15-201909041605
       jaegerOperatorHub:
         channel: stable
-        clusterServiceVersion: jaeger-operator.v1.13.1
+        clusterServiceVersion: jaeger-operator.v1.14.0
       kialiOperatorHub:
         channel: stable
-        clusterServiceVersion: kiali-operator.v1.0.5
+        clusterServiceVersion: kiali-operator.v1.4.2
       serviceMeshOperatorHub:
         channel: "1.0"
-        clusterServiceVersion: servicemeshoperator.v1.0.0
+        clusterServiceVersion: servicemeshoperator.v1.0.1
     squash:
       enabled: false
     workshopper:
