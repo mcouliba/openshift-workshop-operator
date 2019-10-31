@@ -94,7 +94,34 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 
 	istioMembers := []string{}
 	for id := 1; id <= users; id++ {
-		istioMembers = append(istioMembers, fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.Name, id))
+		username := fmt.Sprintf("user%d", id)
+		projectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.Name, id)
+
+		istioMembers = append(istioMembers, projectName)
+
+		jaegerRole := deployment.NewRole(deployment.NewRoleParameters{
+			Name:      username + "-jaeger",
+			Namespace: "istio-system",
+			Rules:     deployment.JaegerUserRules(),
+		})
+		if err := r.client.Create(context.TODO(), jaegerRole); err != nil && !errors.IsAlreadyExists(err) {
+			return reconcile.Result{}, err
+		} else if err == nil {
+			logrus.Infof("Created %s Role", jaegerRole.Name)
+		}
+
+		JaegerRoleBinding := deployment.NewRoleBindingUser(deployment.NewRoleBindingUserParameters{
+			Name:      username + "-jaeger",
+			Namespace: "istio-system",
+			Username:  username,
+			RoleName:  jaegerRole.Name,
+			RoleKind:  "Role",
+		})
+		if err := r.client.Create(context.TODO(), JaegerRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
+			return reconcile.Result{}, err
+		} else if err == nil {
+			logrus.Infof("Created %s Role Binding", JaegerRoleBinding.Name)
+		}
 	}
 
 	serviceMeshMemberRollCR := smmr.NewServiceMeshMemberRollCR(smmr.NewServiceMeshMemberRollCRParameters{

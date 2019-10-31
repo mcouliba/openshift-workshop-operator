@@ -199,7 +199,7 @@ func NewEtherpadSettingsJson(cr *openshiftv1alpha1.Workshop, userEndpointStr str
 }
 
 func NewEtherpadDatabaseDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string) *appsv1.Deployment {
-	etherpadDatabaseImage := "mysql:5.6"
+	etherpadDatabaseImage := "image-registry.openshift-image-registry.svc:5000/openshift/mariadb:10.2"
 	labels := GetLabels(cr, name)
 
 	env := []corev1.EnvVar{
@@ -306,8 +306,8 @@ func NewEtherpadDatabaseDeployment(cr *openshiftv1alpha1.Workshop, name string, 
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name:      name + "-volume",
-									MountPath: "/var/lib/mysql",
+									Name:      name + "-data",
+									MountPath: "/var/lib/mysql/data",
 								},
 							},
 							Env: env,
@@ -315,7 +315,7 @@ func NewEtherpadDatabaseDeployment(cr *openshiftv1alpha1.Workshop, name string, 
 					},
 					Volumes: []corev1.Volume{
 						{
-							Name: name + "-volume",
+							Name: name + "-data",
 							VolumeSource: corev1.VolumeSource{
 								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 									ClaimName: name,

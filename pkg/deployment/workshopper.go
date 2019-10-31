@@ -58,16 +58,16 @@ func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, names
 			Value: appsHostnameSuffix,
 		},
 		{
+			Name:  "WORKSHOP_GIT_REPO",
+			Value: cr.Spec.Source.GitURL,
+		},
+		{
+			Name:  "WORKSHOP_GIT_REF",
+			Value: cr.Spec.Source.GitBranch,
+		},
+		{
 			Name:  "LABS_GIT_REPO",
 			Value: "https://github.com/" + guidePath + ".git#" + guideBranch,
-		},
-		{
-			Name:  "LABS_DOWNLOAD_URL",
-			Value: "https://github.com/" + guidePath + "/archive/" + guideBranch + ".zip",
-		},
-		{
-			Name:  "WEB_NODEJS_GIT_REPO",
-			Value: "https://github.com/" + guidePath + "/tree/" + guideBranch + "/labs/web-nodejs",
 		},
 		{
 			Name:  "CATALOG_GO_GIT_REPO",
@@ -76,6 +76,10 @@ func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, names
 		{
 			Name:  "CHE_URL",
 			Value: "http://che-eclipse-che." + appsHostnameSuffix,
+		},
+		{
+			Name:  "GOGS_URL",
+			Value: "http://gogs-gogs-server-workshop-infra." + appsHostnameSuffix,
 		},
 		{
 			Name:  "NEXUS_URL",

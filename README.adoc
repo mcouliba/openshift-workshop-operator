@@ -1,0 +1,44 @@
+== OpenShift Workshop Operator
+
+This is an https://coreos.com/operators/[Kubernetes Operator^] to install the infrastructure for running 
+OpenShift Workshops
+
+=== Run the operator from local
+
+[source,bash]
+----
+cd openshift-workshop-operator
+export OPERATOR_NAME=openshift-workshop-operator
+oc create -f deploy/crds/openshift_v1alpha1_workshop_crd.yaml
+oc new-project workshop-infra
+operator-sdk up local --namespace=workshop-infra
+----
+
+=== Build and Push into quay.io
+
+[source,bash]
+----
+cd openshift-workshop-operator
+./buildImage.sh
+----
+
+=== Run from OpenShift
+
+[source,bash]
+----
+oc new-project workshop-infra
+oc apply -n workshop-infra -f deploy/service_account.yaml
+oc apply -n workshop-infra -f deploy/role.yaml
+oc apply -n workshop-infra -f deploy/role_binding.yaml
+oc apply -n workshop-infra -f deploy/crds/openshift_v1alpha1_workshop_crd.yaml
+oc apply -n workshop-infra -f deploy/operator.yaml
+----
+
+== Create a custom resource (CR)
+
+Create an custom resource called **Workshop**, checkout the ./deploy/crds/[examples]
+
+[source,bash]
+----
+oc create -f deploy/crds/cloud_native_workshop_cr.yaml -n workshop-infra
+----

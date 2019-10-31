@@ -1317,3 +1317,19 @@ func IstioUserRules() []rbac.PolicyRule {
 		},
 	}
 }
+
+func JaegerUserRules() []rbac.PolicyRule {
+	return []rbac.PolicyRule{
+		{
+			APIGroups: []string{
+				"",
+			},
+			Resources: []string{
+				"pods",
+			},
+			Verbs: []string{
+				"get",
+			},
+		},
+	}
+}

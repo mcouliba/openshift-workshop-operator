@@ -76,7 +76,7 @@ func (r *ReconcileWorkshop) addProject(instance *openshiftv1alpha1.Workshop, pro
 		Name:      username + "-istio",
 		Namespace: projectNamespace.Name,
 		Username:  username,
-		RoleName:  username + "-istio",
+		RoleName:  istioRole.Name,
 		RoleKind:  "Role",
 	})
 	if err := r.client.Create(context.TODO(), istioRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
@@ -142,8 +142,8 @@ func (r *ReconcileWorkshop) addProject(instance *openshiftv1alpha1.Workshop, pro
 		}
 	}
 
-	// Explicitly allows traffic from the OpenShift ingress to the project
-	networkPolicy := deployment.NewNetworkPolicyAllowFromOpenShfitIngress("allow-from-openshift-ingress", projectNamespace.Name)
+	// Explicitly allows traffic from all namespaces to the project
+	networkPolicy := deployment.NewNetworkPolicyAllowAllNamespaces("allow-all-namespaces", projectNamespace.Name)
 	if err := r.client.Create(context.TODO(), networkPolicy); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
