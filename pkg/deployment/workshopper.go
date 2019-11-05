@@ -91,7 +91,7 @@ func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, names
 		},
 		{
 			Name:  "JAEGER_URL",
-			Value: "https://tracing-istio-system." + appsHostnameSuffix,
+			Value: "https://jaeger-istio-system." + appsHostnameSuffix,
 		},
 		{
 			Name:  "KIBANA_URL",
