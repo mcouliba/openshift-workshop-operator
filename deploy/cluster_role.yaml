@@ -1,7 +1,6 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  creationTimestamp: null
   name: openshift-workshop-operator
 rules:
 - apiGroups:
@@ -116,6 +115,28 @@ rules:
   - gpte.opentlc.com
   resources:
   - nexus
+  - gogs
+  verbs:
+  - create
+  - list
+  - get
+- apiGroups:
+  - operators.coreos.com
+  resources:
+  - catalogsourceconfigs
+  - operatorgroups
+  - subscriptions
+  - clusterserviceversions
+  verbs:
+  - create
+  - list
+  - get
+  - update
+  - watch
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - networkpolicies
   verbs:
   - create
   - list

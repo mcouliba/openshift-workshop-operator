@@ -5,6 +5,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: openshift-workshop-operator
+  namespace: workshop-infra
 roleRef:
   kind: ClusterRole
   name: openshift-workshop-operator

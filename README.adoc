@@ -1,9 +1,27 @@
-== OpenShift Workshop Operator
+= OpenShift Workshop Operator
+
+
+== Overview
 
 This is an https://coreos.com/operators/[Kubernetes Operator^] to install the infrastructure for running 
-OpenShift Workshops
+OpenShift Workshops.
 
-=== Run the operator from local
+[IMPORTANT]
+====
+This operator has been tested on **OpenShift Container Platform 4.2** 
+with **N preconfigured users (user1, user2, ..., userN)**. 
+====
+
+== Deploy the Operator
+
+[IMPORTANT]
+====
+Please use an OpenShift user with **cluster-admin** privileges
+====
+
+=== Run it from your local environment
+
+Perform the following tasks:
 
 [source,bash]
 ----
@@ -14,31 +32,54 @@ oc new-project workshop-infra
 operator-sdk up local --namespace=workshop-infra
 ----
 
-=== Build and Push into quay.io
+=== Deploy it on OpenShift
+
+Perform the following tasks:
 
 [source,bash]
 ----
 cd openshift-workshop-operator
-./buildImage.sh
+oc login
+oc new-project workshop-infra #<1>
+oc apply -n workshop-infra -f deploy/service_account.yaml #<2>
+oc apply -n workshop-infra -f deploy/cluster_role.yaml #<3>
+oc apply -n workshop-infra -f deploy/cluster_role_binding.yaml #<4>
+oc apply -n workshop-infra -f deploy/crds/openshift_v1alpha1_workshop_crd.yaml #<5>
+oc apply -n workshop-infra -f deploy/operator.yaml #<6>
 ----
+<1> creates of the project/namespace for the operator to run in and to host some components
+like Etherpad and Gogs
+<2> creates of the Service Account for the operator
+<3> creates of the Cluster Role for the operator
+<4> grants the Cluster Role to the Service Account
+<5> creates of the Custom Resource Definition called "Workshop"
+<6> deploys the operator
 
-=== Run from OpenShift
+== Deploy the Workshop Infrastructure using the Operator
+
+The Workshop Infrastructure is deployed by creating a Custom Resource based on the **WorkShop** Custom Resource Definition. 
+There is examples of custom resources (CR) in https://github.com/mcouliba/openshift-workshop-operator/tree/master/deploy/crds[crds]
+
+For instance, to deploy the Workshop Infrastruture for the Cloud-Native Workshop,
+please execute the following command:
 
 [source,bash]
 ----
-oc new-project workshop-infra
-oc apply -n workshop-infra -f deploy/service_account.yaml
-oc apply -n workshop-infra -f deploy/role.yaml
-oc apply -n workshop-infra -f deploy/role_binding.yaml
-oc apply -n workshop-infra -f deploy/crds/openshift_v1alpha1_workshop_crd.yaml
-oc apply -n workshop-infra -f deploy/operator.yaml
+oc create -n workshop-infra -f deploy/crds/cloud_native_workshop_cr.yaml 
 ----
 
-== Create a custom resource (CR)
+== Development
 
-Create an custom resource called **Workshop**, checkout the ./deploy/crds/[examples]
+=== Requirements
+
+* OpenShift 4.2
+* Operator-SDK v0.8.0
+* Docker
+
+=== Build and Push the Operator Image
 
 [source,bash]
 ----
-oc create -f deploy/crds/cloud_native_workshop_cr.yaml -n workshop-infra
+cd openshift-workshop-operator
+./buildImage.sh quay.io/mcouliba/openshift-workshop-operator:4.2
 ----

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE_TAG=$1
+IMAGE=$1
 
-operator-sdk build quay.io/mcouliba/openshift-workshop-operator:${IMAGE_TAG}
-docker push quay.io/mcouliba/openshift-workshop-operator:${IMAGE_TAG}
+operator-sdk build ${IMAGE}
+docker push ${IMAGE}

@@ -16,9 +16,9 @@ spec:
       containers:
         - name: openshift-workshop-operator
           # Replace this with the built image name
-          image: quay.io/mcouliba/openshift-workshop-operator:rhte
+          image: quay.io/mcouliba/openshift-workshop-operator:4.2
           command:
-          - openshift-workshop-operator
+            - openshift-workshop-operator
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
