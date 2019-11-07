@@ -66,10 +66,6 @@ func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, names
 			Value: cr.Spec.Source.GitBranch,
 		},
 		{
-			Name:  "LABS_GIT_REPO",
-			Value: "https://github.com/" + guidePath + ".git#" + guideBranch,
-		},
-		{
 			Name:  "CATALOG_GO_GIT_REPO",
 			Value: "https://github.com/" + guidePath + "/tree/" + guideBranch + "/labs/catalog-go",
 		},
