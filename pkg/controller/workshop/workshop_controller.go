@@ -5,6 +5,7 @@ import (
 	"regexp"
 
 	che "github.com/eclipse/che-operator/pkg/apis/org/v1"
+	argocd "github.com/jmckind/argocd-operator/pkg/apis/argoproj/v1alpha1"
 	imagev1 "github.com/openshift/api/image/v1"
 	routev1 "github.com/openshift/api/route/v1"
 	securityv1 "github.com/openshift/api/security/v1"
@@ -93,12 +94,19 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	if err := apiextensionsv1beta1.AddToScheme(mgr.GetScheme()); err != nil {
 		return err
 	}
+
+	if err := argocd.SchemeBuilder.AddToScheme(mgr.GetScheme()); err != nil {
+		return err
+	}
+
 	if err := nexus.AddToScheme(mgr.GetScheme()); err != nil {
 		return err
 	}
+
 	if err := gogscustomresource.AddToScheme(mgr.GetScheme()); err != nil {
 		return err
 	}
+
 	if err := che.SchemeBuilder.AddToScheme(mgr.GetScheme()); err != nil {
 		return err
 	}
@@ -299,15 +307,15 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	//////////////////////////
 	// Etherpad
 	//////////////////////////
-	if err := r.reconcileEtherpad(instance, users, appsHostnameSuffix); err != nil {
-		return reconcile.Result{}, err
+	if result, err := r.reconcileEtherpad(instance, users, appsHostnameSuffix); err != nil {
+		return result, err
 	}
 
 	//////////////////////////
 	// Nexus
 	//////////////////////////
-	if err := r.reconcileNexus(instance); err != nil {
-		return reconcile.Result{}, err
+	if result, err := r.reconcileNexus(instance); err != nil {
+		return result, err
 	}
 
 	//////////////////////////
@@ -325,9 +333,17 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	}
 
 	//////////////////////////
-	// Che
+	// Argo CD
 	//////////////////////////
-	if result, err := r.reconcileChe(instance, users, appsHostnameSuffix,
+	if result, err := r.reconcileArgoCD(instance, users, appsHostnameSuffix,
+		openshiftConsoleURL, openshiftAPIURL); err != nil {
+		return result, err
+	}
+
+	//////////////////////////
+	// CodeReadyWorkspace
+	//////////////////////////
+	if result, err := r.reconcileCodeReadyWorkspace(instance, users, appsHostnameSuffix,
 		openshiftConsoleURL, openshiftAPIURL); err != nil {
 		return result, err
 	}
@@ -343,6 +359,13 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	// Service Mesh
 	//////////////////////////
 	if result, err := r.reconcileServiceMesh(instance, users); err != nil {
+		return result, err
+	}
+
+	//////////////////////////
+	// Serverless
+	//////////////////////////
+	if result, err := r.reconcileServerless(instance); err != nil {
 		return result, err
 	}
 

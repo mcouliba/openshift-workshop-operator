@@ -4,35 +4,37 @@ require (
 	contrib.go.opencensus.io/exporter/ocagent v0.4.9 // indirect
 	github.com/Azure/go-autorest v11.5.2+incompatible // indirect
 	github.com/appscode/jsonpatch v0.0.0-20190108182946-7c0e3b262f30 // indirect
-	github.com/coreos/prometheus-operator v0.26.0 // indirect
-	github.com/eclipse/che-operator v0.0.0-20190815024259-fbeb80885d76
+	github.com/eclipse/che-operator v0.0.0-20191211154745-df0be398efea
 	github.com/evanphx/json-patch v4.1.0+incompatible // indirect
 	github.com/go-logr/logr v0.1.0 // indirect
 	github.com/go-logr/zapr v0.1.0 // indirect
 	github.com/go-openapi/spec v0.19.0
+	github.com/go-openapi/validate v0.18.0 // indirect
 	github.com/googleapis/gnostic v0.2.0 // indirect
 	github.com/gophercloud/gophercloud v0.0.0-20190318015731-ff9851476e98 // indirect
-	github.com/openshift/api v3.9.1-0.20190424152011-77b8897ec79a+incompatible
+	github.com/jmckind/argocd-operator v0.0.2
+	github.com/openshift/api v3.9.1-0.20190916204813-cdbe64fb0c91+incompatible
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190522155654-7b2b397ad0cc
 	github.com/operator-framework/operator-marketplace v0.0.0-20190820221623-6881ba35b740
-	github.com/operator-framework/operator-sdk v0.8.1-0.20190520230602-e9a6ee27551a
+	github.com/operator-framework/operator-sdk v0.10.1-0.20190919225052-3a85983ecc72
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/sirupsen/logrus v1.4.1
 	github.com/spf13/pflag v1.0.3
 	go.opencensus.io v0.19.2 // indirect
 	go.uber.org/atomic v1.3.2 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
-	k8s.io/api v0.0.0-20190515023547-db5a9d1c40eb
+	k8s.io/api v0.0.0-20190612125737-db0771252981
 	k8s.io/apiextensions-apiserver v0.0.0-20190228180357-d002e88f6236
-	k8s.io/apimachinery v0.0.0-20190515023456-b74e4c97951f
+	k8s.io/apimachinery v0.0.0-20190612125636-6a5db36e93ad
 	k8s.io/client-go v11.0.0+incompatible
 	k8s.io/code-generator v0.0.0-20181203235156-f8cba74510f3
 	k8s.io/gengo v0.0.0-20190327210449-e17681d19d3a
 	k8s.io/klog v0.3.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20190401085232-94e1e7b7574c
-	sigs.k8s.io/controller-runtime v0.1.10
+	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208
+	sigs.k8s.io/controller-runtime v0.1.12
 	sigs.k8s.io/controller-tools v0.1.10
 	sigs.k8s.io/testing_frameworks v0.1.0 // indirect
+	sigs.k8s.io/yaml v1.1.0
 )
 
 // Pinned to kubernetes-1.13.1

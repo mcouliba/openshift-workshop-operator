@@ -26,6 +26,7 @@ Perform the following tasks:
 [source,bash]
 ----
 cd openshift-workshop-operator
+oc login
 export OPERATOR_NAME=openshift-workshop-operator
 oc create -f deploy/crds/openshift_v1alpha1_workshop_crd.yaml
 oc new-project workshop-infra

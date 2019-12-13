@@ -29,16 +29,22 @@ type SourceSpec struct {
 }
 
 type InfrastructureSpec struct {
-	Che         CheSpec         `json:"che"`
-	Etherpad    EtherpadSpec    `json:"etherpad"`
-	Gogs        GogsSpec        `json:"gogs"`
-	Guide       GuideSpec       `json:"guide"`
-	Nexus       NexusSpec       `json:"nexus"`
-	Pipeline    PipelineSpec    `json:"pipeline"`
-	Project     ProjectSpec     `json:"project"`
-	ServiceMesh ServiceMeshSpec `json:"serviceMesh"`
-	Squash      SquashSpec      `json:"squash"`
-	Workshopper WorkshopperSpec `json:"workshopper"`
+	ArgoCD             ArgoCDSpec             `json:"argocd"`
+	CodeReadyWorkspace CodeReadyWorkspaceSpec `json:"codeReadyWorkspace"`
+	Etherpad           EtherpadSpec           `json:"etherpad"`
+	Gogs               GogsSpec               `json:"gogs"`
+	Guide              GuideSpec              `json:"guide"`
+	Nexus              NexusSpec              `json:"nexus"`
+	Pipeline           PipelineSpec           `json:"pipeline"`
+	Project            ProjectSpec            `json:"project"`
+	ServiceMesh        ServiceMeshSpec        `json:"serviceMesh"`
+	Serverless         ServerlessSpec         `json:"serverless"`
+	Squash             SquashSpec             `json:"squash"`
+	Workshopper        WorkshopperSpec        `json:"workshopper"`
+}
+
+type ArgoCDSpec struct {
+	Enabled bool `json:"enabled"`
 }
 
 type EtherpadSpec struct {
@@ -60,8 +66,9 @@ type PipelineSpec struct {
 }
 
 type ProjectSpec struct {
-	Enabled bool   `json:"enabled"`
-	Name    string `json:"name"`
+	Enabled     bool   `json:"enabled"`
+	DevName     string `json:"devName"`
+	StagingName string `json:"stagingName"`
 }
 
 type ServiceMeshSpec struct {
@@ -70,6 +77,11 @@ type ServiceMeshSpec struct {
 	JaegerOperatorHub        OperatorHubSpec `json:"jaegerOperatorHub"`
 	KialiOperatorHub         OperatorHubSpec `json:"kialiOperatorHub"`
 	ServiceMeshOperatorHub   OperatorHubSpec `json:"serviceMeshOperatorHub"`
+}
+
+type ServerlessSpec struct {
+	Enabled     bool            `json:"enabled"`
+	OperatorHub OperatorHubSpec `json:"operatorHub"`
 }
 
 type WorkshopperSpec struct {
@@ -86,7 +98,7 @@ type GuideSpec struct {
 	GitRepositoryGuideFile      string `json:"gitRepositoryGuideFile"`
 }
 
-type CheSpec struct {
+type CodeReadyWorkspaceSpec struct {
 	Enabled     bool            `json:"enabled"`
 	OperatorHub OperatorHubSpec `json:"operatorHub"`
 }
@@ -111,13 +123,18 @@ type WorkshopStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
-	Che         string `json:"che"`
-	Etherpad    string `json:"etherpad"`
-	Gogs        string `json:"gogs"`
-	Guide       string `json:"guide"`
-	Nexus       string `json:"nexus"`
-	ServiceMesh string `json:"servicemesh"`
-	Squash      string `json:"squash"`
+	ArgoCD             string `json:"argocd"`
+	CodeReadyWorkspace string `json:"codeReadyWorkspace"`
+	Etherpad           string `json:"etherpad"`
+	Gogs               string `json:"gogs"`
+	Guide              string `json:"guide"`
+	Nexus              string `json:"nexus"`
+	Pipeline           string `json:"pipeline"`
+	Project            string `json:"project"`
+	ServiceMesh        string `json:"serviceMesh"`
+	Serverless         string `json:"serverless"`
+	Squash             string `json:"squash"`
+	Workshopper        string `json:"workshopper"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

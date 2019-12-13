@@ -4,37 +4,39 @@ metadata:
   name: cloud-native-workshop
 spec:
   user: 
-    number: 12
+    number: 5
     password: openshift
   source:
     gitURL: https://github.com/mcouliba/cloud-native-workshop
-    gitBranch: "3.0"
+    gitBranch: master
   infrastructure:
-    argocd:
-      enabled: true
-    codeReadyWorkspace:
+    che:
       enabled: true
       operatorHub:
-        channel: latest
-        clusterServiceVersion: crwoperator.v2.0.0
+        channel: stable
+        clusterServiceVersion: eclipse-che.v7.3.1
     etherpad:
-      enabled: true
+      enabled: false
     gogs:
-      enabled: true
+      enabled: false
       image:
         name: quay.io/wkulhanek/gogs-operator
         tag: v0.9.0
     nexus:
       enabled: true
     pipeline:
-      enabled: true
+      enabled: false
       operatorHub:
         channel: dev-preview
         clusterServiceVersion: openshift-pipelines-operator.v0.5.2
     project:
       enabled: true
-      devName: my-project
-      stagingName: cn-project
+      name: kn-project
+    serverless:
+      enabled: true
+      operatorHub:
+        channel: techpreview
+        clusterServiceVersion: serverless-operator.v1.1.0
     serviceMesh:
       enabled: true
       elasticSearchOperatorHub:
@@ -52,4 +54,4 @@ spec:
     squash:
       enabled: false
     workshopper:
-      enabled: true
+      enabled: false

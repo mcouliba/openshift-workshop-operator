@@ -1,4 +1,4 @@
-package che
+package deployment
 
 import (
 	che "github.com/eclipse/che-operator/pkg/apis/org/v1"
@@ -6,7 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func NewCustomResource(cr *openshiftv1alpha1.Workshop, name string, namespace string) *che.CheCluster {
+func NewCodeReadyWorkspacesCustomResource(cr *openshiftv1alpha1.Workshop, name string, namespace string) *che.CheCluster {
 	return &che.CheCluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "CheCluster",
@@ -18,29 +18,33 @@ func NewCustomResource(cr *openshiftv1alpha1.Workshop, name string, namespace st
 		},
 		Spec: che.CheClusterSpec{
 			Server: che.CheClusterSpecServer{
-				CheImageTag:          "",
+				CheImageTag: "",
+				CheFlavor:   "codeready",
+				CustomCheProperties: map[string]string{
+					"CHE_INFRA_KUBERNETES_PVC_WAIT__BOUND": "false",
+				},
 				DevfileRegistryImage: "",
 				PluginRegistryImage:  "quay.io/mcouliba/che-plugin-registry:7.3.x",
-				TlsSupport:           false,
+				TlsSupport:           true,
 				SelfSignedCert:       false,
 			},
 			Database: che.CheClusterSpecDB{
-				ExternalDB:            false,
-				ChePostgresDBHostname: "",
-				ChePostgresPort:       "",
-				ChePostgresUser:       "",
-				ChePostgresPassword:   "",
-				ChePostgresDb:         "",
+				ExternalDb:          false,
+				ChePostgresHostName: "",
+				ChePostgresPort:     "",
+				ChePostgresUser:     "",
+				ChePostgresPassword: "",
+				ChePostgresDb:       "",
 			},
 			Auth: che.CheClusterSpecAuth{
-				OpenShiftOauth:        true,
-				KeycloakImage:         "",
-				ExternalKeycloak:      false,
-				KeycloakURL:           "",
-				KeycloakRealm:         "",
-				KeycloakClientId:      "",
-				KeycloakAdminUserName: "admin",
-				KeycloakAdminPassword: "admin",
+				OpenShiftoAuth:                true,
+				IdentityProviderImage:         "",
+				ExternalIdentityProvider:      false,
+				IdentityProviderURL:           "",
+				IdentityProviderRealm:         "",
+				IdentityProviderClientId:      "",
+				IdentityProviderAdminUserName: "admin",
+				IdentityProviderPassword:      "admin",
 			},
 			Storage: che.CheClusterSpecStorage{
 				PvcStrategy:       "per-workspace",

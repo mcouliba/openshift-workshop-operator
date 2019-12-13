@@ -6,6 +6,7 @@ import (
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	gogscustomresource "github.com/redhat/openshift-workshop-operator/pkg/customresource/gogs"
 	deployment "github.com/redhat/openshift-workshop-operator/pkg/deployment"
+	"github.com/redhat/openshift-workshop-operator/pkg/util"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -16,8 +17,18 @@ func (r *ReconcileWorkshop) reconcileGogs(instance *openshiftv1alpha1.Workshop) 
 	enabledGogs := instance.Spec.Infrastructure.Gogs.Enabled
 
 	if enabledGogs {
+
 		if result, err := r.addGogs(instance); err != nil {
 			return result, err
+		}
+
+		// Installed
+		if instance.Status.Gogs != util.OperatorStatus.Installed {
+			instance.Status.Gogs = util.OperatorStatus.Installed
+			if err := r.client.Status().Update(context.TODO(), instance); err != nil {
+				logrus.Errorf("Failed to update Workshop status: %s", err)
+				return reconcile.Result{}, err
+			}
 		}
 	}
 

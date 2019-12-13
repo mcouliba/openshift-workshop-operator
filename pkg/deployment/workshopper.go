@@ -12,8 +12,8 @@ import (
 )
 
 func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string,
-	projectName string, infraProjectName string, username string, appsHostnameSuffix string,
-	openshiftConsoleURL string, openshiftAPIURL string) *appsv1.Deployment {
+	devProjectName string, stagingProjectName string, infraProjectName string, username string,
+	appsHostnameSuffix string, openshiftConsoleURL string, openshiftAPIURL string) *appsv1.Deployment {
 	workshopperImage := "quay.io/osevg/workshopper:latest"
 	labels := GetLabels(cr, name)
 
@@ -30,8 +30,12 @@ func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, names
 			Value: "https://raw.githubusercontent.com/" + guidePath + "/" + guideBranch + "/guide/_workshop.yml",
 		},
 		{
+			Name:  "DEV_PROJECT",
+			Value: devProjectName,
+		},
+		{
 			Name:  "PROJECT",
-			Value: projectName,
+			Value: stagingProjectName,
 		},
 		{
 			Name:  "INFRA_PROJECT",

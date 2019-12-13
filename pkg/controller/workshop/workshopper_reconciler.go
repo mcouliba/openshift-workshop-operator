@@ -8,6 +8,7 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	deployment "github.com/redhat/openshift-workshop-operator/pkg/deployment"
+	"github.com/redhat/openshift-workshop-operator/pkg/util"
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -25,11 +26,12 @@ func (r *ReconcileWorkshop) reconcileWorkshopper(instance *openshiftv1alpha1.Wor
 	for {
 		username := fmt.Sprintf("user%d", id)
 		infraProjectName := fmt.Sprintf("infra%d", id)
-		projectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.Name, id)
+		devProjectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.DevName, id)
+		stagingProjectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.StagingName, id)
 
 		if id <= users && enabledWorkshopper {
 			// Guide
-			if result, err := r.addUpdateWorkshopper(instance, projectName, infraProjectName, username,
+			if result, err := r.addUpdateWorkshopper(instance, devProjectName, stagingProjectName, infraProjectName, username,
 				appsHostnameSuffix, openshiftConsoleURL, openshiftAPIURL); err != nil {
 				return result, err
 			}
@@ -51,11 +53,21 @@ func (r *ReconcileWorkshop) reconcileWorkshopper(instance *openshiftv1alpha1.Wor
 		id++
 	}
 
+	// Installed
+	if instance.Status.Workshopper != util.OperatorStatus.Installed {
+		instance.Status.Workshopper = util.OperatorStatus.Installed
+		if err := r.client.Status().Update(context.TODO(), instance); err != nil {
+			logrus.Errorf("Failed to update Workshop status: %s", err)
+			return reconcile.Result{}, nil
+		}
+	}
+
 	//Success
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileWorkshop) addUpdateWorkshopper(instance *openshiftv1alpha1.Workshop, projectName string, infraProjectName string, username string,
+func (r *ReconcileWorkshop) addUpdateWorkshopper(instance *openshiftv1alpha1.Workshop, devProjectName string,
+	stagingProjectName string, infraProjectName string, username string,
 	appsHostnameSuffix string, openshiftConsoleURL string, openshiftAPIURL string) (reconcile.Result, error) {
 
 	workshopperNamespace := deployment.NewNamespace(instance, infraProjectName)
@@ -66,8 +78,8 @@ func (r *ReconcileWorkshop) addUpdateWorkshopper(instance *openshiftv1alpha1.Wor
 	}
 
 	// Deploy/Update Guide
-	guideDeployment := deployment.NewWorkshopperDeployment(instance, "guide", infraProjectName, projectName,
-		infraProjectName, username, appsHostnameSuffix, openshiftConsoleURL, openshiftAPIURL)
+	guideDeployment := deployment.NewWorkshopperDeployment(instance, "guide", infraProjectName, devProjectName,
+		stagingProjectName, infraProjectName, username, appsHostnameSuffix, openshiftConsoleURL, openshiftAPIURL)
 	if err := r.client.Create(context.TODO(), guideDeployment); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {

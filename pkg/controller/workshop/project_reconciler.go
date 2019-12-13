@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	securityv1 "github.com/openshift/api/security/v1"
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	deployment "github.com/redhat/openshift-workshop-operator/pkg/deployment"
 	"github.com/redhat/openshift-workshop-operator/pkg/util"
@@ -22,7 +21,7 @@ func (r *ReconcileWorkshop) reconcileProject(instance *openshiftv1alpha1.Worksho
 	id := 1
 	for {
 		username := fmt.Sprintf("user%d", id)
-		projectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.Name, id)
+		projectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.StagingName, id)
 
 		if id <= users && enabledProject {
 			// Project
@@ -48,6 +47,14 @@ func (r *ReconcileWorkshop) reconcileProject(instance *openshiftv1alpha1.Worksho
 		id++
 	}
 
+	// Installed
+	if instance.Status.Project != util.OperatorStatus.Installed {
+		instance.Status.Project = util.OperatorStatus.Installed
+		if err := r.client.Status().Update(context.TODO(), instance); err != nil {
+			logrus.Errorf("Failed to update Workshop status: %s", err)
+			return reconcile.Result{}, err
+		}
+	}
 	//Success
 	return reconcile.Result{}, nil
 }
@@ -109,37 +116,6 @@ func (r *ReconcileWorkshop) addProject(instance *openshiftv1alpha1.Workshop, pro
 		return reconcile.Result{}, err
 	} else if err == nil {
 		logrus.Infof("Created %s Role Binding", defaultRoleBinding.Name)
-	}
-
-	//SCC
-	serviceaccount := "system:serviceaccount:" + projectName + ":default"
-
-	privilegedSCCFound := &securityv1.SecurityContextConstraints{}
-	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "privileged"}, privilegedSCCFound); err != nil {
-		return reconcile.Result{}, err
-	}
-
-	if !util.StringInSlice(serviceaccount, privilegedSCCFound.Users) {
-		privilegedSCCFound.Users = append(privilegedSCCFound.Users, serviceaccount)
-		if err := r.client.Update(context.TODO(), privilegedSCCFound); err != nil {
-			return reconcile.Result{}, err
-		} else if err == nil {
-			logrus.Infof("Updated %s Privileged SCC", privilegedSCCFound.Name)
-		}
-	}
-
-	anyuidSCCFound := &securityv1.SecurityContextConstraints{}
-	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "anyuid"}, anyuidSCCFound); err != nil {
-		return reconcile.Result{}, err
-	}
-
-	if !util.StringInSlice(serviceaccount, anyuidSCCFound.Users) {
-		anyuidSCCFound.Users = append(anyuidSCCFound.Users, serviceaccount)
-		if err := r.client.Update(context.TODO(), anyuidSCCFound); err != nil {
-			return reconcile.Result{}, err
-		} else if err == nil {
-			logrus.Infof("Updated %s Anyuid SCC", anyuidSCCFound.Name)
-		}
 	}
 
 	// Explicitly allows traffic from all namespaces to the project

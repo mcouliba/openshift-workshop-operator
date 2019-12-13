@@ -22,6 +22,15 @@ func (r *ReconcileWorkshop) reconcileSquash(instance *openshiftv1alpha1.Workshop
 		if result, err := r.addSquash(instance); err != nil {
 			return result, err
 		}
+
+		// Installed
+		if instance.Status.Squash != util.OperatorStatus.Installed {
+			instance.Status.Squash = util.OperatorStatus.Installed
+			if err := r.client.Status().Update(context.TODO(), instance); err != nil {
+				logrus.Errorf("Failed to update Workshop status: %s", err)
+				return reconcile.Result{}, nil
+			}
+		}
 	}
 
 	//Success

@@ -3,24 +3,39 @@ package workshop
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	deployment "github.com/redhat/openshift-workshop-operator/pkg/deployment"
 	smcp "github.com/redhat/openshift-workshop-operator/pkg/deployment/maistra/servicemeshcontrolplane"
 	smmr "github.com/redhat/openshift-workshop-operator/pkg/deployment/maistra/servicemeshmemberroll"
+	"github.com/redhat/openshift-workshop-operator/pkg/util"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // Reconciling ServiceMesh
 func (r *ReconcileWorkshop) reconcileServiceMesh(instance *openshiftv1alpha1.Workshop, users int) (reconcile.Result, error) {
 	enabledServiceMesh := instance.Spec.Infrastructure.ServiceMesh.Enabled
+	enabledServerless := instance.Spec.Infrastructure.Serverless.Enabled
 
-	if enabledServiceMesh {
+	if enabledServiceMesh || enabledServerless {
+
 		if result, err := r.addServiceMesh(instance, users); err != nil {
 			return result, err
+		}
+
+		// Installed
+		if instance.Status.ServiceMesh != util.OperatorStatus.Installed {
+			instance.Status.ServiceMesh = util.OperatorStatus.Installed
+			if err := r.client.Status().Update(context.TODO(), instance); err != nil {
+				logrus.Errorf("Failed to update Workshop status: %s", err)
+				return reconcile.Result{}, nil
+			}
 		}
 	}
 
@@ -29,41 +44,6 @@ func (r *ReconcileWorkshop) reconcileServiceMesh(instance *openshiftv1alpha1.Wor
 }
 
 func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop, users int) (reconcile.Result, error) {
-	// ElasticSearch from OperatorHub
-	// serviceMeshCatalogSourceConfig := deployment.NewCatalogSourceConfig(instance, "installed-service-mesh",
-	// 	"openshift-operators", "elasticsearch-operator,jaeger-product,kiali-ossm,servicemeshoperator")
-	// if err := r.client.Create(context.TODO(), serviceMeshCatalogSourceConfig); err != nil && !errors.IsAlreadyExists(err) {
-	// 	return reconcile.Result{}, err
-	// } else if err == nil {
-	// 	logrus.Infof("Created %s CatalogSourceConfig", serviceMeshCatalogSourceConfig.Name)
-	// }
-
-	// elasticSubscription := deployment.NewCertifiedSubscription(instance, "elasticsearch-operator", "openshift-operators",
-	// 	instance.Spec.Infrastructure.ServiceMesh.ElasticSearchOperatorHub.Channel,
-	// 	instance.Spec.Infrastructure.ServiceMesh.ElasticSearchOperatorHub.ClusterServiceVersion)
-	// if err := r.client.Create(context.TODO(), elasticSubscription); err != nil && !errors.IsAlreadyExists(err) {
-	// 	return reconcile.Result{}, err
-	// } else if err == nil {
-	// 	logrus.Infof("Created %s Subscription", elasticSubscription.Name)
-	// }
-
-	// jaegerSubscription := deployment.NewCommunitySubscription(instance, "jaeger-workshop", "openshift-operators", "jaeger",
-	// 	instance.Spec.Infrastructure.ServiceMesh.JaegerOperatorHub.Channel,
-	// 	instance.Spec.Infrastructure.ServiceMesh.JaegerOperatorHub.ClusterServiceVersion)
-	// if err := r.client.Create(context.TODO(), jaegerSubscription); err != nil && !errors.IsAlreadyExists(err) {
-	// 	return reconcile.Result{}, err
-	// } else if err == nil {
-	// 	logrus.Infof("Created %s Subscription", jaegerSubscription.Name)
-	// }
-
-	// kialiSubscription := deployment.NewCommunitySubscription(instance, "kiali-workshop", "openshift-operators", "kiali",
-	// 	instance.Spec.Infrastructure.ServiceMesh.KialiOperatorHub.Channel,
-	// 	instance.Spec.Infrastructure.ServiceMesh.KialiOperatorHub.ClusterServiceVersion)
-	// if err := r.client.Create(context.TODO(), kialiSubscription); err != nil && !errors.IsAlreadyExists(err) {
-	// 	return reconcile.Result{}, err
-	// } else if err == nil {
-	// 	logrus.Infof("Created %s Subscription", kialiSubscription.Name)
-	// }
 
 	servicemeshSubscription := deployment.NewRedHatSubscription(instance, "servicemeshoperator", "openshift-operators", "servicemeshoperator",
 		instance.Spec.Infrastructure.ServiceMesh.ServiceMeshOperatorHub.Channel,
@@ -95,7 +75,7 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 	istioMembers := []string{}
 	for id := 1; id <= users; id++ {
 		username := fmt.Sprintf("user%d", id)
-		projectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.Name, id)
+		projectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.StagingName, id)
 
 		istioMembers = append(istioMembers, projectName)
 
@@ -133,6 +113,40 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 30}, err
 	} else if err == nil {
 		logrus.Infof("Created %s Custom Resource", serviceMeshMemberRollCR.Name)
+	}
+
+	// Updated Istio/Kiali label for the Workshop
+	kialiConfigMap := r.GetEffectiveConfigMap(instance, "kiali", istioSystemNamespace.Name)
+
+	configLines := strings.Split(kialiConfigMap.Data["config.yaml"], "\n")
+
+	for i, line := range configLines {
+		if strings.Contains(line, "app_label_name:") {
+			configLines[i] = "  app_label_name: app.kubernetes.io/instance"
+			break
+		}
+	}
+	newConfig := strings.Join(configLines, "\n")
+
+	if kialiConfigMap.Data["config.yaml"] != newConfig {
+		kialiConfigMap.Data["config.yaml"] = newConfig
+		if err := r.client.Update(context.TODO(), kialiConfigMap); err != nil {
+			return reconcile.Result{}, err
+		} else if err == nil {
+			logrus.Infof("Updated Kiali ConfigMap for Labels")
+
+			kialipod, err := k8sclient.GetDeploymentPod("kiali", istioSystemNamespace.Name)
+			if err == nil {
+				found := &corev1.Pod{}
+				err = r.client.Get(context.TODO(), types.NamespacedName{Name: kialipod, Namespace: istioSystemNamespace.Name}, found)
+				if err == nil {
+					if err := r.client.Delete(context.TODO(), found); err != nil {
+						return reconcile.Result{}, err
+					}
+					logrus.Infof("Restarted a new Kiali Pod (Fix)")
+				}
+			}
+		}
 	}
 
 	//Success

@@ -81,3 +81,27 @@ func NewRedHatSubscription(cr *openshiftv1alpha1.Workshop, name string, namespac
 		},
 	}
 }
+
+func NewCustomSubscription(cr *openshiftv1alpha1.Workshop, name string, namespace string, packageName string,
+	channel string, catalogSource string) *olmv1alpha1.Subscription {
+	return &olmv1alpha1.Subscription{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Subscription",
+			APIVersion: "operators.coreos.com/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"csc-owner-name":      "custom-operators",
+				"csc-owner-namespace": "openshift-marketplace",
+			},
+		},
+		Spec: &olmv1alpha1.SubscriptionSpec{
+			Channel:                channel,
+			CatalogSource:          catalogSource,
+			CatalogSourceNamespace: "openshift-marketplace",
+			Package:                packageName,
+		},
+	}
+}

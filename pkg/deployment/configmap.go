@@ -6,7 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func NewConfigMap(cr *openshiftv1alpha1.Workshop, name string, namespaces string, data map[string]string) *corev1.ConfigMap {
+func NewConfigMap(cr *openshiftv1alpha1.Workshop, name string, namespace string, data map[string]string) *corev1.ConfigMap {
 	labels := GetLabels(cr, name)
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
@@ -15,7 +15,7 @@ func NewConfigMap(cr *openshiftv1alpha1.Workshop, name string, namespaces string
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: namespaces,
+			Namespace: namespace,
 			Labels:    labels,
 		},
 		Data: data,
