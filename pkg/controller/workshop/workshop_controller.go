@@ -7,6 +7,7 @@ import (
 	che "github.com/eclipse/che-operator/pkg/apis/org/v1"
 	argocd "github.com/jmckind/argocd-operator/pkg/apis/argoproj/v1alpha1"
 	imagev1 "github.com/openshift/api/image/v1"
+	oauthv1 "github.com/openshift/api/oauth/v1"
 	routev1 "github.com/openshift/api/route/v1"
 	securityv1 "github.com/openshift/api/security/v1"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
@@ -87,6 +88,11 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 	// register OpenShift Security in the scheme
 	if err := securityv1.AddToScheme(mgr.GetScheme()); err != nil {
+		return err
+	}
+
+	// register OpenShift OAuthClient in the scheme
+	if err := oauthv1.AddToScheme(mgr.GetScheme()); err != nil {
 		return err
 	}
 

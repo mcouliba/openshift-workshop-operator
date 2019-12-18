@@ -75,7 +75,7 @@ func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, names
 		},
 		{
 			Name:  "CHE_URL",
-			Value: "http://che-eclipse-che." + appsHostnameSuffix,
+			Value: "http://codeready-workspaces." + appsHostnameSuffix,
 		},
 		{
 			Name:  "GOGS_URL",

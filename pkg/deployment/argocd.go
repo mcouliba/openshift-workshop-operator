@@ -17,6 +17,8 @@ func NewArgoCDCustomResource(cr *openshiftv1alpha1.Workshop, name string, namesp
 			Namespace: namespace,
 		},
 		Spec: argocd.ArgoCDSpec{
+			Image:   "argoproj/argocd",
+			Version: "v1.3.6",
 			Grafana: argocd.ArgoCDGrafanaSpec{
 				Enabled: false,
 			},
@@ -28,6 +30,10 @@ func NewArgoCDCustomResource(cr *openshiftv1alpha1.Workshop, name string, namesp
 			},
 			Server: argocd.ArgoCDServerSpec{
 				Insecure: true,
+			},
+			Dex: argocd.ArgoCDDexSpec{
+				Image:   "quay.io/ablock/dex",
+				Version: "openshift-connector",
 			},
 		},
 	}

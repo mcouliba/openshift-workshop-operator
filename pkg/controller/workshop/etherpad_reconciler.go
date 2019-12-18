@@ -82,7 +82,13 @@ func (r *ReconcileWorkshop) addEtherpad(instance *openshiftv1alpha1.Workshop, us
 	settings := map[string]string{
 		"settings.json": deployment.NewEtherpadSettingsJson(instance, userEndpointStr.String()),
 	}
-	etherpadConfigMap := deployment.NewConfigMap(instance, "etherpad-settings", instance.Namespace, settings)
+
+	labels := map[string]string{
+		"app.kubernetes.io/name":    "etherpad-settings",
+		"app.kubernetes.io/part-of": "etherpad",
+	}
+
+	etherpadConfigMap := deployment.NewConfigMap(instance, "etherpad-settings", instance.Namespace, labels, settings)
 	if err := r.client.Create(context.TODO(), etherpadConfigMap); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {

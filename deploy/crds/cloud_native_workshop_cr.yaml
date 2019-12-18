@@ -4,7 +4,7 @@ metadata:
   name: cloud-native-workshop
 spec:
   user: 
-    number: 12
+    number: 2
     password: openshift
   source:
     gitURL: https://github.com/mcouliba/cloud-native-workshop
@@ -30,7 +30,7 @@ spec:
       enabled: true
       operatorHub:
         channel: dev-preview
-        clusterServiceVersion: openshift-pipelines-operator.v0.5.2
+        clusterServiceVersion: openshift-pipelines-operator.v0.8.2
     project:
       enabled: true
       devName: my-project
@@ -42,13 +42,13 @@ spec:
         clusterServiceVersion: elasticsearch-operator.4.1.15-201909041605
       jaegerOperatorHub:
         channel: stable
-        clusterServiceVersion: jaeger-operator.v1.14.0
+        clusterServiceVersion: jaeger-operator.v1.13.1
       kialiOperatorHub:
         channel: stable
-        clusterServiceVersion: kiali-operator.v1.4.2
+        clusterServiceVersion: kiali-operator.v1.0.8
       serviceMeshOperatorHub:
         channel: "1.0"
-        clusterServiceVersion: servicemeshoperator.v1.0.1
+        clusterServiceVersion: servicemeshoperator.v1.0.3
     squash:
       enabled: false
     workshopper:
