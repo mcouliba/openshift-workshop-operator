@@ -135,15 +135,43 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 		} else if err == nil {
 			logrus.Infof("Updated Kiali ConfigMap for Labels")
 
-			kialipod, err := k8sclient.GetDeploymentPod("kiali", istioSystemNamespace.Name)
+			kialipodName, err := k8sclient.GetDeploymentPod("kiali", istioSystemNamespace.Name)
 			if err == nil {
 				found := &corev1.Pod{}
-				err = r.client.Get(context.TODO(), types.NamespacedName{Name: kialipod, Namespace: istioSystemNamespace.Name}, found)
+				err = r.client.Get(context.TODO(), types.NamespacedName{Name: kialipodName, Namespace: istioSystemNamespace.Name}, found)
 				if err == nil {
 					if err := r.client.Delete(context.TODO(), found); err != nil {
 						return reconcile.Result{}, err
 					}
-					logrus.Infof("Restarted a new Kiali Pod (Fix)")
+					logrus.Infof("Restarted a new Kiali Pod")
+				}
+			}
+		}
+	}
+
+	// Updated Istio SideCar Injector for the Workshop
+	injectorConfigMap := r.GetEffectiveConfigMap(instance, "istio-sidecar-injector", istioSystemNamespace.Name)
+
+	newConfig = strings.ReplaceAll(injectorConfigMap.Data["config"],
+		"index .ObjectMeta.Labels \"app\"",
+		"index .ObjectMeta.Labels \"deploymentconfig\"")
+
+	if injectorConfigMap.Data["config"] != newConfig {
+		injectorConfigMap.Data["config"] = newConfig
+		if err := r.client.Update(context.TODO(), injectorConfigMap); err != nil {
+			return reconcile.Result{}, err
+		} else if err == nil {
+			logrus.Infof("Updated %s ConfigMap", injectorConfigMap.Name)
+
+			injectorPodName, err := k8sclient.GetDeploymentPod("sidecarInjectorWebhook", istioSystemNamespace.Name)
+			if err == nil {
+				found := &corev1.Pod{}
+				err = r.client.Get(context.TODO(), types.NamespacedName{Name: injectorPodName, Namespace: istioSystemNamespace.Name}, found)
+				if err == nil {
+					if err := r.client.Delete(context.TODO(), found); err != nil {
+						return reconcile.Result{}, err
+					}
+					logrus.Infof("Restarted Istio Sidecar Injector Pod")
 				}
 			}
 		}
