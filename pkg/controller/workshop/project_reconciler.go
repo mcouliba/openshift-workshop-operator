@@ -118,6 +118,19 @@ func (r *ReconcileWorkshop) addProject(instance *openshiftv1alpha1.Workshop, pro
 		logrus.Infof("Created %s Role Binding", defaultRoleBinding.Name)
 	}
 
+	argocdRoleBinding := deployment.NewRoleBindingUser(deployment.NewRoleBindingUserParameters{
+		Name:      username + "-argocd",
+		Namespace: projectNamespace.Name,
+		Username:  "system:serviceaccount:argocd:argocd-application-controller",
+		RoleName:  "edit",
+		RoleKind:  "ClusterRole",
+	})
+	if err := r.client.Create(context.TODO(), argocdRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Role Binding", argocdRoleBinding.Name)
+	}
+
 	// Explicitly allows traffic from all namespaces to the project
 	networkPolicy := deployment.NewNetworkPolicyAllowAllNamespaces("allow-all-namespaces", projectNamespace.Name)
 	if err := r.client.Create(context.TODO(), networkPolicy); err != nil && !errors.IsAlreadyExists(err) {

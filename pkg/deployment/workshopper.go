@@ -97,6 +97,10 @@ func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, names
 			Name:  "KIBANA_URL",
 			Value: "https://kibana-openshift-logging." + appsHostnameSuffix,
 		},
+		{
+			Name:  "GITOPS_URL",
+			Value: "https://argocd-server-argocd." + appsHostnameSuffix,
+		},
 	}
 
 	return &appsv1.Deployment{

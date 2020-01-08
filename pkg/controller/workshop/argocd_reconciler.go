@@ -2,6 +2,7 @@ package workshop
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"time"
 
@@ -128,6 +129,63 @@ func (r *ReconcileWorkshop) addArgoCD(instance *openshiftv1alpha1.Workshop, user
 			if !reflect.DeepEqual(configMapFound.Data, data) {
 				// Update
 				configMapFound.Data = data
+				if err := r.client.Update(context.TODO(), configMapFound); err != nil {
+					return reconcile.Result{}, err
+				}
+				logrus.Infof("Updated %s ConfigMap", configMapFound.Name)
+			}
+		}
+	}
+
+	argocdPolicy := ""
+	for id := 1; id <= users; id++ {
+		username := fmt.Sprintf("user%d", id)
+		userRole := fmt.Sprintf("role:%s", username)
+		projectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.StagingName, id)
+
+		userPolicy := `p, ` + userRole + `, applications, create, ` + projectName + `/*, allow
+p, ` + userRole + `, applications, get, ` + projectName + `/*, allow
+p, ` + userRole + `, applications, update, ` + projectName + `/*, allow
+p, ` + userRole + `, applications, delete, ` + projectName + `/*, allow
+p, ` + userRole + `, applications, sync, ` + projectName + `/*, allow
+p, ` + userRole + `, clusters, get, *, allow
+p, ` + userRole + `, projects, create, ` + projectName + `, allow
+p, ` + userRole + `, projects, get, ` + projectName + `, allow
+p, ` + userRole + `, projects, update, ` + projectName + `, allow
+p, ` + userRole + `, projects, delete, ` + projectName + `, allow
+p, ` + userRole + `, repositories, create, *, allow
+p, ` + userRole + `, repositories, get, *, allow
+p, ` + userRole + `, repositories, update, *, allow
+p, ` + userRole + `, repositories, delete, *, allow
+g, ` + username + `, ` + userRole + `
+`
+
+		argocdPolicy = fmt.Sprintf("%s%s", argocdPolicy, userPolicy)
+	}
+
+	rbacData := map[string]string{
+		"scopes":     "[preferred_username]",
+		"policy.csv": argocdPolicy,
+	}
+
+	rbacLabels := map[string]string{
+		"app.kubernetes.io/name":    "argocd-rbac-cm",
+		"app.kubernetes.io/part-of": "argocd",
+	}
+
+	rbacConfigmap := deployment.NewConfigMap(instance, "argocd-rbac-cm", namespace.Name, rbacLabels, rbacData)
+	if err := r.client.Create(context.TODO(), rbacConfigmap); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s ConfigMap", rbacConfigmap.Name)
+	} else if errors.IsAlreadyExists(err) {
+		configMapFound := &corev1.ConfigMap{}
+		if err := r.client.Get(context.TODO(), types.NamespacedName{Name: rbacConfigmap.Name, Namespace: namespace.Name}, configMapFound); err != nil {
+			return reconcile.Result{}, err
+		} else if err == nil {
+			if !reflect.DeepEqual(configMapFound.Data, rbacData) {
+				// Update
+				configMapFound.Data = rbacData
 				if err := r.client.Update(context.TODO(), configMapFound); err != nil {
 					return reconcile.Result{}, err
 				}
