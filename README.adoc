@@ -56,7 +56,7 @@ like Etherpad and Gogs
 <5> creates of the Custom Resource Definition called "Workshop"
 <6> deploys the operator
 
-== Deploy the Workshop Infrastructure using the Operator
+== Install the Workshop Infrastructure
 
 The Workshop Infrastructure is deployed by creating a Custom Resource based on the **WorkShop** Custom Resource Definition. 
 There is examples of custom resources (CR) in https://github.com/mcouliba/openshift-workshop-operator/tree/master/deploy/crds[crds]
