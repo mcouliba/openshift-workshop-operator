@@ -4,7 +4,7 @@ metadata:
   name: cloud-native-workshop
 spec:
   user: 
-    number: 2
+    number: 5
     password: openshift
   source:
     gitURL: https://github.com/mcouliba/cloud-native-workshop
