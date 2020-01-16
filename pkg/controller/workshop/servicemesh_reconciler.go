@@ -116,7 +116,11 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 	}
 
 	// Updated Istio/Kiali label for the Workshop
-	kialiConfigMap := r.GetEffectiveConfigMap(instance, "kiali", istioSystemNamespace.Name)
+	kialiConfigMap, err := r.GetEffectiveConfigMap(instance, "kiali", istioSystemNamespace.Name)
+
+	if err != nil {
+		return reconcile.Result{}, err
+	}
 
 	configLines := strings.Split(kialiConfigMap.Data["config.yaml"], "\n")
 
@@ -150,7 +154,11 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 	}
 
 	// Updated Istio SideCar Injector for the Workshop
-	injectorConfigMap := r.GetEffectiveConfigMap(instance, "istio-sidecar-injector", istioSystemNamespace.Name)
+	injectorConfigMap, err := r.GetEffectiveConfigMap(instance, "istio-sidecar-injector", istioSystemNamespace.Name)
+
+	if err != nil {
+		return reconcile.Result{}, err
+	}
 
 	newConfig = strings.ReplaceAll(injectorConfigMap.Data["config"],
 		"index .ObjectMeta.Labels \"app\"",

@@ -57,14 +57,14 @@ func (r *ReconcileWorkshop) GetEffectiveRoute(instance *openshiftv1alpha1.Worksh
 	return route
 }
 
-func (r *ReconcileWorkshop) GetEffectiveConfigMap(instance *openshiftv1alpha1.Workshop, name string, namespace string) (configMap *corev1.ConfigMap) {
+func (r *ReconcileWorkshop) GetEffectiveConfigMap(instance *openshiftv1alpha1.Workshop, name string, namespace string) (configMap *corev1.ConfigMap, err error) {
 	configMap = &corev1.ConfigMap{}
-	err := r.client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, configMap)
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, configMap)
 	if err != nil {
 		logrus.Errorf("Failed to get %s config map: %s", name, err)
-		return nil
+		return nil, err
 	}
-	return configMap
+	return configMap, nil
 
 }
 
