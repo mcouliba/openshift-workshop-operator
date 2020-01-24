@@ -11,8 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string,
-	devProjectName string, stagingProjectName string, infraProjectName string, username string,
+func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string, userID string,
 	appsHostnameSuffix string, openshiftConsoleURL string, openshiftAPIURL string) *appsv1.Deployment {
 	workshopperImage := "quay.io/osevg/workshopper:latest"
 	labels := GetLabels(cr, name)
@@ -30,16 +29,8 @@ func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, names
 			Value: "https://raw.githubusercontent.com/" + guidePath + "/" + guideBranch + "/guide/_workshop.yml",
 		},
 		{
-			Name:  "DEV_PROJECT",
-			Value: devProjectName,
-		},
-		{
-			Name:  "PROJECT",
-			Value: stagingProjectName,
-		},
-		{
-			Name:  "INFRA_PROJECT",
-			Value: infraProjectName,
+			Name:  "USER_ID",
+			Value: userID,
 		},
 		{
 			Name:  "OPENSHIFT_CONSOLE_URL",
@@ -48,10 +39,6 @@ func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, names
 		{
 			Name:  "OPENSHIFT_API_URL",
 			Value: openshiftAPIURL,
-		},
-		{
-			Name:  "OPENSHIFT_USER",
-			Value: username,
 		},
 		{
 			Name:  "OPENSHIFT_PASSWORD",

@@ -18,6 +18,7 @@ func GogsRules() []rbac.PolicyRule {
 				"events",
 				"configmaps",
 				"secrets",
+				"serviceaccounts",
 			},
 			Verbs: []string{
 				"create",

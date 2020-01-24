@@ -17,7 +17,7 @@ func NewGogsCustomResource(cr *openshiftv1alpha1.Workshop, name string, namespac
 		},
 		Spec: GogsSpec{
 			GogsVolumeSize:       "4Gi",
-			GogsSsl:              false,
+			GogsSsl:              true,
 			PostgresqlVolumeSize: "4Gi",
 		},
 	}

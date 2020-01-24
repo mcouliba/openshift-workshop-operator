@@ -76,6 +76,10 @@ func NewAnsibleOperatorDeployment(cr *openshiftv1alpha1.Workshop, name string, n
 										},
 									},
 								},
+								{
+									Name:  "ANSIBLE_GATHERING",
+									Value: "explicit",
+								},
 							},
 						},
 					},

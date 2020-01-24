@@ -69,7 +69,8 @@ func (r *ReconcileWorkshop) addGogs(instance *openshiftv1alpha1.Workshop) (recon
 		logrus.Infof("Created %s Cluster Role Binding", gogsClusterRoleBinding.Name)
 	}
 
-	gogsOperator := deployment.NewOperatorDeployment(instance, "gogs-operator", instance.Namespace, imageName+":"+imageTag, "gogs-operator", 60000, nil, nil, nil, nil)
+	gogsOperator := deployment.NewAnsibleOperatorDeployment(instance, "gogs-operator", instance.Namespace, imageName+":"+imageTag, "gogs-operator")
+
 	if err := r.client.Create(context.TODO(), gogsOperator); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {

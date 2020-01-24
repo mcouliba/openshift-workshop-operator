@@ -131,14 +131,6 @@ func (r *ReconcileWorkshop) addProject(instance *openshiftv1alpha1.Workshop, pro
 		logrus.Infof("Created %s Role Binding", argocdRoleBinding.Name)
 	}
 
-	// Explicitly allows traffic from all namespaces to the project
-	networkPolicy := deployment.NewNetworkPolicyAllowAllNamespaces("allow-all-namespaces", projectNamespace.Name)
-	if err := r.client.Create(context.TODO(), networkPolicy); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s Network Policy for %s", networkPolicy.Name, projectNamespace.Name)
-	}
-
 	//Success
 	return reconcile.Result{}, nil
 }

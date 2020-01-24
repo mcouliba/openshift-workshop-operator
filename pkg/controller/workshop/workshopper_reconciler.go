@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strconv"
 
 	routev1 "github.com/openshift/api/route/v1"
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
@@ -24,18 +25,15 @@ func (r *ReconcileWorkshop) reconcileWorkshopper(instance *openshiftv1alpha1.Wor
 
 	id := 1
 	for {
-		username := fmt.Sprintf("user%d", id)
-		infraProjectName := fmt.Sprintf("infra%d", id)
-		devProjectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.DevName, id)
-		stagingProjectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.StagingName, id)
-
 		if id <= users && enabledWorkshopper {
 			// Guide
-			if result, err := r.addUpdateWorkshopper(instance, devProjectName, stagingProjectName, infraProjectName, username,
+			if result, err := r.addUpdateWorkshopper(instance, strconv.Itoa(id),
 				appsHostnameSuffix, openshiftConsoleURL, openshiftAPIURL); err != nil {
 				return result, err
 			}
 		} else {
+
+			infraProjectName := fmt.Sprintf("infra%d", id)
 
 			infraNamespace := deployment.NewNamespace(instance, infraProjectName)
 			infraNamespaceFound := &corev1.Namespace{}
@@ -66,10 +64,10 @@ func (r *ReconcileWorkshop) reconcileWorkshopper(instance *openshiftv1alpha1.Wor
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileWorkshop) addUpdateWorkshopper(instance *openshiftv1alpha1.Workshop, devProjectName string,
-	stagingProjectName string, infraProjectName string, username string,
+func (r *ReconcileWorkshop) addUpdateWorkshopper(instance *openshiftv1alpha1.Workshop, userID string,
 	appsHostnameSuffix string, openshiftConsoleURL string, openshiftAPIURL string) (reconcile.Result, error) {
 
+	infraProjectName := fmt.Sprintf("infra%s", userID)
 	workshopperNamespace := deployment.NewNamespace(instance, infraProjectName)
 	if err := r.client.Create(context.TODO(), workshopperNamespace); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
@@ -78,8 +76,7 @@ func (r *ReconcileWorkshop) addUpdateWorkshopper(instance *openshiftv1alpha1.Wor
 	}
 
 	// Deploy/Update Guide
-	guideDeployment := deployment.NewWorkshopperDeployment(instance, "guide", infraProjectName, devProjectName,
-		stagingProjectName, infraProjectName, username, appsHostnameSuffix, openshiftConsoleURL, openshiftAPIURL)
+	guideDeployment := deployment.NewWorkshopperDeployment(instance, "guide", infraProjectName, userID, appsHostnameSuffix, openshiftConsoleURL, openshiftAPIURL)
 	if err := r.client.Create(context.TODO(), guideDeployment); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
