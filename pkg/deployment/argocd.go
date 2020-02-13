@@ -18,7 +18,7 @@ func NewArgoCDCustomResource(cr *openshiftv1alpha1.Workshop, name string, namesp
 		},
 		Spec: argocd.ArgoCDSpec{
 			Image:   "argoproj/argocd",
-			Version: "v1.3.6",
+			Version: "v1.4.2",
 			Grafana: argocd.ArgoCDGrafanaSpec{
 				Enabled: false,
 			},
