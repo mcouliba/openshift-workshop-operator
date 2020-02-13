@@ -73,7 +73,7 @@ oc create -n workshop-infra -f deploy/crds/cloud_native_workshop_cr.yaml
 
 === Requirements
 
-* OpenShift 4.2
+* OpenShift 4.3
 * Operator-SDK v0.8.0
 * Docker
 
@@ -82,5 +82,5 @@ oc create -n workshop-infra -f deploy/crds/cloud_native_workshop_cr.yaml
 [source,bash]
 ----
 cd openshift-workshop-operator
-./buildImage.sh quay.io/mcouliba/openshift-workshop-operator:latest
+./buildImage.sh quay.io/mcouliba/openshift-workshop-operator:3.1
 ----
