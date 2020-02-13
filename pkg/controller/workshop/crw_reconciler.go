@@ -74,6 +74,13 @@ func (r *ReconcileWorkshop) addCodeReadyWorkspace(instance *openshiftv1alpha1.Wo
 		logrus.Infof("Created %s Subscription", codeReadyWorkspacesSubscription.Name)
 	}
 
+	// Approve the installation
+	time.Sleep(time.Duration(10) * time.Second)
+	if err := r.ApproveInstallPlan("codeready-workspaces", codeReadyWorkspacesNamespace.Name); err != nil {
+		logrus.Infof("Waiting for Subscription to create InstallPlan for %s", "codeready-workspaces")
+		return reconcile.Result{}, err
+	}
+
 	// Wait for CodeReadyWorkspace Operator to be running
 	time.Sleep(time.Duration(1) * time.Second)
 	codeReadyWorkspacesOperatorDeployment, err := r.GetEffectiveDeployment(instance, "codeready-operator", codeReadyWorkspacesNamespace.Name)

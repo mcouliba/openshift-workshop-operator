@@ -4,11 +4,11 @@ metadata:
   name: cloud-native-workshop
 spec:
   user: 
-    number: 10
+    number: 15
     password: openshift
   source:
     gitURL: https://github.com/mcouliba/cloud-native-workshop
-    gitBranch: "3.0"
+    gitBranch: "3.1"
   infrastructure:
     argocd:
       enabled: true
@@ -37,19 +37,10 @@ spec:
       stagingName: cn-project
     serviceMesh:
       enabled: true
-      elasticSearchOperatorHub:
-        channel: preview
-        clusterServiceVersion: elasticsearch-operator.4.1.15-201909041605
-      jaegerOperatorHub:
-        channel: stable
-        clusterServiceVersion: jaeger-operator.v1.13.1
-      kialiOperatorHub:
-        channel: stable
-        clusterServiceVersion: kiali-operator.v1.0.8
       serviceMeshOperatorHub:
         channel: "1.0"
-        clusterServiceVersion: servicemeshoperator.v1.0.3
-    squash:
+        clusterServiceVersion: servicemeshoperator.v1.0.6
+    istioWorkspace:
       enabled: false
     workshopper:
       enabled: true

@@ -73,6 +73,12 @@ func (r *ReconcileWorkshop) addArgoCD(instance *openshiftv1alpha1.Workshop, user
 		logrus.Infof("Created %s Subscription", subscription.Name)
 	}
 
+	// Approve the installation
+	if err := r.ApproveInstallPlan("argocd-operator", namespace.Name); err != nil {
+		logrus.Infof("Waiting for Subscription to create InstallPlan for %s", "argocd-operator")
+		return reconcile.Result{}, err
+	}
+
 	// Wait for ArgoCD Operator to be running
 	time.Sleep(time.Duration(1) * time.Second)
 	operatorDeployment, err := r.GetEffectiveDeployment(instance, "argocd-operator", namespace.Name)
@@ -108,7 +114,8 @@ func (r *ReconcileWorkshop) addArgoCD(instance *openshiftv1alpha1.Workshop, user
       clientSecret: openshift
       insecureCA: true
       redirectURI: ` + argocdRoute + `/api/dex/callback`,
-		"url": argocdRoute,
+		"url":                          argocdRoute,
+		"application.instanceLabelKey": "argocd.argoproj.io/instance",
 	}
 
 	labels := map[string]string{

@@ -26,7 +26,7 @@ func NewCertifiedSubscription(cr *openshiftv1alpha1.Workshop, name string, names
 			CatalogSource:          "certified-operators",
 			CatalogSourceNamespace: "openshift-marketplace",
 			StartingCSV:            startingCSV,
-			InstallPlanApproval:    olmv1alpha1.ApprovalAutomatic,
+			InstallPlanApproval:    olmv1alpha1.ApprovalManual,
 			Package:                packageName,
 		},
 	}
@@ -51,7 +51,7 @@ func NewCommunitySubscription(cr *openshiftv1alpha1.Workshop, name string, names
 			CatalogSource:          "community-operators",
 			CatalogSourceNamespace: "openshift-marketplace",
 			StartingCSV:            startingCSV,
-			InstallPlanApproval:    olmv1alpha1.ApprovalAutomatic,
+			InstallPlanApproval:    olmv1alpha1.ApprovalManual,
 			Package:                packageName,
 		},
 	}
@@ -76,7 +76,7 @@ func NewRedHatSubscription(cr *openshiftv1alpha1.Workshop, name string, namespac
 			CatalogSource:          "redhat-operators",
 			CatalogSourceNamespace: "openshift-marketplace",
 			StartingCSV:            startingCSV,
-			InstallPlanApproval:    olmv1alpha1.ApprovalAutomatic,
+			InstallPlanApproval:    olmv1alpha1.ApprovalManual,
 			Package:                packageName,
 		},
 	}

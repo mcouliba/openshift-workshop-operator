@@ -39,7 +39,7 @@ type InfrastructureSpec struct {
 	Project            ProjectSpec            `json:"project"`
 	ServiceMesh        ServiceMeshSpec        `json:"serviceMesh"`
 	Serverless         ServerlessSpec         `json:"serverless"`
-	Squash             SquashSpec             `json:"squash"`
+	IstioWorkspace     IstioWorkspaceSpec     `json:"istioWorkspace"`
 	Workshopper        WorkshopperSpec        `json:"workshopper"`
 }
 
@@ -72,11 +72,8 @@ type ProjectSpec struct {
 }
 
 type ServiceMeshSpec struct {
-	Enabled                  bool            `json:"enabled"`
-	ElasticSearchOperatorHub OperatorHubSpec `json:"elasticSearchOperatorHub"`
-	JaegerOperatorHub        OperatorHubSpec `json:"jaegerOperatorHub"`
-	KialiOperatorHub         OperatorHubSpec `json:"kialiOperatorHub"`
-	ServiceMeshOperatorHub   OperatorHubSpec `json:"serviceMeshOperatorHub"`
+	Enabled                bool            `json:"enabled"`
+	ServiceMeshOperatorHub OperatorHubSpec `json:"serviceMeshOperatorHub"`
 }
 
 type ServerlessSpec struct {
@@ -103,7 +100,7 @@ type CodeReadyWorkspaceSpec struct {
 	OperatorHub OperatorHubSpec `json:"operatorHub"`
 }
 
-type SquashSpec struct {
+type IstioWorkspaceSpec struct {
 	Enabled bool `json:"enabled"`
 }
 
@@ -133,7 +130,7 @@ type WorkshopStatus struct {
 	Project            string `json:"project"`
 	ServiceMesh        string `json:"serviceMesh"`
 	Serverless         string `json:"serverless"`
-	Squash             string `json:"squash"`
+	IstioWorkspace     string `json:"istioWorkspace"`
 	Workshopper        string `json:"workshopper"`
 }
 

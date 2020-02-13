@@ -4,46 +4,43 @@ metadata:
   name: debugging-workshop
 spec:
   user: 
-    number: 5
-    password: r3dh4t1!
+    number: 10
+    password: openshift
   source:
-    gitURL: https://github.com/mcouliba/debugging-workshop
-    gitBranch: 1.0
+    gitURL: https://github.com/mcouliba/cloud-native-workshop
+    gitBranch: "3.1"
   infrastructure:
-    che:
+    argocd:
+      enabled: true
+    codeReadyWorkspace:
       enabled: true
       operatorHub:
-        channel: stable
-        clusterServiceVersion: eclipse-che.v7.1.0
+        channel: latest
+        clusterServiceVersion: crwoperator.v2.0.0
     etherpad:
       enabled: true
     gogs:
-      enabled: false
+      enabled: true
+      image:
+        name: quay.io/gpte-devops-automation/gogs-operator
+        tag: v0.12
     nexus:
       enabled: true
+    pipeline:
+      enabled: true
+      operatorHub:
+        channel: dev-preview
+        clusterServiceVersion: openshift-pipelines-operator.v0.8.2
+    project:
+      enabled: true
+      devName: my-project
+      stagingName: cn-project
     serviceMesh:
       enabled: true
-      elasticSearchOperatorHub:
-        channel: preview
-        clusterServiceVersion: elasticsearch-operator.4.1.15-201909041605
-      jaegerOperatorHub:
-        channel: stable
-        clusterServiceVersion: jaeger-operator.v1.13.1
-      kialiOperatorHub:
-        channel: stable
-        clusterServiceVersion: kiali-operator.v1.0.5
       serviceMeshOperatorHub:
         channel: "1.0"
-        clusterServiceVersion: servicemeshoperator.v1.0.0
-    # guide:
-    #   enabled: true
-    #   gitRepositoryLabPath: mcouliba/cloud-native-labs
-    #   gitRepositoryLabReference: debugging
-    #   gitRepositoryGuidePath: dwojciec/debugging-lab-summit-2019
-    #   gitRepositoryGuideReference: master
-    #   gitRepositoryGuideContext: instructions
-    #   gitRepositoryGuideFile: _debugging-workshop.yml
-    squash:
-      enabled: true
+        clusterServiceVersion: servicemeshoperator.v1.0.6
+    istioWorkspace:
+      enabled: false
     workshopper:
       enabled: true

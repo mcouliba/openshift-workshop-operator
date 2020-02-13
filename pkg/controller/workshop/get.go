@@ -132,3 +132,21 @@ func (r *ReconcileWorkshop) GetDeploymentEnvVarSource(deployment *appsv1.Deploym
 	}
 	return valueFrom
 }
+
+func (r *ReconcileWorkshop) GetInstallPlan(name string, namespace string) (installPlan *olmv1alpha1.InstallPlan, err error) {
+	installPlan = &olmv1alpha1.InstallPlan{}
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, installPlan); err != nil {
+		logrus.Errorf("Failed to Get InstallPlan %s: %s", installPlan, err)
+		return nil, err
+	}
+	return installPlan, nil
+}
+
+func (r *ReconcileWorkshop) GetSubscription(name string, namespace string) (subscription *olmv1alpha1.Subscription, err error) {
+	subscription = &olmv1alpha1.Subscription{}
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, subscription); err != nil {
+		logrus.Errorf("Failed to Get Subscription %s: %s", subscription, err)
+		return nil, err
+	}
+	return subscription, nil
+}

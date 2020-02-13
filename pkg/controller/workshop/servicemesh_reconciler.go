@@ -54,6 +54,12 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 		logrus.Infof("Created %s Subscription", servicemeshSubscription.Name)
 	}
 
+	// Approve the installation
+	if err := r.ApproveInstallPlan("servicemeshoperator", "openshift-operators"); err != nil {
+		logrus.Infof("Waiting for Subscription to create InstallPlan for %s", "servicemeshoperator")
+		return reconcile.Result{}, err
+	}
+
 	// ISTIO-SYSTEM
 	istioSystemNamespace := deployment.NewNamespace(instance, "istio-system")
 	if err := r.client.Create(context.TODO(), istioSystemNamespace); err != nil && !errors.IsAlreadyExists(err) {
@@ -67,7 +73,7 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 		Namespace: istioSystemNamespace.Name,
 	})
 	if err := r.client.Create(context.TODO(), serviceMeshControlPlaneCR); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 30}, err
+		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 1}, err
 	} else if err == nil {
 		logrus.Infof("Created %s Custom Resource", serviceMeshControlPlaneCR.Name)
 	}
@@ -110,7 +116,7 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 		Members:   istioMembers,
 	})
 	if err := r.client.Create(context.TODO(), serviceMeshMemberRollCR); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 30}, err
+		return reconcile.Result{}, err
 	} else if err == nil {
 		logrus.Infof("Created %s Custom Resource", serviceMeshMemberRollCR.Name)
 	}
