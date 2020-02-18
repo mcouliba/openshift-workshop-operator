@@ -75,7 +75,6 @@ func (r *ReconcileWorkshop) addCodeReadyWorkspace(instance *openshiftv1alpha1.Wo
 	}
 
 	// Approve the installation
-	time.Sleep(time.Duration(10) * time.Second)
 	if err := r.ApproveInstallPlan("codeready-workspaces", codeReadyWorkspacesNamespace.Name); err != nil {
 		logrus.Infof("Waiting for Subscription to create InstallPlan for %s", "codeready-workspaces")
 		return reconcile.Result{}, err

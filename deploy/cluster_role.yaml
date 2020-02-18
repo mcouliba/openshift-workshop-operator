@@ -130,6 +130,7 @@ rules:
   - operatorgroups
   - subscriptions
   - clusterserviceversions
+  - installplans
   verbs:
   - create
   - list
