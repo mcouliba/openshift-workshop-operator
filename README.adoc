@@ -41,20 +41,13 @@ Perform the following tasks:
 ----
 cd openshift-workshop-operator
 oc login
-oc new-project workshop-infra #<1>
-oc apply -n workshop-infra -f deploy/service_account.yaml #<2>
-oc apply -n workshop-infra -f deploy/cluster_role.yaml #<3>
-oc apply -n workshop-infra -f deploy/cluster_role_binding.yaml #<4>
-oc apply -n workshop-infra -f deploy/crds/openshift_v1alpha1_workshop_crd.yaml #<5>
-oc apply -n workshop-infra -f deploy/operator.yaml #<6>
+oc new-project workshop-infra
+oc apply -n workshop-infra -f deploy/service_account.yaml
+oc apply -n workshop-infra -f deploy/cluster_role.yaml
+oc apply -n workshop-infra -f deploy/cluster_role_binding.yaml
+oc apply -n workshop-infra -f deploy/crds/openshift_v1alpha1_workshop_crd.yaml
+oc apply -n workshop-infra -f deploy/operator.yaml
 ----
-<1> creates of the project/namespace for the operator to run in and to host some components
-like Etherpad and Gogs
-<2> creates of the Service Account for the operator
-<3> creates of the Cluster Role for the operator
-<4> grants the Cluster Role to the Service Account
-<5> creates of the Custom Resource Definition called "Workshop"
-<6> deploys the operator
 
 == Install the Workshop Infrastructure
 
