@@ -20,14 +20,14 @@ spec:
     etherpad:
       enabled: true
     gogs:
-      enabled: true
+      enabled: false
       image:
         name: quay.io/gpte-devops-automation/gogs-operator
         tag: v0.12
     nexus:
       enabled: true
     pipeline:
-      enabled: true
+      enabled: false
       operatorHub:
         channel: dev-preview
         clusterServiceVersion: openshift-pipelines-operator.v0.8.2
@@ -39,7 +39,7 @@ spec:
       enabled: true
       serviceMeshOperatorHub:
         channel: "1.0"
-        clusterServiceVersion: servicemeshoperator.v1.0.6
+        clusterServiceVersion: servicemeshoperator.v1.0.7
     istioWorkspace:
       enabled: false
     workshopper:

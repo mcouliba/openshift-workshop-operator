@@ -369,5 +369,6 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	}
 
 	//Success
+	reqLogger.Info("Workshop Reconciled")
 	return reconcile.Result{}, nil
 }

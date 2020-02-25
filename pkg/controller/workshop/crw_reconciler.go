@@ -111,8 +111,10 @@ func (r *ReconcileWorkshop) addCodeReadyWorkspace(instance *openshiftv1alpha1.Wo
 
 	if checluster.Status.CheClusterRunning != "Available" {
 		logrus.Warnf("Waiting for CodeReady Workspaces to be running: %s", checluster.Status.CheClusterRunning)
-		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, err
+		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, nil
 	}
+
+	logrus.Infof("CodeReady Workspaces is %s", checluster.Status.CheClusterRunning)
 
 	// Initialize Workspaces from devfile
 	devfile, result, err := getDevFile(instance)
