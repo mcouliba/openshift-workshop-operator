@@ -7,7 +7,7 @@ spec:
     number: 10
     password: openshift
   source:
-    gitURL: https://github.com/mcouliba/cloud-native-workshop
+    gitURL: https://github.com/mcouliba/debugging-workshop
     gitBranch: "3.1"
   infrastructure:
     argocd:
@@ -33,8 +33,8 @@ spec:
         clusterServiceVersion: openshift-pipelines-operator.v0.8.2
     project:
       enabled: true
-      devName: my-project
-      stagingName: cn-project
+      devName: dev-project
+      stagingName: staging-project
     serviceMesh:
       enabled: true
       serviceMeshOperatorHub:

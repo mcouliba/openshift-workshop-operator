@@ -21,27 +21,45 @@ func (r *ReconcileWorkshop) reconcileProject(instance *openshiftv1alpha1.Worksho
 	id := 1
 	for {
 		username := fmt.Sprintf("user%d", id)
-		projectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.StagingName, id)
+		devProjectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.DevName, id)
+		stagingProjectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.StagingName, id)
 
 		if id <= users && enabledProject {
 			// Project
-			if result, err := r.addProject(instance, projectName, username); err != nil {
+			if result, err := r.addProject(instance, devProjectName, username); err != nil {
+				return result, err
+			}
+			if result, err := r.addProject(instance, stagingProjectName, username); err != nil {
 				return result, err
 			}
 
 		} else {
 
-			projectNamespace := deployment.NewNamespace(instance, projectName)
-			projectNamespaceFound := &corev1.Namespace{}
-			projectNamespaceErr := r.client.Get(context.TODO(), types.NamespacedName{Name: projectNamespace.Name}, projectNamespaceFound)
+			devProjectNamespace := deployment.NewNamespace(instance, devProjectName)
+			devProjectNamespaceFound := &corev1.Namespace{}
+			devProjectNamespaceErr := r.client.Get(context.TODO(), types.NamespacedName{Name: devProjectNamespace.Name}, devProjectNamespaceFound)
 
-			if projectNamespaceErr != nil && errors.IsNotFound(projectNamespaceErr) {
+			if !(devProjectNamespaceErr != nil && errors.IsNotFound(devProjectNamespaceErr)) {
+				if result, err := r.deleteProject(devProjectNamespace); err != nil {
+					return result, err
+				}
+			}
+
+			stagingProjectNamespace := deployment.NewNamespace(instance, stagingProjectName)
+			stagingProjectNamespaceFound := &corev1.Namespace{}
+			stagingProjectNamespaceErr := r.client.Get(context.TODO(), types.NamespacedName{Name: stagingProjectNamespace.Name}, stagingProjectNamespaceFound)
+
+			if !(stagingProjectNamespaceErr != nil && errors.IsNotFound(stagingProjectNamespaceErr)) {
+				if result, err := r.deleteProject(stagingProjectNamespace); err != nil {
+					return result, err
+				}
+			}
+
+			if (devProjectNamespaceErr != nil && errors.IsNotFound(devProjectNamespaceErr)) &&
+				(stagingProjectNamespaceErr != nil && errors.IsNotFound(stagingProjectNamespaceErr)) {
 				break
 			}
 
-			if result, err := r.deleteProject(projectNamespace); err != nil {
-				return result, err
-			}
 		}
 
 		id++

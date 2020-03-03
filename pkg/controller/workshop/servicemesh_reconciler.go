@@ -81,9 +81,11 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 	istioMembers := []string{}
 	for id := 1; id <= users; id++ {
 		username := fmt.Sprintf("user%d", id)
-		projectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.StagingName, id)
+		devProjectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.DevName, id)
+		stagingProjectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.StagingName, id)
 
-		istioMembers = append(istioMembers, projectName)
+		istioMembers = append(istioMembers, devProjectName)
+		istioMembers = append(istioMembers, stagingProjectName)
 
 		jaegerRole := deployment.NewRole(deployment.NewRoleParameters{
 			Name:      username + "-jaeger",
@@ -145,7 +147,7 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 		} else if err == nil {
 			logrus.Infof("Updated Kiali ConfigMap for Labels")
 
-			kialipodName, err := k8sclient.GetDeploymentPod("kiali", istioSystemNamespace.Name)
+			kialipodName, err := k8sclient.GetDeploymentPod("kiali", istioSystemNamespace.Name, "app")
 			if err == nil {
 				found := &corev1.Pod{}
 				err = r.client.Get(context.TODO(), types.NamespacedName{Name: kialipodName, Namespace: istioSystemNamespace.Name}, found)
@@ -177,7 +179,7 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 		} else if err == nil {
 			logrus.Infof("Updated %s ConfigMap", injectorConfigMap.Name)
 
-			injectorPodName, err := k8sclient.GetDeploymentPod("sidecarInjectorWebhook", istioSystemNamespace.Name)
+			injectorPodName, err := k8sclient.GetDeploymentPod("sidecarInjectorWebhook", istioSystemNamespace.Name, "app")
 			if err == nil {
 				found := &corev1.Pod{}
 				err = r.client.Get(context.TODO(), types.NamespacedName{Name: injectorPodName, Namespace: istioSystemNamespace.Name}, found)

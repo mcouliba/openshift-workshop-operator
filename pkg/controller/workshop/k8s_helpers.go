@@ -142,7 +142,7 @@ func (cl *k8s) GetDeploymentStatus(name string, namespace string) (scaled bool) 
 		for i := range eventList {
 			logrus.Errorf("Event message: %v", eventList[i].Message)
 		}
-		deploymentPod, err := cl.GetDeploymentPod(name, namespace)
+		deploymentPod, err := cl.GetDeploymentPod(name, namespace, "app")
 		if err != nil {
 			return false
 		}
@@ -179,10 +179,10 @@ func (cl *k8s) GetPodLogs(podName string, namespace string) {
 }
 
 //GetDeploymentPod queries all pods is a selected namespace by LabelSelector
-func (cl *k8s) GetDeploymentPod(name string, namespace string) (podName string, err error) {
+func (cl *k8s) GetDeploymentPod(name string, namespace string, label string) (podName string, err error) {
 	api := cl.clientset.CoreV1()
 	listOptions := metav1.ListOptions{
-		LabelSelector: "app=" + name,
+		LabelSelector: label + "=" + name,
 	}
 	podList, _ := api.Pods(namespace).List(listOptions)
 	podListItems := podList.Items

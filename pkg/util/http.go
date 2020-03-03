@@ -13,6 +13,10 @@ type Token struct {
 	Scope            string `json:"scope"`
 }
 
+type ArgoToken struct {
+	Token string `json:"token"`
+}
+
 func GetBasicAuth(username string, password string) string {
 	auth := username + ":" + password
 	return base64.StdEncoding.EncodeToString([]byte(auth))
