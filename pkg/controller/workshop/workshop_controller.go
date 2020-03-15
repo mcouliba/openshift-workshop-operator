@@ -4,8 +4,8 @@ import (
 	"context"
 	"regexp"
 
+	argocd "github.com/argoproj-labs/argocd-operator/pkg/apis/argoproj/v1alpha1"
 	che "github.com/eclipse/che-operator/pkg/apis/org/v1"
-	argocd "github.com/jmckind/argocd-operator/pkg/apis/argoproj/v1alpha1"
 	imagev1 "github.com/openshift/api/image/v1"
 	oauthv1 "github.com/openshift/api/oauth/v1"
 	routev1 "github.com/openshift/api/route/v1"
@@ -35,7 +35,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logf.Log.WithName("controller_workshop")
+var (
+	log = logf.Log.WithName("controller_workshop")
+)
 
 /**
 * USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
@@ -365,6 +367,13 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	// Serverless
 	//////////////////////////
 	if result, err := r.reconcileServerless(instance); err != nil {
+		return result, err
+	}
+
+	//////////////////////////
+	// Istio Workspace
+	//////////////////////////
+	if result, err := r.reconcileIstioWorkspace(instance, users); err != nil {
 		return result, err
 	}
 

@@ -44,7 +44,8 @@ type InfrastructureSpec struct {
 }
 
 type ArgoCDSpec struct {
-	Enabled bool `json:"enabled"`
+	Enabled     bool            `json:"enabled"`
+	OperatorHub OperatorHubSpec `json:"operatorHub"`
 }
 
 type EtherpadSpec struct {
@@ -72,8 +73,8 @@ type ProjectSpec struct {
 }
 
 type ServiceMeshSpec struct {
-	Enabled                bool            `json:"enabled"`
-	ServiceMeshOperatorHub OperatorHubSpec `json:"serviceMeshOperatorHub"`
+	Enabled     bool            `json:"enabled"`
+	OperatorHub OperatorHubSpec `json:"operatorHub"`
 }
 
 type ServerlessSpec struct {
@@ -101,7 +102,8 @@ type CodeReadyWorkspaceSpec struct {
 }
 
 type IstioWorkspaceSpec struct {
-	Enabled bool `json:"enabled"`
+	Enabled bool      `json:"enabled"`
+	Image   ImageSpec `json:"image"`
 }
 
 type OperatorHubSpec struct {

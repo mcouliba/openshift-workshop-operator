@@ -46,8 +46,8 @@ func (r *ReconcileWorkshop) reconcileServiceMesh(instance *openshiftv1alpha1.Wor
 func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop, users int) (reconcile.Result, error) {
 
 	servicemeshSubscription := deployment.NewRedHatSubscription(instance, "servicemeshoperator", "openshift-operators", "servicemeshoperator",
-		instance.Spec.Infrastructure.ServiceMesh.ServiceMeshOperatorHub.Channel,
-		instance.Spec.Infrastructure.ServiceMesh.ServiceMeshOperatorHub.ClusterServiceVersion)
+		instance.Spec.Infrastructure.ServiceMesh.OperatorHub.Channel,
+		instance.Spec.Infrastructure.ServiceMesh.OperatorHub.ClusterServiceVersion)
 	if err := r.client.Create(context.TODO(), servicemeshSubscription); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {

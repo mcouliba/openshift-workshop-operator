@@ -12,6 +12,9 @@ spec:
   infrastructure:
     argocd:
       enabled: true
+      operatorHub:
+        channel: alpha
+        clusterServiceVersion: argocd-operator.v0.0.4
     codeReadyWorkspace:
       enabled: true
       operatorHub:
@@ -37,10 +40,13 @@ spec:
       stagingName: staging-project
     serviceMesh:
       enabled: true
-      serviceMeshOperatorHub:
+      operatorHub:
         channel: "1.0"
         clusterServiceVersion: servicemeshoperator.v1.0.7
     istioWorkspace:
       enabled: false
+      image:
+        name: quay.io/maistra/istio-workspace
+        tag: v0.0.2
     workshopper:
       enabled: true

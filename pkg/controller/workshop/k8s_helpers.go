@@ -184,6 +184,7 @@ func (cl *k8s) GetDeploymentPod(name string, namespace string, label string) (po
 	listOptions := metav1.ListOptions{
 		LabelSelector: label + "=" + name,
 	}
+
 	podList, _ := api.Pods(namespace).List(listOptions)
 	podListItems := podList.Items
 	if len(podListItems) == 0 {

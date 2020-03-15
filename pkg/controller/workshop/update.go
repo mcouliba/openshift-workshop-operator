@@ -41,7 +41,7 @@ func (r *ReconcileWorkshop) ApproveInstallPlan(subscriptionName string, namespac
 		if err := r.client.Update(context.TODO(), installPlan); err != nil {
 			return err
 		}
-		logrus.Infof("%s Subscription in % project Approved", subscriptionName, namespace)
+		logrus.Infof("%s Subscription in %s project Approved", subscriptionName, namespace)
 	}
 
 	return nil

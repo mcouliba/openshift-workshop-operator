@@ -94,7 +94,7 @@ func NewAnsibleOperatorDeployment(cr *openshiftv1alpha1.Workshop, name string, n
 	}
 }
 
-func NewOperatorDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string, image string, serviceAccountName string, containerPort int32, commands []string, args []string, volumeMounts []corev1.VolumeMount, volumes []corev1.Volume) *appsv1.Deployment {
+func NewOperatorDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string, image string, serviceAccountName string, metricsPort int32, commands []string, args []string, volumeMounts []corev1.VolumeMount, volumes []corev1.Volume) *appsv1.Deployment {
 	labels := map[string]string{
 		"name": name,
 	}
@@ -129,7 +129,7 @@ func NewOperatorDeployment(cr *openshiftv1alpha1.Workshop, name string, namespac
 							Ports: []corev1.ContainerPort{
 								{
 									Name:          "metrics",
-									ContainerPort: containerPort,
+									ContainerPort: metricsPort,
 									Protocol:      "TCP",
 								},
 							},
