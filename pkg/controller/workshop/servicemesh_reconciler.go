@@ -45,9 +45,11 @@ func (r *ReconcileWorkshop) reconcileServiceMesh(instance *openshiftv1alpha1.Wor
 
 func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop, users int) (reconcile.Result, error) {
 
-	servicemeshSubscription := deployment.NewRedHatSubscription(instance, "servicemeshoperator", "openshift-operators", "servicemeshoperator",
-		instance.Spec.Infrastructure.ServiceMesh.OperatorHub.Channel,
-		instance.Spec.Infrastructure.ServiceMesh.OperatorHub.ClusterServiceVersion)
+	channel := instance.Spec.Infrastructure.ServiceMesh.OperatorHub.Channel
+	clusterServiceVersion := instance.Spec.Infrastructure.ServiceMesh.OperatorHub.ClusterServiceVersion
+
+	servicemeshSubscription := deployment.NewRedHatSubscription(instance, "servicemeshoperator", "openshift-operators",
+		"servicemeshoperator", channel, clusterServiceVersion)
 	if err := r.client.Create(context.TODO(), servicemeshSubscription); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
@@ -55,7 +57,7 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 	}
 
 	// Approve the installation
-	if err := r.ApproveInstallPlan("servicemeshoperator", "openshift-operators"); err != nil {
+	if err := r.ApproveInstallPlan(clusterServiceVersion, "servicemeshoperator", "openshift-operators"); err != nil {
 		logrus.Infof("Waiting for Subscription to create InstallPlan for %s", "servicemeshoperator")
 		return reconcile.Result{}, err
 	}

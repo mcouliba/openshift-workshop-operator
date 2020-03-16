@@ -12,13 +12,11 @@ import (
 	"strings"
 	"time"
 
-	che "github.com/eclipse/che-operator/pkg/apis/org/v1"
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	deployment "github.com/redhat/openshift-workshop-operator/pkg/deployment"
 	"github.com/redhat/openshift-workshop-operator/pkg/util"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
 )
@@ -51,6 +49,9 @@ func (r *ReconcileWorkshop) reconcileCodeReadyWorkspace(instance *openshiftv1alp
 func (r *ReconcileWorkshop) addCodeReadyWorkspace(instance *openshiftv1alpha1.Workshop, users int,
 	appsHostnameSuffix string, openshiftConsoleURL string, openshiftAPIURL string) (reconcile.Result, error) {
 
+	channel := instance.Spec.Infrastructure.CodeReadyWorkspace.OperatorHub.Channel
+	clusterServiceVersion := instance.Spec.Infrastructure.CodeReadyWorkspace.OperatorHub.ClusterServiceVersion
+
 	codeReadyWorkspacesNamespace := deployment.NewNamespace(instance, "workspaces")
 	if err := r.client.Create(context.TODO(), codeReadyWorkspacesNamespace); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
@@ -65,9 +66,8 @@ func (r *ReconcileWorkshop) addCodeReadyWorkspace(instance *openshiftv1alpha1.Wo
 		logrus.Infof("Created %s OperatorGroup", codeReadyWorkspacesOperatorGroup.Name)
 	}
 
-	codeReadyWorkspacesSubscription := deployment.NewRedHatSubscription(instance, "codeready-workspaces", codeReadyWorkspacesNamespace.Name, "codeready-workspaces",
-		instance.Spec.Infrastructure.CodeReadyWorkspace.OperatorHub.Channel,
-		instance.Spec.Infrastructure.CodeReadyWorkspace.OperatorHub.ClusterServiceVersion)
+	codeReadyWorkspacesSubscription := deployment.NewRedHatSubscription(instance, "codeready-workspaces", codeReadyWorkspacesNamespace.Name,
+		"codeready-workspaces", channel, clusterServiceVersion)
 	if err := r.client.Create(context.TODO(), codeReadyWorkspacesSubscription); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
@@ -75,24 +75,14 @@ func (r *ReconcileWorkshop) addCodeReadyWorkspace(instance *openshiftv1alpha1.Wo
 	}
 
 	// Approve the installation
-	if err := r.ApproveInstallPlan("codeready-workspaces", codeReadyWorkspacesNamespace.Name); err != nil {
+	if err := r.ApproveInstallPlan(clusterServiceVersion, "codeready-workspaces", codeReadyWorkspacesNamespace.Name); err != nil {
 		logrus.Warnf("Waiting for Subscription to create InstallPlan for %s", "codeready-workspaces")
 		return reconcile.Result{}, err
 	}
 
 	// Wait for CodeReadyWorkspace Operator to be running
-	time.Sleep(time.Duration(1) * time.Second)
-	codeReadyWorkspacesOperatorDeployment, err := r.GetEffectiveDeployment(instance, "codeready-operator", codeReadyWorkspacesNamespace.Name)
-	if err != nil {
-		logrus.Warnf("Waiting for OLM to create codeready-operator deployment")
-		return reconcile.Result{}, err
-	}
-
-	if codeReadyWorkspacesOperatorDeployment.Status.AvailableReplicas != 1 {
-		scaled := k8sclient.GetDeploymentStatus("codeready-operator", codeReadyWorkspacesNamespace.Name)
-		if !scaled {
-			return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 1}, err
-		}
+	if !k8sclient.GetDeploymentStatus("codeready-operator", codeReadyWorkspacesNamespace.Name) {
+		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 1}, nil
 	}
 
 	codeReadyWorkspacesCustomResource := deployment.NewCodeReadyWorkspacesCustomResource(instance, "codereadyworkspaces", codeReadyWorkspacesNamespace.Name)
@@ -103,18 +93,9 @@ func (r *ReconcileWorkshop) addCodeReadyWorkspace(instance *openshiftv1alpha1.Wo
 	}
 
 	// Wait for CodeReadyWorkspace to be running
-	checluster := &che.CheCluster{}
-	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: codeReadyWorkspacesCustomResource.Name, Namespace: codeReadyWorkspacesCustomResource.Namespace}, checluster); err != nil {
-		logrus.Errorf("Failed to get Checluster: %v", err)
-		return reconcile.Result{}, err
+	if !k8sclient.GetDeploymentStatus("codeready", codeReadyWorkspacesNamespace.Name) {
+		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 1}, nil
 	}
-
-	if checluster.Status.CheClusterRunning != "Available" {
-		logrus.Warnf("Waiting for CodeReady Workspaces to be running: %s", checluster.Status.CheClusterRunning)
-		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, nil
-	}
-
-	logrus.Infof("CodeReady Workspaces is %s", checluster.Status.CheClusterRunning)
 
 	// Initialize Workspaces from devfile
 	devfile, result, err := getDevFile(instance)

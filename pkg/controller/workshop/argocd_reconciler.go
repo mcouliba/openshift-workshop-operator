@@ -48,6 +48,9 @@ func (r *ReconcileWorkshop) reconcileArgoCD(instance *openshiftv1alpha1.Workshop
 func (r *ReconcileWorkshop) addArgoCD(instance *openshiftv1alpha1.Workshop, users int,
 	appsHostnameSuffix string, openshiftConsoleURL string, openshiftAPIURL string) (reconcile.Result, error) {
 
+	channel := instance.Spec.Infrastructure.ArgoCD.OperatorHub.Channel
+	clusterServiceVersion := instance.Spec.Infrastructure.ArgoCD.OperatorHub.ClusterServiceVersion
+
 	namespace := deployment.NewNamespace(instance, "argocd")
 	if err := r.client.Create(context.TODO(), namespace); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
@@ -69,8 +72,8 @@ func (r *ReconcileWorkshop) addArgoCD(instance *openshiftv1alpha1.Workshop, user
 		logrus.Infof("Created %s OperatorGroup", operatorGroup.Name)
 	}
 
-	subscription := deployment.NewCustomSubscription(instance, "argocd-operator", namespace.Name, "argocd-operator",
-		"alpha", catalogSource.Name)
+	subscription := deployment.NewCustomSubscription(instance, "argocd-operator", namespace.Name,
+		"argocd-operator", channel, catalogSource.Name)
 	if err := r.client.Create(context.TODO(), subscription); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
@@ -78,13 +81,12 @@ func (r *ReconcileWorkshop) addArgoCD(instance *openshiftv1alpha1.Workshop, user
 	}
 
 	// Approve the installation
-	if err := r.ApproveInstallPlan("argocd-operator", namespace.Name); err != nil {
+	if err := r.ApproveInstallPlan(clusterServiceVersion, "argocd-operator", namespace.Name); err != nil {
 		logrus.Warnf("Waiting for Subscription to create InstallPlan for %s", "argocd-operator")
 		return reconcile.Result{}, err
 	}
 
 	// Wait for ArgoCD Operator to be running
-	time.Sleep(time.Duration(1) * time.Second)
 	operatorDeployment, err := r.GetEffectiveDeployment(instance, "argocd-operator", namespace.Name)
 	if err != nil {
 		logrus.Warnf("Waiting for OLM to create %s deployment", "argocd-operator")
@@ -203,21 +205,17 @@ g, ` + username + `, ` + userRole + `
 		logrus.Infof("Created %s Custom Resource", customResource.Name)
 	}
 
+	// Wait for ArgoCD Dex Server to be running
+	if !k8sclient.GetDeploymentStatus("argocd-dex-server", namespace.Name) {
+		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 1}, nil
+	}
+
 	// Wait for ArgoCD Server to be running
-	time.Sleep(time.Duration(1) * time.Second)
-	deployment, err := r.GetEffectiveDeployment(instance, "argocd-server", namespace.Name)
-	if err != nil {
-		logrus.Warnf("Waiting for %s to be running", "argocd-server")
-		return reconcile.Result{}, err
+	if !k8sclient.GetDeploymentStatus("argocd-server", namespace.Name) {
+		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 1}, nil
 	}
 
-	if deployment.Status.AvailableReplicas != 1 {
-		scaled := k8sclient.GetDeploymentStatus("argocd-server", namespace.Name)
-		if !scaled {
-			return reconcile.Result{}, err
-		}
-	}
-
+	time.Sleep(time.Duration(10) * time.Second)
 	adminToken, result, err := getAdminToken(instance, namespace.Name, appsHostnameSuffix)
 	if err != nil {
 		return result, err

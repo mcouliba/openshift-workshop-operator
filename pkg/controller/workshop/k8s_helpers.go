@@ -119,16 +119,16 @@ func (cl *k8s) GetDeploymentStatus(name string, namespace string) (scaled bool) 
 			logrus.Errorf("Failed to get %s deployment: %s", deployment.Name, err)
 			return false
 		}
-		if deployment.Status.AvailableReplicas == 1 {
-			logrus.Infof("Deployment '%s' successfully scaled to %v", deployment.Name, deployment.Status.AvailableReplicas)
+		if deployment.Status.ReadyReplicas == 1 {
+			logrus.Infof("Deployment '%s' successfully scaled to %v", deployment.Name, deployment.Status.ReadyReplicas)
 			return true
 		}
 		switch event.Type {
 		case watch.Error:
 			watcher.Stop()
 		case watch.Modified:
-			if dc.Status.AvailableReplicas == 1 {
-				logrus.Infof("Deployment '%s' successfully scaled to %v", deployment.Name, dc.Status.AvailableReplicas)
+			if dc.Status.ReadyReplicas == 1 {
+				logrus.Infof("Deployment '%s' successfully scaled to %v", deployment.Name, dc.Status.ReadyReplicas)
 				watcher.Stop()
 				return true
 
@@ -136,7 +136,7 @@ func (cl *k8s) GetDeploymentStatus(name string, namespace string) (scaled bool) 
 		}
 	}
 	dc, _ := cl.clientset.AppsV1().Deployments(namespace).Get(name, metav1.GetOptions{})
-	if dc.Status.AvailableReplicas != 1 {
+	if dc.Status.ReadyReplicas != 1 {
 		logrus.Errorf("Failed to verify a successful %s deployment", name)
 		eventList := cl.GetEvents(name, namespace).Items
 		for i := range eventList {

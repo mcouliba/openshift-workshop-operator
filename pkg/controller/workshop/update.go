@@ -18,7 +18,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (r *ReconcileWorkshop) ApproveInstallPlan(subscriptionName string, namespace string) error {
+func (r *ReconcileWorkshop) ApproveInstallPlan(clusterServiceVersion string, subscriptionName string, namespace string) error {
 
 	subscription, subscriptionErr := r.GetSubscription(subscriptionName, namespace)
 
@@ -26,23 +26,25 @@ func (r *ReconcileWorkshop) ApproveInstallPlan(subscriptionName string, namespac
 		return subscriptionErr
 	}
 
-	if subscription.Status.InstallPlanRef == nil {
-		return errors.New("InstallPlan Approval: Subscription is not ready yet")
-	}
-
-	installPlan, installPlanErr := r.GetInstallPlan(subscription.Status.InstallPlanRef.Name, namespace)
-
-	if installPlanErr != nil {
-		return installPlanErr
-	}
-
-	if !installPlan.Spec.Approved {
-		installPlan.Spec.Approved = true
-		if err := r.client.Update(context.TODO(), installPlan); err != nil {
-			return err
+	if subscription.Status.InstalledCSV != clusterServiceVersion ||
+		subscription.Status.CurrentCSV == clusterServiceVersion {
+		if subscription.Status.InstallPlanRef == nil {
+			return errors.New("InstallPlan Approval: Subscription is not ready yet")
 		}
-		logrus.Infof("%s Subscription in %s project Approved", subscriptionName, namespace)
-	}
 
+		installPlan, installPlanErr := r.GetInstallPlan(subscription.Status.InstallPlanRef.Name, namespace)
+
+		if installPlanErr != nil {
+			return installPlanErr
+		}
+
+		if !installPlan.Spec.Approved {
+			installPlan.Spec.Approved = true
+			if err := r.client.Update(context.TODO(), installPlan); err != nil {
+				return err
+			}
+			logrus.Infof("%s Subscription in %s project Approved", subscriptionName, namespace)
+		}
+	}
 	return nil
 }
