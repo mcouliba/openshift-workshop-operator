@@ -39,9 +39,14 @@ func (r *ReconcileWorkshop) reconcileEtherpad(instance *openshiftv1alpha1.Worksh
 func (r *ReconcileWorkshop) addEtherpad(instance *openshiftv1alpha1.Workshop, users int, appsHostnameSuffix string) (reconcile.Result, error) {
 	reqLogger := log.WithName("Etherpad")
 
+	labels := map[string]string{
+		"app":                       "etherpad",
+		"app.kubernetes.io/part-of": "etherpad",
+	}
+
 	var userEndpointStr strings.Builder
 	for id := 1; id <= users; id++ {
-		userEndpointStr.WriteString(fmt.Sprintf("You are user%d\t|\thttp://guide-infra%d.%s\t|\t<INSERT_YOUR_NAME>\n", id, id, appsHostnameSuffix))
+		userEndpointStr.WriteString(fmt.Sprintf("You are user%d\t|\thttp://bookbag-%d-workshop-infra.%s\t|\t<INSERT_YOUR_NAME>\n", id, id, appsHostnameSuffix))
 	}
 
 	databaseCredentials := map[string]string{
@@ -64,14 +69,14 @@ func (r *ReconcileWorkshop) addEtherpad(instance *openshiftv1alpha1.Workshop, us
 		logrus.Infof("Created %s Persistent Volume Claim", etherpadDatabasePersistentVolumeClaim.Name)
 	}
 
-	etherpadDatabaseDeployment := deployment.NewEtherpadDatabaseDeployment(instance, "etherpad-mysql", instance.Namespace)
+	etherpadDatabaseDeployment := deployment.NewEtherpadDatabaseDeployment(instance, "etherpad-mysql", instance.Namespace, labels)
 	if err := r.client.Create(context.TODO(), etherpadDatabaseDeployment); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
 		logrus.Infof("Created %s Database", etherpadDatabaseDeployment.Name)
 	}
 
-	etherpadDatabaseService := deployment.NewService(instance, "etherpad-mysql", instance.Namespace, []string{"mysql"}, []int32{3306})
+	etherpadDatabaseService := deployment.NewService(instance, "etherpad-mysql", instance.Namespace, labels, []string{"mysql"}, []int32{3306})
 	if err := r.client.Create(context.TODO(), etherpadDatabaseService); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
@@ -83,11 +88,6 @@ func (r *ReconcileWorkshop) addEtherpad(instance *openshiftv1alpha1.Workshop, us
 		"settings.json": deployment.NewEtherpadSettingsJson(instance, userEndpointStr.String()),
 	}
 
-	labels := map[string]string{
-		"app.kubernetes.io/name":    "etherpad-settings",
-		"app.kubernetes.io/part-of": "etherpad",
-	}
-
 	etherpadConfigMap := deployment.NewConfigMap(instance, "etherpad-settings", instance.Namespace, labels, settings)
 	if err := r.client.Create(context.TODO(), etherpadConfigMap); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
@@ -95,21 +95,21 @@ func (r *ReconcileWorkshop) addEtherpad(instance *openshiftv1alpha1.Workshop, us
 		logrus.Infof("Created %s ConfigMap", etherpadConfigMap.Name)
 	}
 
-	etherpadDeployment := deployment.NewEtherpadDeployment(instance, "etherpad", instance.Namespace)
+	etherpadDeployment := deployment.NewEtherpadDeployment(instance, "etherpad", instance.Namespace, labels)
 	if err := r.client.Create(context.TODO(), etherpadDeployment); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
 		logrus.Infof("Created %s Deployment", etherpadDeployment.Name)
 	}
 
-	etherpadService := deployment.NewService(instance, "etherpad", instance.Namespace, []string{"http"}, []int32{9001})
+	etherpadService := deployment.NewService(instance, "etherpad", instance.Namespace, labels, []string{"http"}, []int32{9001})
 	if err := r.client.Create(context.TODO(), etherpadService); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
 		logrus.Infof("Created %s Service", etherpadService.Name)
 	}
 
-	etherpadRoute := deployment.NewRoute(instance, "etherpad", instance.Namespace, "etherpad", 9001)
+	etherpadRoute := deployment.NewRoute(instance, "etherpad", instance.Namespace, labels, "etherpad", 9001)
 	if err := r.client.Create(context.TODO(), etherpadRoute); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {

@@ -15,6 +15,11 @@ spec:
       operatorHub:
         channel: alpha
         clusterServiceVersion: argocd-operator.v0.0.4
+    bookbag:
+      enabled: true
+      image:
+        name: quay.io/mcouliba/debugging-workshop-bookbag
+        tag: "3.1"
     codeReadyWorkspace:
       enabled: true
       operatorHub:
@@ -49,4 +54,4 @@ spec:
         name: quay.io/maistra/istio-workspace
         tag: v0.0.2
     workshopper:
-      enabled: true
+      enabled: false

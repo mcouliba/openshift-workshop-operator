@@ -7,8 +7,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func NewService(cr *openshiftv1alpha1.Workshop, name string, namespace string, portName []string, portNumber []int32) *corev1.Service {
-	labels := GetLabels(cr, name)
+func NewService(cr *openshiftv1alpha1.Workshop, name string, namespace string, labels map[string]string,
+	portName []string, portNumber []int32) *corev1.Service {
 	ports := []corev1.ServicePort{}
 	for i := range portName {
 		port := corev1.ServicePort{
@@ -35,8 +35,8 @@ func NewService(cr *openshiftv1alpha1.Workshop, name string, namespace string, p
 	}
 }
 
-func NewCustomService(cr *openshiftv1alpha1.Workshop, name string, namespace string, portName []string, portNumber []int32, targetPortNumber []intstr.IntOrString) *corev1.Service {
-	labels := GetLabels(cr, name)
+func NewCustomService(cr *openshiftv1alpha1.Workshop, name string, namespace string, labels map[string]string,
+	portName []string, portNumber []int32, targetPortNumber []intstr.IntOrString) *corev1.Service {
 	ports := []corev1.ServicePort{}
 	for i := range portName {
 		port := corev1.ServicePort{

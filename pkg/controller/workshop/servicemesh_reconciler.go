@@ -83,10 +83,8 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 	istioMembers := []string{}
 	for id := 1; id <= users; id++ {
 		username := fmt.Sprintf("user%d", id)
-		devProjectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.DevName, id)
 		stagingProjectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.StagingName, id)
 
-		istioMembers = append(istioMembers, devProjectName)
 		istioMembers = append(istioMembers, stagingProjectName)
 
 		jaegerRole := deployment.NewRole(deployment.NewRoleParameters{

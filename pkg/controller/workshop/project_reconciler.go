@@ -21,45 +21,30 @@ func (r *ReconcileWorkshop) reconcileProject(instance *openshiftv1alpha1.Worksho
 	id := 1
 	for {
 		username := fmt.Sprintf("user%d", id)
-		devProjectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.DevName, id)
 		stagingProjectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.StagingName, id)
 
 		if id <= users && enabledProject {
 			// Project
-			if result, err := r.addProject(instance, devProjectName, username); err != nil {
-				return result, err
-			}
-			if result, err := r.addProject(instance, stagingProjectName, username); err != nil {
-				return result, err
-			}
-
-		} else {
-
-			devProjectNamespace := deployment.NewNamespace(instance, devProjectName)
-			devProjectNamespaceFound := &corev1.Namespace{}
-			devProjectNamespaceErr := r.client.Get(context.TODO(), types.NamespacedName{Name: devProjectNamespace.Name}, devProjectNamespaceFound)
-
-			if !(devProjectNamespaceErr != nil && errors.IsNotFound(devProjectNamespaceErr)) {
-				if result, err := r.deleteProject(devProjectNamespace); err != nil {
+			if instance.Spec.Infrastructure.Project.StagingName != "" {
+				if result, err := r.addProject(instance, stagingProjectName, username); err != nil {
 					return result, err
 				}
 			}
 
+		} else {
 			stagingProjectNamespace := deployment.NewNamespace(instance, stagingProjectName)
 			stagingProjectNamespaceFound := &corev1.Namespace{}
 			stagingProjectNamespaceErr := r.client.Get(context.TODO(), types.NamespacedName{Name: stagingProjectNamespace.Name}, stagingProjectNamespaceFound)
+
+			if stagingProjectNamespaceErr != nil && errors.IsNotFound(stagingProjectNamespaceErr) {
+				break
+			}
 
 			if !(stagingProjectNamespaceErr != nil && errors.IsNotFound(stagingProjectNamespaceErr)) {
 				if result, err := r.deleteProject(stagingProjectNamespace); err != nil {
 					return result, err
 				}
 			}
-
-			if (devProjectNamespaceErr != nil && errors.IsNotFound(devProjectNamespaceErr)) &&
-				(stagingProjectNamespaceErr != nil && errors.IsNotFound(stagingProjectNamespaceErr)) {
-				break
-			}
-
 		}
 
 		id++

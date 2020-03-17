@@ -67,6 +67,11 @@ func (r *ReconcileWorkshop) reconcileWorkshopper(instance *openshiftv1alpha1.Wor
 func (r *ReconcileWorkshop) addUpdateWorkshopper(instance *openshiftv1alpha1.Workshop, userID string,
 	appsHostnameSuffix string, openshiftConsoleURL string, openshiftAPIURL string) (reconcile.Result, error) {
 
+	labels := map[string]string{
+		"app":                       "guide",
+		"app.kubernetes.io/part-of": "workshopper",
+	}
+
 	infraProjectName := fmt.Sprintf("infra%s", userID)
 	workshopperNamespace := deployment.NewNamespace(instance, infraProjectName)
 	if err := r.client.Create(context.TODO(), workshopperNamespace); err != nil && !errors.IsAlreadyExists(err) {
@@ -97,7 +102,7 @@ func (r *ReconcileWorkshop) addUpdateWorkshopper(instance *openshiftv1alpha1.Wor
 	}
 
 	// Create Service
-	guideService := deployment.NewService(instance, "guide", infraProjectName, []string{"http"}, []int32{8080})
+	guideService := deployment.NewService(instance, "guide", infraProjectName, labels, []string{"http"}, []int32{8080})
 	if err := r.client.Create(context.TODO(), guideService); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
@@ -105,7 +110,7 @@ func (r *ReconcileWorkshop) addUpdateWorkshopper(instance *openshiftv1alpha1.Wor
 	}
 
 	// Create Route
-	guideRoute := deployment.NewRoute(instance, "guide", infraProjectName, "guide", 8080)
+	guideRoute := deployment.NewRoute(instance, "guide", infraProjectName, labels, "guide", 8080)
 	if err := r.client.Create(context.TODO(), guideRoute); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {

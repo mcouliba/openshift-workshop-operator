@@ -7,8 +7,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func NewRoute(cr *openshiftv1alpha1.Workshop, name string, namespace string, serviceName string, port int32) *routev1.Route {
-	labels := GetLabels(cr, name)
+func NewRoute(cr *openshiftv1alpha1.Workshop, name string, namespace string, labels map[string]string,
+	serviceName string, port int32) *routev1.Route {
+
 	targetPort := intstr.IntOrString{
 		Type:   intstr.Int,
 		IntVal: int32(port),

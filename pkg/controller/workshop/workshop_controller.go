@@ -313,6 +313,14 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	}
 
 	//////////////////////////
+	// Bookbag
+	//////////////////////////
+	if result, err := r.reconcileBookbag(instance, users, appsHostnameSuffix,
+		openshiftConsoleURL); err != nil {
+		return result, err
+	}
+
+	//////////////////////////
 	// Etherpad
 	//////////////////////////
 	if result, err := r.reconcileEtherpad(instance, users, appsHostnameSuffix); err != nil {

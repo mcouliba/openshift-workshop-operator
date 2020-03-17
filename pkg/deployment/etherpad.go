@@ -198,9 +198,8 @@ func NewEtherpadSettingsJson(cr *openshiftv1alpha1.Workshop, userEndpointStr str
 	return string(jsonResult)
 }
 
-func NewEtherpadDatabaseDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string) *appsv1.Deployment {
+func NewEtherpadDatabaseDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string, labels map[string]string) *appsv1.Deployment {
 	etherpadDatabaseImage := "image-registry.openshift-image-registry.svc:5000/openshift/mariadb:10.2"
-	labels := GetLabels(cr, name)
 
 	env := []corev1.EnvVar{
 		{
@@ -329,9 +328,8 @@ func NewEtherpadDatabaseDeployment(cr *openshiftv1alpha1.Workshop, name string, 
 	}
 }
 
-func NewEtherpadDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string) *appsv1.Deployment {
+func NewEtherpadDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string, labels map[string]string) *appsv1.Deployment {
 	etherpadImage := "quay.io/wkulhanek/etherpad:1.7.5"
-	labels := GetLabels(cr, name)
 
 	env := []corev1.EnvVar{
 		{

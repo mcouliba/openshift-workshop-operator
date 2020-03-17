@@ -30,22 +30,28 @@ type SourceSpec struct {
 
 type InfrastructureSpec struct {
 	ArgoCD             ArgoCDSpec             `json:"argocd"`
+	Bookbag            BookbagSpec            `json:"bookbag"`
 	CodeReadyWorkspace CodeReadyWorkspaceSpec `json:"codeReadyWorkspace"`
 	Etherpad           EtherpadSpec           `json:"etherpad"`
 	Gogs               GogsSpec               `json:"gogs"`
 	Guide              GuideSpec              `json:"guide"`
+	IstioWorkspace     IstioWorkspaceSpec     `json:"istioWorkspace"`
 	Nexus              NexusSpec              `json:"nexus"`
 	Pipeline           PipelineSpec           `json:"pipeline"`
 	Project            ProjectSpec            `json:"project"`
 	ServiceMesh        ServiceMeshSpec        `json:"serviceMesh"`
 	Serverless         ServerlessSpec         `json:"serverless"`
-	IstioWorkspace     IstioWorkspaceSpec     `json:"istioWorkspace"`
 	Workshopper        WorkshopperSpec        `json:"workshopper"`
 }
 
 type ArgoCDSpec struct {
 	Enabled     bool            `json:"enabled"`
 	OperatorHub OperatorHubSpec `json:"operatorHub"`
+}
+
+type BookbagSpec struct {
+	Enabled bool      `json:"enabled"`
+	Image   ImageSpec `json:"image"`
 }
 
 type EtherpadSpec struct {
@@ -123,16 +129,17 @@ type WorkshopStatus struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
 	ArgoCD             string `json:"argocd"`
+	Bookbag            string `json:"bookbag"`
 	CodeReadyWorkspace string `json:"codeReadyWorkspace"`
 	Etherpad           string `json:"etherpad"`
 	Gogs               string `json:"gogs"`
 	Guide              string `json:"guide"`
+	IstioWorkspace     string `json:"istioWorkspace"`
 	Nexus              string `json:"nexus"`
 	Pipeline           string `json:"pipeline"`
 	Project            string `json:"project"`
 	ServiceMesh        string `json:"serviceMesh"`
 	Serverless         string `json:"serverless"`
-	IstioWorkspace     string `json:"istioWorkspace"`
 	Workshopper        string `json:"workshopper"`
 }
 
