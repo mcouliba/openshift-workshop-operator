@@ -24,7 +24,8 @@ func NewBookbagDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace
 	"CHE_URL": "http://codeready-workspaces.` + appsHostnameSuffix + `",
 	"JAEGER_URL": "https://jaeger-istio-system.` + appsHostnameSuffix + `",
 	"KIALI_URL": "https://kiali-istio-system.` + appsHostnameSuffix + `",
-	"KIBANA_URL": "https://kibana-openshift-logging.` + appsHostnameSuffix + `"
+	"KIBANA_URL": "https://kibana-openshift-logging.` + appsHostnameSuffix + `",
+	"GITOPS_URL": "https://argocd-server-argocd.` + appsHostnameSuffix + `"
 }`
 
 	return &appsv1.Deployment{
