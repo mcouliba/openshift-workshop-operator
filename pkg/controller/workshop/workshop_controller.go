@@ -4,8 +4,8 @@ import (
 	"context"
 	"regexp"
 
+	argocd "github.com/argoproj-labs/argocd-operator/pkg/apis/argoproj/v1alpha1"
 	che "github.com/eclipse/che-operator/pkg/apis/org/v1"
-	argocd "github.com/jmckind/argocd-operator/pkg/apis/argoproj/v1alpha1"
 	imagev1 "github.com/openshift/api/image/v1"
 	oauthv1 "github.com/openshift/api/oauth/v1"
 	routev1 "github.com/openshift/api/route/v1"

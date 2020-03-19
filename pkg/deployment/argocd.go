@@ -1,7 +1,7 @@
 package deployment
 
 import (
-	argocd "github.com/jmckind/argocd-operator/pkg/apis/argoproj/v1alpha1"
+	argocd "github.com/argoproj-labs/argocd-operator/pkg/apis/argoproj/v1alpha1"
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
