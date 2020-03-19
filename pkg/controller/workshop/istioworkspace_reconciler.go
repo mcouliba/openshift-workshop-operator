@@ -95,7 +95,7 @@ func (r *ReconcileWorkshop) addIstioWorkspace(instance *openshiftv1alpha1.Worksh
 			Name:      username + "-istio-workspace",
 			Namespace: stagingProjectName,
 			Username:  username,
-			RoleName:  stagingProjectName,
+			RoleName:  username + "-istio-workspace",
 			RoleKind:  "Role",
 		})
 		if err := r.client.Create(context.TODO(), roleBinding); err != nil && !errors.IsAlreadyExists(err) {
