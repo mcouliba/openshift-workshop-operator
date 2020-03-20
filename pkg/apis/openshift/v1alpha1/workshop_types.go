@@ -41,6 +41,7 @@ type InfrastructureSpec struct {
 	Project            ProjectSpec            `json:"project"`
 	ServiceMesh        ServiceMeshSpec        `json:"serviceMesh"`
 	Serverless         ServerlessSpec         `json:"serverless"`
+	Vault              VaultSpec              `json:"vault"`
 	Workshopper        WorkshopperSpec        `json:"workshopper"`
 }
 
@@ -122,6 +123,11 @@ type ImageSpec struct {
 	Tag  string `json:"tag"`
 }
 
+type VaultSpec struct {
+	Enabled bool      `json:"enabled"`
+	Image   ImageSpec `json:"image"`
+}
+
 // WorkshopStatus defines the observed state of Workshop
 // +k8s:openapi-gen=true
 type WorkshopStatus struct {
@@ -140,6 +146,7 @@ type WorkshopStatus struct {
 	Project            string `json:"project"`
 	ServiceMesh        string `json:"serviceMesh"`
 	Serverless         string `json:"serverless"`
+	Vault              string `json:"vault"`
 	Workshopper        string `json:"workshopper"`
 }
 

@@ -18,7 +18,7 @@ func NewCustomResource(cr *openshiftv1alpha1.Workshop, name string, namespace st
 		Spec: NexusSpec{
 			NexusVolumeSize:    "5Gi",
 			NexusSSL:           true,
-			NexusImageTag:      "latest",
+			NexusImageTag:      "3.18.1-01-ubi-3",
 			NexusCPURequest:    1,
 			NexusCPULimit:      2,
 			NexusMemoryRequest: "2Gi",

@@ -190,6 +190,30 @@ func IstioUserRules() []rbac.PolicyRule {
 	}
 }
 
+func IstioArgoCDRules() []rbac.PolicyRule {
+	return []rbac.PolicyRule{
+		{
+			APIGroups: []string{
+				"networking.istio.io",
+			},
+			Resources: []string{
+				"destinationrules",
+				"gateways",
+				"virtualservices",
+			},
+			Verbs: []string{
+				"create",
+				"update",
+				"delete",
+				"get",
+				"list",
+				"watch",
+				"patch",
+			},
+		},
+	}
+}
+
 func JaegerUserRules() []rbac.PolicyRule {
 	return []rbac.PolicyRule{
 		{

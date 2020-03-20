@@ -385,6 +385,13 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 		return result, err
 	}
 
+	//////////////////////////
+	// Vault
+	//////////////////////////
+	if result, err := r.reconcileVault(instance, users); err != nil {
+		return result, err
+	}
+
 	//Success
 	reqLogger.Info("Workshop Reconciled")
 	return reconcile.Result{}, nil

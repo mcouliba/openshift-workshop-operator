@@ -47,11 +47,16 @@ spec:
       enabled: true
       operatorHub:
         channel: "1.0"
-        clusterServiceVersion: servicemeshoperator.v1.0.7
+        clusterServiceVersion: servicemeshoperator.v1.0.9
     istioWorkspace:
       enabled: true
       image:
         name: quay.io/maistra/istio-workspace
         tag: v0.0.2
+    vault:
+      enabled: false
+      image:
+        name: vault
+        tag: 1.3.3
     workshopper:
       enabled: false

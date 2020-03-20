@@ -46,7 +46,7 @@ func (r *ReconcileWorkshop) addEtherpad(instance *openshiftv1alpha1.Workshop, us
 
 	var userEndpointStr strings.Builder
 	for id := 1; id <= users; id++ {
-		userEndpointStr.WriteString(fmt.Sprintf("You are user%d\t|\thttp://bookbag-%d-workshop-infra.%s\t|\t<INSERT_YOUR_NAME>\n", id, id, appsHostnameSuffix))
+		userEndpointStr.WriteString(fmt.Sprintf("You are user%d\t|\thttp://bookbag-%d-workshop-infra.%s/workshop\t|\t<INSERT_YOUR_NAME>\n", id, id, appsHostnameSuffix))
 	}
 
 	databaseCredentials := map[string]string{

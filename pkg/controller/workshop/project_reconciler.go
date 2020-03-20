@@ -71,67 +71,8 @@ func (r *ReconcileWorkshop) addProject(instance *openshiftv1alpha1.Workshop, pro
 		logrus.Infof("Created %s Namespace", projectNamespace.Name)
 	}
 
-	istioRole := deployment.NewRole(deployment.NewRoleParameters{
-		Name:      username + "-istio",
-		Namespace: projectNamespace.Name,
-		Rules:     deployment.IstioUserRules(),
-	})
-	if err := r.client.Create(context.TODO(), istioRole); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s Role", istioRole.Name)
-	}
-
-	istioRoleBinding := deployment.NewRoleBindingUser(deployment.NewRoleBindingUserParameters{
-		Name:      username + "-istio",
-		Namespace: projectNamespace.Name,
-		Username:  username,
-		RoleName:  istioRole.Name,
-		RoleKind:  "Role",
-	})
-	if err := r.client.Create(context.TODO(), istioRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s Role Binding", istioRole.Name)
-	}
-
-	userRoleBinding := deployment.NewRoleBindingUser(deployment.NewRoleBindingUserParameters{
-		Name:      username + "-admin",
-		Namespace: projectNamespace.Name,
-		Username:  username,
-		RoleName:  "admin",
-		RoleKind:  "ClusterRole",
-	})
-	if err := r.client.Create(context.TODO(), userRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s Role Binding", userRoleBinding.Name)
-	}
-
-	defaultRoleBinding := deployment.NewRoleBindingSA(deployment.NewRoleBindingSAParameters{
-		Name:               "view",
-		Namespace:          projectNamespace.Name,
-		ServiceAccountName: "default",
-		RoleName:           "view",
-		RoleKind:           "ClusterRole",
-	})
-	if err := r.client.Create(context.TODO(), defaultRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s Role Binding", defaultRoleBinding.Name)
-	}
-
-	argocdRoleBinding := deployment.NewRoleBindingUser(deployment.NewRoleBindingUserParameters{
-		Name:      username + "-argocd",
-		Namespace: projectNamespace.Name,
-		Username:  "system:serviceaccount:argocd:argocd-application-controller",
-		RoleName:  "edit",
-		RoleKind:  "ClusterRole",
-	})
-	if err := r.client.Create(context.TODO(), argocdRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s Role Binding", argocdRoleBinding.Name)
+	if result, err := r.manageRoles(projectNamespace.Name, username); err != nil {
+		return result, err
 	}
 
 	//Success
@@ -144,6 +85,103 @@ func (r *ReconcileWorkshop) deleteProject(namespaces *corev1.Namespace) (reconci
 		return reconcile.Result{}, err
 	} else if err == nil {
 		logrus.Infof("Deleted %s Namespace", namespaces.Name)
+	}
+
+	//Success
+	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileWorkshop) manageRoles(projectName string, username string) (reconcile.Result, error) {
+
+	// Istio
+	istioRole := deployment.NewRole(deployment.NewRoleParameters{
+		Name:      username + "-istio",
+		Namespace: projectName,
+		Rules:     deployment.IstioUserRules(),
+	})
+	if err := r.client.Create(context.TODO(), istioRole); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Role", istioRole.Name)
+	}
+
+	istioRoleBinding := deployment.NewRoleBindingUser(deployment.NewRoleBindingUserParameters{
+		Name:      username + "-istio",
+		Namespace: projectName,
+		Username:  username,
+		RoleName:  istioRole.Name,
+		RoleKind:  "Role",
+	})
+	if err := r.client.Create(context.TODO(), istioRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Role Binding", istioRole.Name)
+	}
+
+	istioArgocdRole := deployment.NewRole(deployment.NewRoleParameters{
+		Name:      username + "-istio-argocd",
+		Namespace: projectName,
+		Rules:     deployment.IstioArgoCDRules(),
+	})
+	if err := r.client.Create(context.TODO(), istioArgocdRole); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Role", istioArgocdRole.Name)
+	}
+
+	istioArgocdRoleBinding := deployment.NewRoleBindingUser(deployment.NewRoleBindingUserParameters{
+		Name:      username + "-istio-argocd",
+		Namespace: projectName,
+		Username:  "system:serviceaccount:argocd:argocd-application-controller",
+		RoleName:  istioArgocdRole.Name,
+		RoleKind:  "Role",
+	})
+	if err := r.client.Create(context.TODO(), istioArgocdRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Role Binding", istioArgocdRoleBinding.Name)
+	}
+
+	// User
+	userRoleBinding := deployment.NewRoleBindingUser(deployment.NewRoleBindingUserParameters{
+		Name:      username + "-admin",
+		Namespace: projectName,
+		Username:  username,
+		RoleName:  "admin",
+		RoleKind:  "ClusterRole",
+	})
+	if err := r.client.Create(context.TODO(), userRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Role Binding", userRoleBinding.Name)
+	}
+
+	// Default
+	defaultRoleBinding := deployment.NewRoleBindingSA(deployment.NewRoleBindingSAParameters{
+		Name:               "view",
+		Namespace:          projectName,
+		ServiceAccountName: "default",
+		RoleName:           "view",
+		RoleKind:           "ClusterRole",
+	})
+	if err := r.client.Create(context.TODO(), defaultRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Role Binding", defaultRoleBinding.Name)
+	}
+
+	//Argo CD
+	argocdEditRoleBinding := deployment.NewRoleBindingUser(deployment.NewRoleBindingUserParameters{
+		Name:      username + "-argocd",
+		Namespace: projectName,
+		Username:  "system:serviceaccount:argocd:argocd-application-controller",
+		RoleName:  "edit",
+		RoleKind:  "ClusterRole",
+	})
+	if err := r.client.Create(context.TODO(), argocdEditRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Role Binding", argocdEditRoleBinding.Name)
 	}
 
 	//Success
