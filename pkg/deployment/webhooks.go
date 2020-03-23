@@ -4,26 +4,18 @@ import (
 	admissionregistration "k8s.io/api/admissionregistration/v1beta1"
 )
 
-func IstioWebHook() []admissionregistration.Webhook {
-	var smcp = new(string)
-	*smcp = "/validate-smcp"
-
-	var smmr = new(string)
-	*smmr = "/validate-smmr"
-
-	var failurePolicy = new(admissionregistration.FailurePolicyType)
-	*failurePolicy = admissionregistration.Fail
+func VaultAgentInjectorWebHook(namespace string) []admissionregistration.Webhook {
+	path := "/mutate"
 
 	return []admissionregistration.Webhook{
 		{
-			Name:          "smcp.validation.maistra.io",
-			FailurePolicy: failurePolicy,
+			Name: "vault.hashicorp.com",
 			ClientConfig: admissionregistration.WebhookClientConfig{
 				CABundle: []byte{},
 				Service: &admissionregistration.ServiceReference{
-					Name:      "admission-controller",
-					Namespace: "istio-operator",
-					Path:      smcp,
+					Name:      "vault-agent-injector",
+					Namespace: namespace,
+					Path:      &path,
 				},
 			},
 			Rules: []admissionregistration.RuleWithOperations{
@@ -34,44 +26,13 @@ func IstioWebHook() []admissionregistration.Webhook {
 					},
 					Rule: admissionregistration.Rule{
 						APIGroups: []string{
-							"maistra.io",
+							"",
 						},
 						APIVersions: []string{
 							"v1",
 						},
 						Resources: []string{
-							"servicemeshcontrolplanes",
-						},
-					},
-				},
-			},
-		},
-		{
-			Name:          "smmr.validation.maistra.io",
-			FailurePolicy: failurePolicy,
-			ClientConfig: admissionregistration.WebhookClientConfig{
-				CABundle: []byte{},
-				Service: &admissionregistration.ServiceReference{
-					Name:      "admission-controller",
-					Namespace: "istio-operator",
-					Path:      smmr,
-				},
-			},
-			Rules: []admissionregistration.RuleWithOperations{
-				{
-					Operations: []admissionregistration.OperationType{
-						"CREATE",
-						"UPDATE",
-					},
-					Rule: admissionregistration.Rule{
-						APIGroups: []string{
-							"maistra.io",
-						},
-						APIVersions: []string{
-							"v1",
-						},
-						Resources: []string{
-							"servicemeshmemberrolls",
+							"pods",
 						},
 					},
 				},

@@ -18,7 +18,11 @@ func (r *ReconcileWorkshop) reconcileVault(instance *openshiftv1alpha1.Workshop,
 	enabled := instance.Spec.Infrastructure.Vault.Enabled
 
 	if enabled {
-		if result, err := r.addVault(instance, users); err != nil {
+		if result, err := r.addVaultServer(instance, users); err != nil {
+			return result, err
+		}
+
+		if result, err := r.addVaultAgentInjector(instance, users); err != nil {
 			return result, err
 		}
 
@@ -36,7 +40,7 @@ func (r *ReconcileWorkshop) reconcileVault(instance *openshiftv1alpha1.Workshop,
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileWorkshop) addVault(instance *openshiftv1alpha1.Workshop, users int) (reconcile.Result, error) {
+func (r *ReconcileWorkshop) addVaultServer(instance *openshiftv1alpha1.Workshop, users int) (reconcile.Result, error) {
 	labels := map[string]string{
 		"app":                       "vault",
 		"app.kubernetes.io/name":    "vault",
@@ -91,12 +95,12 @@ storage "file" {
 		logrus.Infof("Created %s Service Account", serviceAccount.Name)
 	}
 
+	serviceAccountUser := "system:serviceaccount:" + namespace.Name + ":" + serviceAccount.Name
+
 	privilegedSCCFound := &securityv1.SecurityContextConstraints{}
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "privileged"}, privilegedSCCFound); err != nil {
 		return reconcile.Result{}, err
 	}
-
-	serviceAccountUser := "system:serviceaccount:" + namespace.Name + ":" + serviceAccount.Name
 	if !util.StringInSlice(serviceAccountUser, privilegedSCCFound.Users) {
 		privilegedSCCFound.Users = append(privilegedSCCFound.Users, serviceAccountUser)
 		if err := r.client.Update(context.TODO(), privilegedSCCFound); err != nil {
@@ -136,6 +140,89 @@ storage "file" {
 		return reconcile.Result{}, err
 	} else if err == nil {
 		logrus.Infof("Created %s Stateful", stateful.Name)
+	}
+
+	//Success
+	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileWorkshop) addVaultAgentInjector(instance *openshiftv1alpha1.Workshop, users int) (reconcile.Result, error) {
+	labels := map[string]string{
+		"app":                       "vault",
+		"app.kubernetes.io/name":    "vault-agent-injector",
+		"app.kubernetes.io/part-of": "vault",
+		"component":                 "webhook",
+	}
+
+	namespace := deployment.NewNamespace(instance, "vault")
+	if err := r.client.Create(context.TODO(), namespace); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Project", namespace.Name)
+	}
+
+	// Create Service Account
+	serviceAccount := deployment.NewServiceAccount(instance, "vault-agent-injector", namespace.Name)
+	if err := r.client.Create(context.TODO(), serviceAccount); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Service Account", serviceAccount.Name)
+	}
+
+	serviceAccountUser := "system:serviceaccount:" + namespace.Name + ":" + serviceAccount.Name
+
+	privilegedSCCFound := &securityv1.SecurityContextConstraints{}
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "privileged"}, privilegedSCCFound); err != nil {
+		return reconcile.Result{}, err
+	}
+
+	if !util.StringInSlice(serviceAccountUser, privilegedSCCFound.Users) {
+		privilegedSCCFound.Users = append(privilegedSCCFound.Users, serviceAccountUser)
+		if err := r.client.Update(context.TODO(), privilegedSCCFound); err != nil {
+			return reconcile.Result{}, err
+		} else if err == nil {
+			logrus.Infof("Updated %s SCC", privilegedSCCFound.Name)
+		}
+	}
+	// Create Cluster Role
+	clusterRole := deployment.NewClusterRole(instance, "vault-agent-injector", namespace.Name, deployment.VaultAgentInjectorRules())
+	if err := r.client.Create(context.TODO(), clusterRole); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Cluster Role", clusterRole.Name)
+	}
+
+	clusterRoleBinding := deployment.NewClusterRoleBindingForServiceAccount(instance, "vault-agent-injector", namespace.Name,
+		"vault-agent-injector", clusterRole.Name, "ClusterRole")
+	if err := r.client.Create(context.TODO(), clusterRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Cluster Role Binding", clusterRoleBinding.Name)
+	}
+
+	// Create Service
+	service := deployment.NewServiceWithTarget(instance, "vault-agent-injector", namespace.Name, labels,
+		[]string{"http"}, []int32{443}, []int32{8080})
+	if err := r.client.Create(context.TODO(), service); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Service", service.Name)
+	}
+
+	// Create Deployment
+	ocpDeployment := deployment.NewVaultAgentInjectorDeployment(instance, "vault-agent-injector", namespace.Name, labels)
+	if err := r.client.Create(context.TODO(), ocpDeployment); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Deployment", ocpDeployment.Name)
+	}
+
+	// Create
+	mutatingWebhookConfiguration := deployment.NewMutatingWebhookConfiguration(instance, "vault-agent-injector-cfg", labels, deployment.VaultAgentInjectorWebHook(namespace.Name))
+	if err := r.client.Create(context.TODO(), mutatingWebhookConfiguration); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Mutating Webhook Configuration", mutatingWebhookConfiguration.Name)
 	}
 
 	//Success

@@ -306,6 +306,7 @@ func (in *UserSpec) DeepCopy() *UserSpec {
 func (in *VaultSpec) DeepCopyInto(out *VaultSpec) {
 	*out = *in
 	out.Image = in.Image
+	out.AgentInjectorImage = in.AgentInjectorImage
 	return
 }
 

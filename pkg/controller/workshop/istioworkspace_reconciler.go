@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	securityv1 "github.com/openshift/api/security/v1"
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	deployment "github.com/redhat/openshift-workshop-operator/pkg/deployment"
 	"github.com/redhat/openshift-workshop-operator/pkg/util"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -103,6 +105,38 @@ func (r *ReconcileWorkshop) addIstioWorkspace(instance *openshiftv1alpha1.Worksh
 		} else if err == nil {
 			logrus.Infof("Created %s Role Binding", roleBinding.Name)
 		}
+
+		// Create SCC
+		serviceAccountUser := "system:serviceaccount:" + stagingProjectName + ":default"
+
+		privilegedSCCFound := &securityv1.SecurityContextConstraints{}
+		if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "privileged"}, privilegedSCCFound); err != nil {
+			return reconcile.Result{}, err
+		}
+
+		if !util.StringInSlice(serviceAccountUser, privilegedSCCFound.Users) {
+			privilegedSCCFound.Users = append(privilegedSCCFound.Users, serviceAccountUser)
+			if err := r.client.Update(context.TODO(), privilegedSCCFound); err != nil {
+				return reconcile.Result{}, err
+			} else if err == nil {
+				logrus.Infof("Updated %s SCC", privilegedSCCFound.Name)
+			}
+		}
+
+		anyuidSCCFound := &securityv1.SecurityContextConstraints{}
+		if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "anyuid"}, anyuidSCCFound); err != nil {
+			return reconcile.Result{}, err
+		}
+
+		if !util.StringInSlice(serviceAccountUser, anyuidSCCFound.Users) {
+			anyuidSCCFound.Users = append(anyuidSCCFound.Users, serviceAccountUser)
+			if err := r.client.Update(context.TODO(), anyuidSCCFound); err != nil {
+				return reconcile.Result{}, err
+			} else if err == nil {
+				logrus.Infof("Updated %s SCC", anyuidSCCFound.Name)
+			}
+		}
+
 	}
 
 	//Success

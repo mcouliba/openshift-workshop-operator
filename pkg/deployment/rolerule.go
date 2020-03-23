@@ -352,3 +352,22 @@ func IstioWorkspaceUserRules() []rbac.PolicyRule {
 		},
 	}
 }
+
+func VaultAgentInjectorRules() []rbac.PolicyRule {
+	return []rbac.PolicyRule{
+		{
+			APIGroups: []string{
+				"admissionregistration.k8s.io",
+			},
+			Resources: []string{
+				"mutatingwebhookconfigurations",
+			},
+			Verbs: []string{
+				"get",
+				"list",
+				"watch",
+				"patch",
+			},
+		},
+	}
+}

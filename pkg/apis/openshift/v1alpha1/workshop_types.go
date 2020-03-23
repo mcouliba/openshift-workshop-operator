@@ -124,8 +124,9 @@ type ImageSpec struct {
 }
 
 type VaultSpec struct {
-	Enabled bool      `json:"enabled"`
-	Image   ImageSpec `json:"image"`
+	Enabled            bool      `json:"enabled"`
+	Image              ImageSpec `json:"image"`
+	AgentInjectorImage ImageSpec `json:"agentInjectorImage"`
 }
 
 // WorkshopStatus defines the observed state of Workshop

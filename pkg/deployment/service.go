@@ -62,3 +62,35 @@ func NewCustomService(cr *openshiftv1alpha1.Workshop, name string, namespace str
 		},
 	}
 }
+
+func NewServiceWithTarget(cr *openshiftv1alpha1.Workshop, name string, namespace string, labels map[string]string,
+	portName []string, portNumber []int32, targetPortNumber []int32) *corev1.Service {
+	ports := []corev1.ServicePort{}
+	for i := range portName {
+		port := corev1.ServicePort{
+			Name: portName[i],
+			Port: portNumber[i],
+			TargetPort: intstr.IntOrString{
+				Type:   intstr.Int,
+				IntVal: targetPortNumber[i],
+			},
+			Protocol: "TCP",
+		}
+		ports = append(ports, port)
+	}
+	return &corev1.Service{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Service",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+			Labels:    labels,
+		},
+		Spec: corev1.ServiceSpec{
+			Ports:    ports,
+			Selector: labels,
+		},
+	}
+}
