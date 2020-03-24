@@ -25,6 +25,7 @@ spec:
       operatorHub:
         channel: latest
         clusterServiceVersion: crwoperator.v2.0.0
+      openshiftOAuth: false
     etherpad:
       enabled: true
     gogs:
@@ -52,7 +53,7 @@ spec:
       enabled: true
       image:
         name: quay.io/maistra/istio-workspace
-        tag: v0.0.2
+        tag: v0.0.3
     vault:
       enabled: false
       image:

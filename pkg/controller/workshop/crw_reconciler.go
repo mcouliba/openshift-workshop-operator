@@ -1,6 +1,7 @@
 package workshop
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/json"
@@ -103,20 +104,47 @@ func (r *ReconcileWorkshop) addCodeReadyWorkspace(instance *openshiftv1alpha1.Wo
 		return result, err
 	}
 
-	for id := 1; id <= users; id++ {
-		username := fmt.Sprintf("user%d", id)
-
-		userAccessToken, result, err := getUserToken(instance, username, "codeready", codeReadyWorkspacesNamespace.Name, appsHostnameSuffix)
+	// Users and Workspaces
+	if !instance.Spec.Infrastructure.CodeReadyWorkspace.OpenshiftOAuth {
+		masterAccessToken, result, err := getKeycloakAdminToken(instance, codeReadyWorkspacesNamespace.Name, appsHostnameSuffix)
 		if err != nil {
 			return result, err
 		}
 
-		if result, err := updateUserEmail(instance, username, "codeready", codeReadyWorkspacesNamespace.Name, appsHostnameSuffix); err != nil {
-			return result, err
-		}
+		for id := 1; id <= users; id++ {
+			username := fmt.Sprintf("user%d", id)
 
-		if result, err := initWorkspace(instance, username, "codeready", codeReadyWorkspacesNamespace.Name, userAccessToken, devfile, appsHostnameSuffix); err != nil {
-			return result, err
+			if result, err := createUser(instance, username, "codeready", codeReadyWorkspacesNamespace.Name, appsHostnameSuffix, masterAccessToken); err != nil {
+				return result, err
+			}
+
+			userAccessToken, result, err := getUserToken(instance, username, "codeready", codeReadyWorkspacesNamespace.Name, appsHostnameSuffix)
+			if err != nil {
+				return result, err
+			}
+
+			if result, err := initWorkspace(instance, username, "codeready", codeReadyWorkspacesNamespace.Name, userAccessToken, devfile, appsHostnameSuffix); err != nil {
+				return result, err
+			}
+
+		}
+	} else {
+		for id := 1; id <= users; id++ {
+			username := fmt.Sprintf("user%d", id)
+
+			userAccessToken, result, err := getOAuthUserToken(instance, username, "codeready", codeReadyWorkspacesNamespace.Name, appsHostnameSuffix)
+			if err != nil {
+				return result, err
+			}
+
+			if result, err := updateUserEmail(instance, username, "codeready", codeReadyWorkspacesNamespace.Name, appsHostnameSuffix); err != nil {
+				return result, err
+			}
+
+			if result, err := initWorkspace(instance, username, "codeready", codeReadyWorkspacesNamespace.Name, userAccessToken, devfile, appsHostnameSuffix); err != nil {
+				return result, err
+			}
+
 		}
 	}
 
@@ -175,7 +203,97 @@ func getDevFile(instance *openshiftv1alpha1.Workshop) (string, reconcile.Result,
 	return devfile, reconcile.Result{}, nil
 }
 
-func getUserToken(instance *openshiftv1alpha1.Workshop, username string,
+func createUser(instance *openshiftv1alpha1.Workshop, username string, codeflavor string,
+	namespace string, appsHostnameSuffix string, masterToken string) (reconcile.Result, error) {
+
+	var (
+		openshiftUserPassword = instance.Spec.User.Password
+		body                  []byte
+		err                   error
+		httpResponse          *http.Response
+		httpRequest           *http.Request
+		keycloakCheUserURL    = "https://keycloak-" + namespace + "." + appsHostnameSuffix + "/auth/admin/realms/" + codeflavor + "/users"
+
+		client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			},
+			// Do not follow Redirect
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
+		}
+	)
+
+	body, err = json.Marshal(deployment.NewCodeReadyUser(instance, username, openshiftUserPassword))
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	httpRequest, err = http.NewRequest("POST", keycloakCheUserURL, bytes.NewBuffer(body))
+	httpRequest.Header.Set("Authorization", "Bearer "+masterToken)
+	httpRequest.Header.Set("Content-Type", "application/json")
+
+	httpResponse, err = client.Do(httpRequest)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	if httpResponse.StatusCode == http.StatusCreated {
+		logrus.Infof("Created %s in CodeReady Workspaces", username)
+	}
+
+	return reconcile.Result{}, nil
+}
+
+func getUserToken(instance *openshiftv1alpha1.Workshop, username string, codeflavor string, namespace string, appsHostnameSuffix string) (string, reconcile.Result, error) {
+	var (
+		openshiftUserPassword = instance.Spec.User.Password
+		err                   error
+		httpResponse          *http.Response
+		httpRequest           *http.Request
+		keycloakCheTokenURL   = "https://keycloak-" + namespace + "." + appsHostnameSuffix + "/auth/realms/" + codeflavor + "/protocol/openid-connect/token"
+
+		userToken util.Token
+		client    = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			},
+			// Do not follow Redirect
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
+		}
+	)
+
+	// Get User Access Token
+	data := url.Values{}
+	data.Set("username", username)
+	data.Set("password", openshiftUserPassword)
+	data.Set("client_id", codeflavor+"-public")
+	data.Set("grant_type", "password")
+
+	httpRequest, err = http.NewRequest("POST", keycloakCheTokenURL, strings.NewReader(data.Encode()))
+	httpRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	httpResponse, err = client.Do(httpRequest)
+	if err != nil {
+		logrus.Errorf("Error to get the user access  token from %s keycloak (%v)", codeflavor, err)
+		return "", reconcile.Result{}, err
+	}
+	defer httpResponse.Body.Close()
+	if httpResponse.StatusCode == http.StatusOK {
+		if err := json.NewDecoder(httpResponse.Body).Decode(&userToken); err != nil {
+			logrus.Errorf("Error to get the user access  token from %s keycloak (%v)", codeflavor, err)
+			return "", reconcile.Result{}, err
+		}
+	} else {
+		logrus.Errorf("Error to get the user access token from %s keycloak (%d)", codeflavor, httpResponse.StatusCode)
+		return "", reconcile.Result{}, err
+	}
+
+	return userToken.AccessToken, reconcile.Result{}, nil
+}
+
+func getOAuthUserToken(instance *openshiftv1alpha1.Workshop, username string,
 	codeflavor string, namespace string, appsHostnameSuffix string) (string, reconcile.Result, error) {
 	var (
 		openshiftUserPassword = instance.Spec.User.Password
@@ -229,17 +347,17 @@ func getUserToken(instance *openshiftv1alpha1.Workshop, username string,
 		httpRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		httpResponse, err = client.Do(httpRequest)
 		if err != nil {
-			logrus.Errorf("Error to get the user access  token from %s keycloak (%v)", codeflavor, err)
+			logrus.Errorf("Error to get the oauth user access  token from %s keycloak (%v)", codeflavor, err)
 			return "", reconcile.Result{}, err
 		}
 		defer httpResponse.Body.Close()
 		if httpResponse.StatusCode == http.StatusOK {
 			if err := json.NewDecoder(httpResponse.Body).Decode(&userToken); err != nil {
-				logrus.Errorf("Error to get the user access  token from %s keycloak (%v)", codeflavor, err)
+				logrus.Errorf("Error to get the oauth user access  token from %s keycloak (%v)", codeflavor, err)
 				return "", reconcile.Result{}, err
 			}
 		} else {
-			logrus.Errorf("Error to get the user access token from %s keycloak (%d)", codeflavor, httpResponse.StatusCode)
+			logrus.Errorf("Error to get the oauth user access token from %s keycloak (%d)", codeflavor, httpResponse.StatusCode)
 			return "", reconcile.Result{}, err
 		}
 	} else {
@@ -248,6 +366,42 @@ func getUserToken(instance *openshiftv1alpha1.Workshop, username string,
 	}
 
 	return userToken.AccessToken, reconcile.Result{}, nil
+}
+
+func getKeycloakAdminToken(instance *openshiftv1alpha1.Workshop, namespace string, appsHostnameSuffix string) (string, reconcile.Result, error) {
+	var (
+		err                 error
+		httpResponse        *http.Response
+		httpRequest         *http.Request
+		keycloakCheTokenURL = "https://keycloak-" + namespace + "." + appsHostnameSuffix + "/auth/realms/master/protocol/openid-connect/token"
+
+		masterToken util.Token
+		client      = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			},
+			// Do not follow Redirect
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
+		}
+	)
+
+	// GET TOKEN
+	httpRequest, err = http.NewRequest("POST", keycloakCheTokenURL, strings.NewReader("username=admin&password=admin&grant_type=password&client_id=admin-cli"))
+	httpRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	httpResponse, err = client.Do(httpRequest)
+	if err != nil {
+		return "", reconcile.Result{}, err
+	}
+	defer httpResponse.Body.Close()
+	if httpResponse.StatusCode == http.StatusOK {
+		if err := json.NewDecoder(httpResponse.Body).Decode(&masterToken); err != nil {
+			return "", reconcile.Result{}, err
+		}
+	}
+
+	return masterToken.AccessToken, reconcile.Result{}, nil
 }
 
 func updateUserEmail(instance *openshiftv1alpha1.Workshop, username string,
