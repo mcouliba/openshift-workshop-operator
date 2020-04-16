@@ -63,7 +63,7 @@ func NewCodeReadyWorkspacesCustomResource(cr *openshiftv1alpha1.Workshop, name s
 					"CHE_WORKSPACE_ACTIVITY__CLEANUP__SCHEDULER__PERIOD__S": "-1",
 				},
 				DevfileRegistryImage: "",
-				PluginRegistryImage:  "quay.io/mcouliba/che-plugin-registry:7.3.x",
+				PluginRegistryImage:  "quay.io/mcouliba/che-plugin-registry:2.1.0.GA",
 				TlsSupport:           true,
 				SelfSignedCert:       false,
 			},
