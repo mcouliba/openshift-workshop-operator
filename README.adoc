@@ -59,7 +59,7 @@ please execute the following command:
 
 [source,bash]
 ----
-oc create -n workshop-infra -f deploy/crds/cloud_native_workshop_cr.yaml 
+oc create -n workshop-infra -f deploy/crds/debugging_workshop_cr.yaml
 ----
 
 == Development
