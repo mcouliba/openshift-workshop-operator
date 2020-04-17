@@ -24,7 +24,7 @@ spec:
       enabled: true
       operatorHub:
         channel: latest
-        clusterServiceVersion: crwoperator.v2.0.0
+        clusterServiceVersion: crwoperator.v2.1.0
       openshiftOAuth: false
     etherpad:
       enabled: true
