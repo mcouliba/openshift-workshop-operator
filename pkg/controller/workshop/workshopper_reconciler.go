@@ -81,7 +81,7 @@ func (r *ReconcileWorkshop) addUpdateWorkshopper(instance *openshiftv1alpha1.Wor
 	}
 
 	// Deploy/Update Guide
-	guideDeployment := deployment.NewWorkshopperDeployment(instance, "guide", infraProjectName, userID, appsHostnameSuffix, openshiftConsoleURL, openshiftAPIURL)
+	guideDeployment := deployment.NewWorkshopperDeployment(instance, "guide", infraProjectName, labels, userID, appsHostnameSuffix, openshiftConsoleURL, openshiftAPIURL)
 	if err := r.client.Create(context.TODO(), guideDeployment); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {

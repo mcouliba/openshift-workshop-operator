@@ -11,10 +11,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string, userID string,
-	appsHostnameSuffix string, openshiftConsoleURL string, openshiftAPIURL string) *appsv1.Deployment {
+func NewWorkshopperDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace string, labels map[string]string,
+	 userID string, appsHostnameSuffix string, openshiftConsoleURL string, openshiftAPIURL string) *appsv1.Deployment {
 	workshopperImage := "quay.io/osevg/workshopper:latest"
-	labels := GetLabels(cr, name)
 
 	guidePath := strings.TrimPrefix(cr.Spec.Source.GitURL, "https://github.com/")
 	guideBranch := cr.Spec.Source.GitBranch
