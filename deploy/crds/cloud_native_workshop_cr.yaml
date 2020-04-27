@@ -8,7 +8,7 @@ spec:
     password: openshift
   source:
     gitURL: https://github.com/mcouliba/cloud-native-workshop
-    gitBranch: "3.1"
+    gitBranch: "3.2"
   infrastructure:
     argocd:
       enabled: true
@@ -24,7 +24,7 @@ spec:
       enabled: true
       operatorHub:
         channel: latest
-        clusterServiceVersion: crwoperator.v2.0.0
+        clusterServiceVersion: crwoperator.v2.1.1
       openshiftOAuth: false
     etherpad:
       enabled: true
@@ -50,7 +50,7 @@ spec:
         channel: "1.0"
         clusterServiceVersion: servicemeshoperator.v1.0.10
     istioWorkspace:
-      enabled: true
+      enabled: false
       image:
         name: quay.io/maistra/istio-workspace
         tag: v0.0.3
