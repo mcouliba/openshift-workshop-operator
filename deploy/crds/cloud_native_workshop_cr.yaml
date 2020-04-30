@@ -53,7 +53,7 @@ spec:
         channel: "1.0"
         clusterServiceVersion: servicemeshoperator.v1.1.0
     istioWorkspace:
-      enabled: true
+      enabled: false
       image:
         name: quay.io/maistra/istio-workspace
         tag: v0.0.3
