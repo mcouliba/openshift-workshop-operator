@@ -8,7 +8,7 @@ spec:
     password: openshift
   source:
     gitURL: https://github.com/mcouliba/cloud-native-workshop
-    gitBranch: "3.1"
+    gitBranch: "3.2"
   infrastructure:
     argocd:
       enabled: true
@@ -19,13 +19,16 @@ spec:
       enabled: false
       image:
         name: quay.io/mcouliba/cloud-native-workshop-bookbag
-        tag: "3.1"
+        tag: "3.2"
     codeReadyWorkspace:
       enabled: true
       operatorHub:
         channel: latest
-        clusterServiceVersion: crwoperator.v2.0.0
+        clusterServiceVersion: crwoperator.v2.1.1
       openshiftOAuth: false
+      pluginRegistryImage:
+        name: quay.io/mcouliba/che-plugin-registry
+        tag: "2.1.1.GA"
     etherpad:
       enabled: true
     gogs:
@@ -48,7 +51,7 @@ spec:
       enabled: true
       operatorHub:
         channel: "1.0"
-        clusterServiceVersion: servicemeshoperator.v1.0.10
+        clusterServiceVersion: servicemeshoperator.v1.1.0
     istioWorkspace:
       enabled: true
       image:

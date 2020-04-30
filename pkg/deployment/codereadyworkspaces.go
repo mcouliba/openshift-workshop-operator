@@ -43,6 +43,10 @@ func NewCodeReadyUser(cr *openshiftv1alpha1.Workshop, username string, password 
 }
 
 func NewCodeReadyWorkspacesCustomResource(cr *openshiftv1alpha1.Workshop, name string, namespace string) *che.CheCluster {
+
+	pluginRegistryImage := cr.Spec.Infrastructure.CodeReadyWorkspace.PluginRegistryImage.Name +
+		":" + cr.Spec.Infrastructure.CodeReadyWorkspace.PluginRegistryImage.Tag
+
 	return &che.CheCluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "CheCluster",
@@ -63,7 +67,7 @@ func NewCodeReadyWorkspacesCustomResource(cr *openshiftv1alpha1.Workshop, name s
 					"CHE_WORKSPACE_ACTIVITY__CLEANUP__SCHEDULER__PERIOD__S": "-1",
 				},
 				DevfileRegistryImage: "",
-				PluginRegistryImage:  "quay.io/mcouliba/che-plugin-registry:2.1.0.GA",
+				PluginRegistryImage:  pluginRegistryImage,
 				TlsSupport:           true,
 				SelfSignedCert:       false,
 			},

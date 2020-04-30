@@ -46,6 +46,7 @@ func (in *BookbagSpec) DeepCopy() *BookbagSpec {
 func (in *CodeReadyWorkspaceSpec) DeepCopyInto(out *CodeReadyWorkspaceSpec) {
 	*out = *in
 	out.OperatorHub = in.OperatorHub
+	out.PluginRegistryImage = in.PluginRegistryImage
 	return
 }
 

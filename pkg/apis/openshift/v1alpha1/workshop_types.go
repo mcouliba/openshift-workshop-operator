@@ -104,9 +104,10 @@ type GuideSpec struct {
 }
 
 type CodeReadyWorkspaceSpec struct {
-	Enabled        bool            `json:"enabled"`
-	OperatorHub    OperatorHubSpec `json:"operatorHub"`
-	OpenshiftOAuth bool            `json:"openshiftOAuth"`
+	Enabled        		bool            `json:"enabled"`
+	OperatorHub    		OperatorHubSpec `json:"operatorHub"`
+	OpenshiftOAuth 		bool            `json:"openshiftOAuth"`
+	PluginRegistryImage	ImageSpec 		`json:"pluginRegistryImage"`
 }
 
 type IstioWorkspaceSpec struct {
