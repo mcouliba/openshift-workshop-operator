@@ -49,9 +49,18 @@ spec:
       stagingName: staging-project
     serviceMesh:
       enabled: true
-      operatorHub:
+      serviceMeshOperatorHub:
         channel: "1.0"
-        clusterServiceVersion: servicemeshoperator.v1.1.0
+        clusterServiceVersion: servicemeshoperator.v1.1.1
+      elasticSearchOperatorHub:
+        channel: "4.3"
+        clusterServiceVersion: elasticsearch-operator.4.3.14-202004200457
+      jaegerOperatorHub:
+        channel: "stable"
+        clusterServiceVersion: jaeger-operator.v1.17.2
+      kialiOperatorHub:
+        channel: "stable"
+        clusterServiceVersion: kiali-operator.v1.12.11
     istioWorkspace:
       enabled: false
       image:

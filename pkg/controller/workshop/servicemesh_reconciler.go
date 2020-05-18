@@ -25,6 +25,18 @@ func (r *ReconcileWorkshop) reconcileServiceMesh(instance *openshiftv1alpha1.Wor
 
 	if enabledServiceMesh || enabledServerless {
 
+		if result, err := r.addElasticSearchOperator(instance); err != nil {
+			return result, err
+		}
+
+		if result, err := r.addJaegerOperator(instance); err != nil {
+			return result, err
+		}
+
+		if result, err := r.addKialiOperator(instance); err != nil {
+			return result, err
+		}
+
 		if result, err := r.addServiceMesh(instance, users); err != nil {
 			return result, err
 		}
@@ -45,24 +57,24 @@ func (r *ReconcileWorkshop) reconcileServiceMesh(instance *openshiftv1alpha1.Wor
 
 func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop, users int) (reconcile.Result, error) {
 
-	channel := instance.Spec.Infrastructure.ServiceMesh.OperatorHub.Channel
-	clusterServiceVersion := instance.Spec.Infrastructure.ServiceMesh.OperatorHub.ClusterServiceVersion
+	// Service Mesh Operator
+	channel := instance.Spec.Infrastructure.ServiceMesh.ServiceMeshOperatorHub.Channel
+	clusterserviceversion := instance.Spec.Infrastructure.ServiceMesh.ServiceMeshOperatorHub.ClusterServiceVersion
 
-	servicemeshSubscription := deployment.NewRedHatSubscription(instance, "servicemeshoperator", "openshift-operators",
-		"servicemeshoperator", channel, clusterServiceVersion)
-	if err := r.client.Create(context.TODO(), servicemeshSubscription); err != nil && !errors.IsAlreadyExists(err) {
+	subscription := deployment.NewRedHatSubscription(instance, "servicemeshoperator", "openshift-operators",
+		"servicemeshoperator", channel, clusterserviceversion)
+	if err := r.client.Create(context.TODO(), subscription); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
-		logrus.Infof("Created %s Subscription", servicemeshSubscription.Name)
+		logrus.Infof("Created %s Subscription", subscription.Name)
 	}
 
-	// Approve the installation
-	if err := r.ApproveInstallPlan(clusterServiceVersion, "servicemeshoperator", "openshift-operators"); err != nil {
-		logrus.Infof("Waiting for Subscription to create InstallPlan for %s", "servicemeshoperator")
+	if err := r.ApproveInstallPlan(clusterserviceversion, "servicemeshoperator", "openshift-operators"); err != nil {
+		logrus.Infof("Waiting for Subscription to create InstallPlan for %s", subscription.Name)
 		return reconcile.Result{}, err
 	}
 
-	// ISTIO-SYSTEM
+	// Deploy Service Mesh
 	istioSystemNamespace := deployment.NewNamespace(instance, "istio-system")
 	if err := r.client.Create(context.TODO(), istioSystemNamespace); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
@@ -124,6 +136,11 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 	}
 
 	// Updated Istio/Kiali label for the Workshop
+	// Wait for Kiali to be running
+	if !k8sclient.GetDeploymentStatus("kiali", istioSystemNamespace.Name) {
+		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 1}, nil
+	}
+
 	kialiConfigMap, err := r.GetEffectiveConfigMap(instance, "kiali", istioSystemNamespace.Name)
 
 	if err != nil {
@@ -191,6 +208,72 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 				}
 			}
 		}
+	}
+
+	//Success
+	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileWorkshop) addElasticSearchOperator(instance *openshiftv1alpha1.Workshop) (reconcile.Result, error) {
+
+	channel := instance.Spec.Infrastructure.ServiceMesh.ElasticSearchOperatorHub.Channel
+	clusterserviceversion := instance.Spec.Infrastructure.ServiceMesh.ElasticSearchOperatorHub.ClusterServiceVersion
+
+	subscription := deployment.NewRedHatSubscription(instance, "elasticsearch-operator", "openshift-operators",
+		"elasticsearch-operator", channel, clusterserviceversion)
+	if err := r.client.Create(context.TODO(), subscription); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Subscription", subscription.Name)
+	}
+
+	if err := r.ApproveInstallPlan(clusterserviceversion, "elasticsearch-operator", "openshift-operators"); err != nil {
+		logrus.Infof("Waiting for Subscription to create InstallPlan for %s", subscription.Name)
+		return reconcile.Result{}, err
+	}
+
+	//Success
+	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileWorkshop) addJaegerOperator(instance *openshiftv1alpha1.Workshop) (reconcile.Result, error) {
+
+	channel := instance.Spec.Infrastructure.ServiceMesh.JaegerOperatorHub.Channel
+	clusterserviceversion := instance.Spec.Infrastructure.ServiceMesh.JaegerOperatorHub.ClusterServiceVersion
+
+	subscription := deployment.NewRedHatSubscription(instance, "jaeger-product", "openshift-operators",
+		"jaeger-product", channel, clusterserviceversion)
+	if err := r.client.Create(context.TODO(), subscription); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Subscription", subscription.Name)
+	}
+
+	if err := r.ApproveInstallPlan(clusterserviceversion, "jaeger-product", "openshift-operators"); err != nil {
+		logrus.Infof("Waiting for Subscription to create InstallPlan for %s", subscription.Name)
+		return reconcile.Result{}, err
+	}
+
+	//Success
+	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileWorkshop) addKialiOperator(instance *openshiftv1alpha1.Workshop) (reconcile.Result, error) {
+
+	channel := instance.Spec.Infrastructure.ServiceMesh.KialiOperatorHub.Channel
+	clusterserviceversion := instance.Spec.Infrastructure.ServiceMesh.KialiOperatorHub.ClusterServiceVersion
+
+	subscription := deployment.NewRedHatSubscription(instance, "kiali-ossm", "openshift-operators",
+		"kiali-ossm", channel, clusterserviceversion)
+	if err := r.client.Create(context.TODO(), subscription); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Subscription", subscription.Name)
+	}
+
+	if err := r.ApproveInstallPlan(clusterserviceversion, "kiali-ossm", "openshift-operators"); err != nil {
+		logrus.Infof("Waiting for Subscription to create InstallPlan for %s", subscription.Name)
+		return reconcile.Result{}, err
 	}
 
 	//Success

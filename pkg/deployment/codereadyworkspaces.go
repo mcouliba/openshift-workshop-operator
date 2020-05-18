@@ -61,8 +61,8 @@ func NewCodeReadyWorkspacesCustomResource(cr *openshiftv1alpha1.Workshop, name s
 				CheImageTag: "",
 				CheFlavor:   "codeready",
 				CustomCheProperties: map[string]string{
-					// "CHE_INFRA_KUBERNETES_NAMESPACE_DEFAULT":                "<username>-workspace",
-					"CHE_INFRA_KUBERNETES_PVC_WAIT__BOUND":                  "false",
+					"CHE_INFRA_KUBERNETES_NAMESPACE_DEFAULT":                "<username>-workspace",
+					"CHE_LIMITS_USER_WORKSPACES_RUN_COUNT":                  "2",
 					"CHE_WORKSPACE_ACTIVITY__CHECK__SCHEDULER__PERIOD__S":   "-1",
 					"CHE_WORKSPACE_ACTIVITY__CLEANUP__SCHEDULER__PERIOD__S": "-1",
 				},

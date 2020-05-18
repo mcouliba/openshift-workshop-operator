@@ -31,6 +31,7 @@ type SourceSpec struct {
 type InfrastructureSpec struct {
 	ArgoCD             ArgoCDSpec             `json:"argocd"`
 	Bookbag            BookbagSpec            `json:"bookbag"`
+	CertManager        CertManagerSpec        `json:"certManager"`
 	CodeReadyWorkspace CodeReadyWorkspaceSpec `json:"codeReadyWorkspace"`
 	Etherpad           EtherpadSpec           `json:"etherpad"`
 	Gogs               GogsSpec               `json:"gogs"`
@@ -53,6 +54,11 @@ type ArgoCDSpec struct {
 type BookbagSpec struct {
 	Enabled bool      `json:"enabled"`
 	Image   ImageSpec `json:"image"`
+}
+
+type CertManagerSpec struct {
+	Enabled     bool            `json:"enabled"`
+	OperatorHub OperatorHubSpec `json:"operatorHub"`
 }
 
 type EtherpadSpec struct {
@@ -80,8 +86,11 @@ type ProjectSpec struct {
 }
 
 type ServiceMeshSpec struct {
-	Enabled     bool            `json:"enabled"`
-	OperatorHub OperatorHubSpec `json:"operatorHub"`
+	Enabled                  bool            `json:"enabled"`
+	ServiceMeshOperatorHub   OperatorHubSpec `json:"serviceMeshOperatorHub"`
+	ElasticSearchOperatorHub OperatorHubSpec `json:"elasticSearchOperatorHub"`
+	JaegerOperatorHub        OperatorHubSpec `json:"jaegerOperatorHub"`
+	KialiOperatorHub         OperatorHubSpec `json:"kialiOperatorHub"`
 }
 
 type ServerlessSpec struct {
@@ -104,10 +113,10 @@ type GuideSpec struct {
 }
 
 type CodeReadyWorkspaceSpec struct {
-	Enabled        		bool            `json:"enabled"`
-	OperatorHub    		OperatorHubSpec `json:"operatorHub"`
-	OpenshiftOAuth 		bool            `json:"openshiftOAuth"`
-	PluginRegistryImage	ImageSpec 		`json:"pluginRegistryImage"`
+	Enabled             bool            `json:"enabled"`
+	OperatorHub         OperatorHubSpec `json:"operatorHub"`
+	OpenshiftOAuth      bool            `json:"openshiftOAuth"`
+	PluginRegistryImage ImageSpec       `json:"pluginRegistryImage"`
 }
 
 type IstioWorkspaceSpec struct {
@@ -139,6 +148,7 @@ type WorkshopStatus struct {
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
 	ArgoCD             string `json:"argocd"`
 	Bookbag            string `json:"bookbag"`
+	CertManager        string `json:"certManager"`
 	CodeReadyWorkspace string `json:"codeReadyWorkspace"`
 	Etherpad           string `json:"etherpad"`
 	Gogs               string `json:"gogs"`

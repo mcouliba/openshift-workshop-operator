@@ -15,6 +15,7 @@ import (
 	ompv1 "github.com/operator-framework/operator-marketplace/pkg/apis/operators/v1"
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
 	gogscustomresource "github.com/redhat/openshift-workshop-operator/pkg/customresource/gogs"
+	certmanager "github.com/redhat/openshift-workshop-operator/pkg/deployment/certmanager"
 	smcp "github.com/redhat/openshift-workshop-operator/pkg/deployment/maistra/servicemeshcontrolplane"
 	smmr "github.com/redhat/openshift-workshop-operator/pkg/deployment/maistra/servicemeshmemberroll"
 	nexus "github.com/redhat/openshift-workshop-operator/pkg/deployment/nexus"
@@ -124,6 +125,10 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	if err := smmr.AddToScheme(mgr.GetScheme()); err != nil {
+		return err
+	}
+
+	if err := certmanager.AddToScheme(mgr.GetScheme()); err != nil {
 		return err
 	}
 
@@ -379,16 +384,23 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	}
 
 	//////////////////////////
-	// Istio Workspace
+	// Vault
 	//////////////////////////
-	if result, err := r.reconcileIstioWorkspace(instance, users); err != nil {
+	if result, err := r.reconcileVault(instance, users); err != nil {
 		return result, err
 	}
 
 	//////////////////////////
-	// Vault
+	// Cert Manager
 	//////////////////////////
-	if result, err := r.reconcileVault(instance, users); err != nil {
+	if result, err := r.reconcileCertManager(instance, users); err != nil {
+		return result, err
+	}
+
+	//////////////////////////
+	// Istio Workspace
+	//////////////////////////
+	if result, err := r.reconcileIstioWorkspace(instance, users); err != nil {
 		return result, err
 	}
 

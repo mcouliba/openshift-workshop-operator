@@ -1,31 +1,39 @@
 apiVersion: openshift.redhat.com/v1alpha1
 kind: Workshop
 metadata:
-  name: debugging-workshop
+  name: security-layers-workshop
 spec:
   user: 
     number: 10
     password: openshift
   source:
-    gitURL: https://github.com/mcouliba/debugging-workshop
-    gitBranch: "3.1"
+    gitURL: https://github.com/lbroudoux/secured-fruits-catalog-k8s
+    gitBranch: "master"
   infrastructure:
     argocd:
-      enabled: true
+      enabled: false
       operatorHub:
         channel: alpha
         clusterServiceVersion: argocd-operator.v0.0.4
     bookbag:
-      enabled: true
+      enabled: false
       image:
         name: quay.io/mcouliba/debugging-workshop-bookbag
         tag: "3.1"
+    certManager:
+      enabled: true
+      operatorHub:
+        channel: alpha
+        clusterServiceVersion: cert-manager-operator.v0.15.0
     codeReadyWorkspace:
       enabled: true
       operatorHub:
         channel: latest
-        clusterServiceVersion: crwoperator.v2.1.0
+        clusterServiceVersion: crwoperator.v2.1.1
       openshiftOAuth: false
+      pluginRegistryImage:
+        name: quay.io/mcouliba/che-plugin-registry
+        tag: "2.1.1.GA"
     etherpad:
       enabled: true
     gogs:
@@ -39,23 +47,32 @@ spec:
       enabled: false
       operatorHub:
         channel: dev-preview
-        clusterServiceVersion: openshift-pipelines-operator.v0.8.2
+        clusterServiceVersion: openshift-pipelines-operator.v0.10.7
     project:
       enabled: true
       devName: dev-project
-      stagingName: staging-project
+      stagingName: asl-project
     serviceMesh:
       enabled: true
-      operatorHub:
+      serviceMeshOperatorHub:
         channel: "1.0"
-        clusterServiceVersion: servicemeshoperator.v1.0.9
+        clusterServiceVersion: servicemeshoperator.v1.1.1
+      elasticSearchOperatorHub:
+        channel: "4.3"
+        clusterServiceVersion: elasticsearch-operator.4.3.14-202004200457
+      jaegerOperatorHub:
+        channel: "stable"
+        clusterServiceVersion: jaeger-operator.v1.17.2
+      kialiOperatorHub:
+        channel: "stable"
+        clusterServiceVersion: kiali-operator.v1.12.11
     istioWorkspace:
-      enabled: true
+      enabled: false
       image:
         name: quay.io/maistra/istio-workspace
         tag: v0.0.3
     vault:
-      enabled: false
+      enabled: true
       image:
         name: vault
         tag: "1.3.3"
@@ -63,4 +80,4 @@ spec:
         name: "hashicorp/vault-k8s"
         tag: "0.3.0"
     workshopper:
-      enabled: false
+      enabled: true
