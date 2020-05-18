@@ -1,7 +1,7 @@
 apiVersion: openshift.redhat.com/v1alpha1
 kind: Workshop
 metadata:
-  name: mono_to_micro-workshop
+  name: mono-to-micro-workshop
 spec:
   user: 
     number: 10
