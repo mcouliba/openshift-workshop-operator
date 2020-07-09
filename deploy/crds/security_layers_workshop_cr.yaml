@@ -4,7 +4,7 @@ metadata:
   name: security-layers-workshop
 spec:
   user: 
-    number: 10
+    number: 5
     password: openshift
   source:
     gitURL: https://github.com/lbroudoux/secured-fruits-catalog-k8s
@@ -14,7 +14,7 @@ spec:
       enabled: false
       operatorHub:
         channel: alpha
-        clusterServiceVersion: argocd-operator.v0.0.4
+        clusterServiceVersion: argocd-operator.v0.0.9
     bookbag:
       enabled: false
       image:
@@ -24,7 +24,7 @@ spec:
       enabled: true
       operatorHub:
         channel: alpha
-        clusterServiceVersion: cert-manager-operator.v0.15.0
+        clusterServiceVersion: cert-manager-operator.v0.15.1
     codeReadyWorkspace:
       enabled: true
       operatorHub:
@@ -56,10 +56,10 @@ spec:
       enabled: true
       serviceMeshOperatorHub:
         channel: "1.0"
-        clusterServiceVersion: servicemeshoperator.v1.1.1
+        clusterServiceVersion: servicemeshoperator.v1.1.2
       elasticSearchOperatorHub:
-        channel: "4.3"
-        clusterServiceVersion: elasticsearch-operator.4.3.14-202004200457
+        channel: "4.4"
+        clusterServiceVersion: elasticsearch-operator.4.4.0-202005270305
       jaegerOperatorHub:
         channel: "stable"
         clusterServiceVersion: jaeger-operator.v1.17.2

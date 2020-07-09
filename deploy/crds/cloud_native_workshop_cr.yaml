@@ -16,7 +16,7 @@ spec:
         channel: alpha
         clusterServiceVersion: argocd-operator.v0.0.4
     bookbag:
-      enabled: false
+      enabled: true
       image:
         name: quay.io/mcouliba/cloud-native-workshop-bookbag
         tag: "3.2"
@@ -41,8 +41,8 @@ spec:
     pipeline:
       enabled: true
       operatorHub:
-        channel: dev-preview
-        clusterServiceVersion: openshift-pipelines-operator.v0.10.7
+        channel: ocp-4.4
+        clusterServiceVersion: openshift-pipelines-operator.v1.0.1
     project:
       enabled: true
       devName: dev-project
@@ -51,16 +51,16 @@ spec:
       enabled: true
       serviceMeshOperatorHub:
         channel: "1.0"
-        clusterServiceVersion: servicemeshoperator.v1.1.1
+        clusterServiceVersion: servicemeshoperator.v1.1.4
       elasticSearchOperatorHub:
-        channel: "4.3"
-        clusterServiceVersion: elasticsearch-operator.4.3.14-202004200457
+        channel: "4.4"
+        clusterServiceVersion: elasticsearch-operator.4.4.0-202006211643.p0
       jaegerOperatorHub:
         channel: "stable"
-        clusterServiceVersion: jaeger-operator.v1.17.2
+        clusterServiceVersion: jaeger-operator.v1.17.3
       kialiOperatorHub:
         channel: "stable"
-        clusterServiceVersion: kiali-operator.v1.12.11
+        clusterServiceVersion: kiali-operator.v1.12.13
     istioWorkspace:
       enabled: false
       image:
@@ -75,4 +75,4 @@ spec:
         name: "hashicorp/vault-k8s"
         tag: "0.3.0"
     workshopper:
-      enabled: true
+      enabled: false
