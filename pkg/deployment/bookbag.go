@@ -26,8 +26,8 @@ func NewBookbagDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace
 	"KIALI_URL": "https://kiali-istio-system.` + appsHostnameSuffix + `",
 	"KIBANA_URL": "https://kibana-openshift-logging.` + appsHostnameSuffix + `",
 	"GITOPS_URL": "https://argocd-server-argocd.` + appsHostnameSuffix + `",
-	"WORKSHOP_GIT_REPO":` + cr.Spec.Source.GitURL + `",
-	"WORKSHOP_GIT_REF":` + cr.Spec.Source.GitBranch + `",
+	"WORKSHOP_GIT_REPO": "` + cr.Spec.Source.GitURL + `",
+	"WORKSHOP_GIT_REF": "` + cr.Spec.Source.GitBranch + `"
 }`
 
 	return &appsv1.Deployment{
