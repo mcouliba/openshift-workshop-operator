@@ -24,11 +24,11 @@ spec:
       enabled: true
       operatorHub:
         channel: latest
-        clusterServiceVersion: crwoperator.v2.1.1
+        clusterServiceVersion: crwoperator.v2.2.0
       openshiftOAuth: false
       pluginRegistryImage:
         name: quay.io/mcouliba/che-plugin-registry
-        tag: "2.1.1.GA"
+        tag: "2.2.0.GA"
     etherpad:
       enabled: true
     gogs:
@@ -46,7 +46,7 @@ spec:
     project:
       enabled: true
       devName: dev-project
-      stagingName: staging-project
+      stagingName: cn-project
     serviceMesh:
       enabled: true
       serviceMeshOperatorHub:
@@ -57,7 +57,7 @@ spec:
         clusterServiceVersion: elasticsearch-operator.4.4.0-202006211643.p0
       jaegerOperatorHub:
         channel: "stable"
-        clusterServiceVersion: jaeger-operator.v1.17.3
+        clusterServiceVersion: jaeger-operator.v1.17.4
       kialiOperatorHub:
         channel: "stable"
         clusterServiceVersion: kiali-operator.v1.12.13

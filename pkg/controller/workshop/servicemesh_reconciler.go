@@ -219,7 +219,7 @@ func (r *ReconcileWorkshop) addElasticSearchOperator(instance *openshiftv1alpha1
 	channel := instance.Spec.Infrastructure.ServiceMesh.ElasticSearchOperatorHub.Channel
 	clusterserviceversion := instance.Spec.Infrastructure.ServiceMesh.ElasticSearchOperatorHub.ClusterServiceVersion
 
-	subscription := deployment.NewRedHatSubscription(instance, "elasticsearch-operator", "openshift-operators",
+	subscription := deployment.NewRedHatSubscription(instance, "elasticsearch-operator", "openshift-operators-redhat",
 		"elasticsearch-operator", channel, clusterserviceversion)
 	if err := r.client.Create(context.TODO(), subscription); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
@@ -227,7 +227,7 @@ func (r *ReconcileWorkshop) addElasticSearchOperator(instance *openshiftv1alpha1
 		logrus.Infof("Created %s Subscription", subscription.Name)
 	}
 
-	if err := r.ApproveInstallPlan(clusterserviceversion, "elasticsearch-operator", "openshift-operators"); err != nil {
+	if err := r.ApproveInstallPlan(clusterserviceversion, "elasticsearch-operator", "openshift-operators-redhat"); err != nil {
 		logrus.Infof("Waiting for Subscription to create InstallPlan for %s", subscription.Name)
 		return reconcile.Result{}, err
 	}
