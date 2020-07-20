@@ -111,6 +111,22 @@ func (r *ReconcileWorkshop) addCodeReadyWorkspace(instance *openshiftv1alpha1.Wo
 			return result, err
 		}
 
+		// Che Cluster Role
+		cheClusterRole :=
+			deployment.NewClusterRole(instance, "che", codeReadyWorkspacesNamespace.Name, deployment.CheRules())
+		if err := r.client.Create(context.TODO(), cheClusterRole); err != nil && !errors.IsAlreadyExists(err) {
+			return reconcile.Result{}, err
+		} else if err == nil {
+			logrus.Infof("Created %s Cluster Role", cheClusterRole.Name)
+		}
+
+		cheClusterRoleBinding := deployment.NewClusterRoleBindingForServiceAccount(instance, "che", codeReadyWorkspacesNamespace.Name, "che", cheClusterRole.Name, "ClusterRole")
+		if err := r.client.Create(context.TODO(), cheClusterRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
+			return reconcile.Result{}, err
+		} else if err == nil {
+			logrus.Infof("Created %s Cluster Role Binding", cheClusterRoleBinding.Name)
+		}
+
 		for id := 1; id <= users; id++ {
 			username := fmt.Sprintf("user%d", id)
 
@@ -144,7 +160,6 @@ func (r *ReconcileWorkshop) addCodeReadyWorkspace(instance *openshiftv1alpha1.Wo
 			if result, err := initWorkspace(instance, username, "codeready", codeReadyWorkspacesNamespace.Name, userAccessToken, devfile, appsHostnameSuffix); err != nil {
 				return result, err
 			}
-
 		}
 	}
 

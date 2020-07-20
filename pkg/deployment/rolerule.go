@@ -371,3 +371,19 @@ func VaultAgentInjectorRules() []rbac.PolicyRule {
 		},
 	}
 }
+
+func CheRules() []rbac.PolicyRule {
+	return []rbac.PolicyRule{
+		{
+			APIGroups: []string{
+				"project.openshift.io",
+			},
+			Resources: []string{
+				"projectrequests",
+			},
+			Verbs: []string{
+				"create",
+			},
+		},
+	}
+}

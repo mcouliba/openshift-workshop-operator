@@ -54,7 +54,6 @@ spec:
         clusterServiceVersion: servicemeshoperator.v1.1.4
       elasticSearchOperatorHub:
         channel: "4.4"
-        clusterServiceVersion: elasticsearch-operator.4.4.0-202006211643.p0
       jaegerOperatorHub:
         channel: "stable"
         clusterServiceVersion: jaeger-operator.v1.17.4

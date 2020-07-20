@@ -219,6 +219,13 @@ func (r *ReconcileWorkshop) addElasticSearchOperator(instance *openshiftv1alpha1
 	channel := instance.Spec.Infrastructure.ServiceMesh.ElasticSearchOperatorHub.Channel
 	clusterserviceversion := instance.Spec.Infrastructure.ServiceMesh.ElasticSearchOperatorHub.ClusterServiceVersion
 
+	redhatOperatorsNamespace := deployment.NewNamespace(instance, "openshift-operators-redhat")
+	if err := r.client.Create(context.TODO(), redhatOperatorsNamespace); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Namespace", redhatOperatorsNamespace.Name)
+	}
+
 	subscription := deployment.NewRedHatSubscription(instance, "elasticsearch-operator", "openshift-operators-redhat",
 		"elasticsearch-operator", channel, clusterserviceversion)
 	if err := r.client.Create(context.TODO(), subscription); err != nil && !errors.IsAlreadyExists(err) {
