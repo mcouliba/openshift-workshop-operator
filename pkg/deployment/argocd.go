@@ -6,7 +6,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func NewArgoCDCustomResource(cr *openshiftv1alpha1.Workshop, name string, namespace string) *argocd.ArgoCD {
+func NewArgoCDCustomResource(cr *openshiftv1alpha1.Workshop, name string, namespace string, argocdPolicy string) *argocd.ArgoCD {
+
+	scopes := "[preferred_username]"
+
 	return &argocd.ArgoCD{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ArgoCD",
@@ -17,23 +20,19 @@ func NewArgoCDCustomResource(cr *openshiftv1alpha1.Workshop, name string, namesp
 			Namespace: namespace,
 		},
 		Spec: argocd.ArgoCDSpec{
-			Image:   "argoproj/argocd",
-			Version: "v1.4.2",
-			Grafana: argocd.ArgoCDGrafanaSpec{
-				Enabled: false,
-			},
-			Ingress: argocd.ArgoCDIngressSpec{
-				Enabled: false,
-			},
-			Prometheus: argocd.ArgoCDPrometheusSpec{
-				Enabled: false,
+			ApplicationInstanceLabelKey: "argocd.argoproj.io/instance",
+			Dex: argocd.ArgoCDDexSpec{
+				OpenShiftOAuth: true,
 			},
 			Server: argocd.ArgoCDServerSpec{
 				Insecure: true,
+				Route: argocd.ArgoCDRouteSpec{
+					Enabled: true,
+				},
 			},
-			Dex: argocd.ArgoCDDexSpec{
-				Image:   "quay.io/ablock/dex",
-				Version: "openshift-connector",
+			RBAC: argocd.ArgoCDRBACSpec{
+				Policy: &argocdPolicy,
+				Scopes: &scopes,
 			},
 		},
 	}

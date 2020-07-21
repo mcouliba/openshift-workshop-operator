@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"reflect"
 	"strings"
 	"time"
 
@@ -14,9 +13,7 @@ import (
 	deployment "github.com/redhat/openshift-workshop-operator/pkg/deployment"
 	"github.com/redhat/openshift-workshop-operator/pkg/util"
 	"github.com/sirupsen/logrus"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -58,13 +55,6 @@ func (r *ReconcileWorkshop) addArgoCD(instance *openshiftv1alpha1.Workshop, user
 		logrus.Infof("Created %s Project", namespace.Name)
 	}
 
-	catalogSource := deployment.NewCatalogSource(instance, "argocd-catalog", "quay.io/mcouliba/argocd-operator-registry:latest", "Argo CD Operator", "Argo CD")
-	if err := r.client.Create(context.TODO(), catalogSource); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s Catalog Source", catalogSource.Name)
-	}
-
 	operatorGroup := deployment.NewOperatorGroup(instance, "argocd-operator", namespace.Name)
 	if err := r.client.Create(context.TODO(), operatorGroup); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
@@ -72,8 +62,8 @@ func (r *ReconcileWorkshop) addArgoCD(instance *openshiftv1alpha1.Workshop, user
 		logrus.Infof("Created %s OperatorGroup", operatorGroup.Name)
 	}
 
-	subscription := deployment.NewCustomSubscription(instance, "argocd-operator", namespace.Name,
-		"argocd-operator", channel, catalogSource.Name)
+	subscription := deployment.NewCommunitySubscription(instance, "argocd-operator", namespace.Name,
+		"argocd-operator", channel, clusterServiceVersion)
 	if err := r.client.Create(context.TODO(), subscription); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
@@ -100,56 +90,6 @@ func (r *ReconcileWorkshop) addArgoCD(instance *openshiftv1alpha1.Workshop, user
 		}
 	}
 
-	argocdRoute := "https://argocd-server-argocd." + appsHostnameSuffix
-	redirectURIs := []string{argocdRoute + "/api/dex/callback"}
-	oauthClient := deployment.NewOAuthClient(instance, "argocd-dex", redirectURIs)
-	if err := r.client.Create(context.TODO(), oauthClient); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s OAuth Client", oauthClient.Name)
-	}
-
-	data := map[string]string{
-		"dex.config": `connectors:
-  - type: openshift
-    id: openshift
-    name: OpenShift
-    config:
-      issuer: ` + openshiftAPIURL + `:6443
-      clientID: ` + oauthClient.Name + `
-      clientSecret: openshift
-      insecureCA: true
-      redirectURI: ` + argocdRoute + `/api/dex/callback`,
-		"url":                          argocdRoute,
-		"application.instanceLabelKey": "argocd.argoproj.io/instance",
-	}
-
-	labels := map[string]string{
-		"app.kubernetes.io/name":    "argocd-cm",
-		"app.kubernetes.io/part-of": "argocd",
-	}
-
-	configmap := deployment.NewConfigMap(instance, "argocd-cm", namespace.Name, labels, data)
-	if err := r.client.Create(context.TODO(), configmap); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s ConfigMap", configmap.Name)
-	} else if errors.IsAlreadyExists(err) {
-		configMapFound := &corev1.ConfigMap{}
-		if err := r.client.Get(context.TODO(), types.NamespacedName{Name: configmap.Name, Namespace: namespace.Name}, configMapFound); err != nil {
-			return reconcile.Result{}, err
-		} else if err == nil {
-			if !reflect.DeepEqual(configMapFound.Data, data) {
-				// Update
-				configMapFound.Data = data
-				if err := r.client.Update(context.TODO(), configMapFound); err != nil {
-					return reconcile.Result{}, err
-				}
-				logrus.Infof("Updated %s ConfigMap", configMapFound.Name)
-			}
-		}
-	}
-
 	argocdPolicy := ""
 	for id := 1; id <= users; id++ {
 		username := fmt.Sprintf("user%d", id)
@@ -171,38 +111,7 @@ g, ` + username + `, ` + userRole + `
 		argocdPolicy = fmt.Sprintf("%s%s", argocdPolicy, userPolicy)
 	}
 
-	rbacData := map[string]string{
-		"scopes":     "[preferred_username]",
-		"policy.csv": argocdPolicy,
-	}
-
-	rbacLabels := map[string]string{
-		"app.kubernetes.io/name":    "argocd-rbac-cm",
-		"app.kubernetes.io/part-of": "argocd",
-	}
-
-	rbacConfigmap := deployment.NewConfigMap(instance, "argocd-rbac-cm", namespace.Name, rbacLabels, rbacData)
-	if err := r.client.Create(context.TODO(), rbacConfigmap); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s ConfigMap", rbacConfigmap.Name)
-	} else if errors.IsAlreadyExists(err) {
-		configMapFound := &corev1.ConfigMap{}
-		if err := r.client.Get(context.TODO(), types.NamespacedName{Name: rbacConfigmap.Name, Namespace: namespace.Name}, configMapFound); err != nil {
-			return reconcile.Result{}, err
-		} else if err == nil {
-			if !reflect.DeepEqual(configMapFound.Data, rbacData) {
-				// Update
-				configMapFound.Data = rbacData
-				if err := r.client.Update(context.TODO(), configMapFound); err != nil {
-					return reconcile.Result{}, err
-				}
-				logrus.Infof("Updated %s ConfigMap", configMapFound.Name)
-			}
-		}
-	}
-
-	customResource := deployment.NewArgoCDCustomResource(instance, "argocd", namespace.Name)
+	customResource := deployment.NewArgoCDCustomResource(instance, "argocd", namespace.Name, argocdPolicy)
 	if err := r.client.Create(context.TODO(), customResource); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
