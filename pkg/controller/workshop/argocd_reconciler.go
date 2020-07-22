@@ -96,10 +96,7 @@ func (r *ReconcileWorkshop) addArgoCD(instance *openshiftv1alpha1.Workshop, user
 		userRole := fmt.Sprintf("role:%s", username)
 		projectName := fmt.Sprintf("%s%d", instance.Spec.Infrastructure.Project.StagingName, id)
 
-		userPolicy := `p, ` + userRole + `, applications, create, default/` + projectName + `, allow
-p, ` + userRole + `, applications, get, default/` + projectName + `, allow
-p, ` + userRole + `, applications, delete, default/` + projectName + `, allow
-p, ` + userRole + `, applications, sync, default/` + projectName + `, allow
+		userPolicy := `p, ` + userRole + `, applications, *, default/` + projectName + `, allow
 p, ` + userRole + `, clusters, get, https://kubernetes.default.svc, allow
 p, ` + userRole + `, projects, get, default, allow
 p, ` + userRole + `, repositories, get, ` + instance.Spec.Source.GitURL + `, allow
