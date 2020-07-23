@@ -56,7 +56,6 @@ spec:
         channel: "4.4"
       jaegerOperatorHub:
         channel: "stable"
-        clusterServiceVersion: jaeger-operator.v1.17.4
       kialiOperatorHub:
         channel: "stable"
         clusterServiceVersion: kiali-operator.v1.12.13

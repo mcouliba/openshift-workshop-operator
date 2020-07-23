@@ -3,7 +3,6 @@ package workshop
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
@@ -12,9 +11,7 @@ import (
 	smmr "github.com/redhat/openshift-workshop-operator/pkg/deployment/maistra/servicemeshmemberroll"
 	"github.com/redhat/openshift-workshop-operator/pkg/util"
 	"github.com/sirupsen/logrus"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -133,81 +130,6 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 		return reconcile.Result{}, err
 	} else if err == nil {
 		logrus.Infof("Created %s Custom Resource", serviceMeshMemberRollCR.Name)
-	}
-
-	// Updated Istio/Kiali label for the Workshop
-	// Wait for Kiali to be running
-	if !k8sclient.GetDeploymentStatus("kiali", istioSystemNamespace.Name) {
-		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 1}, nil
-	}
-
-	kialiConfigMap, err := r.GetEffectiveConfigMap(instance, "kiali", istioSystemNamespace.Name)
-
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	configLines := strings.Split(kialiConfigMap.Data["config.yaml"], "\n")
-
-	for i, line := range configLines {
-		if strings.Contains(line, "app_label_name:") {
-			configLines[i] = "  app_label_name: app.kubernetes.io/instance"
-			break
-		}
-	}
-	newConfig := strings.Join(configLines, "\n")
-
-	if kialiConfigMap.Data["config.yaml"] != newConfig {
-		kialiConfigMap.Data["config.yaml"] = newConfig
-		if err := r.client.Update(context.TODO(), kialiConfigMap); err != nil {
-			return reconcile.Result{}, err
-		} else if err == nil {
-			logrus.Infof("Updated Kiali ConfigMap for Labels")
-
-			kialipodName, err := k8sclient.GetDeploymentPod("kiali", istioSystemNamespace.Name, "app")
-			if err == nil {
-				found := &corev1.Pod{}
-				err = r.client.Get(context.TODO(), types.NamespacedName{Name: kialipodName, Namespace: istioSystemNamespace.Name}, found)
-				if err == nil {
-					if err := r.client.Delete(context.TODO(), found); err != nil {
-						return reconcile.Result{}, err
-					}
-					logrus.Infof("Restarted a new Kiali Pod")
-				}
-			}
-		}
-	}
-
-	// Updated Istio SideCar Injector for the Workshop
-	injectorConfigMap, err := r.GetEffectiveConfigMap(instance, "istio-sidecar-injector", istioSystemNamespace.Name)
-
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	newConfig = strings.ReplaceAll(injectorConfigMap.Data["config"],
-		"index .ObjectMeta.Labels \"app\"",
-		"index .ObjectMeta.Labels \"deploymentconfig\"")
-
-	if injectorConfigMap.Data["config"] != newConfig {
-		injectorConfigMap.Data["config"] = newConfig
-		if err := r.client.Update(context.TODO(), injectorConfigMap); err != nil {
-			return reconcile.Result{}, err
-		} else if err == nil {
-			logrus.Infof("Updated %s ConfigMap", injectorConfigMap.Name)
-
-			injectorPodName, err := k8sclient.GetDeploymentPod("sidecarInjectorWebhook", istioSystemNamespace.Name, "app")
-			if err == nil {
-				found := &corev1.Pod{}
-				err = r.client.Get(context.TODO(), types.NamespacedName{Name: injectorPodName, Namespace: istioSystemNamespace.Name}, found)
-				if err == nil {
-					if err := r.client.Delete(context.TODO(), found); err != nil {
-						return reconcile.Result{}, err
-					}
-					logrus.Infof("Restarted Istio Sidecar Injector Pod")
-				}
-			}
-		}
 	}
 
 	//Success
