@@ -9,6 +9,7 @@ import (
 func NewArgoCDCustomResource(cr *openshiftv1alpha1.Workshop, name string, namespace string, argocdPolicy string) *argocd.ArgoCD {
 
 	scopes := "[preferred_username]"
+	defaultPolicy := ""
 
 	return &argocd.ArgoCD{
 		TypeMeta: metav1.TypeMeta{
@@ -31,8 +32,9 @@ func NewArgoCDCustomResource(cr *openshiftv1alpha1.Workshop, name string, namesp
 				},
 			},
 			RBAC: argocd.ArgoCDRBACSpec{
-				Policy: &argocdPolicy,
-				Scopes: &scopes,
+				Policy:        &argocdPolicy,
+				Scopes:        &scopes,
+				DefaultPolicy: &defaultPolicy,
 			},
 		},
 	}

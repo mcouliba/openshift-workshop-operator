@@ -31,11 +31,11 @@ spec:
         tag: "2.2.0.GA"
     etherpad:
       enabled: true
-    gogs:
+    gitea:
       enabled: true
       image:
-        name: quay.io/gpte-devops-automation/gogs-operator
-        tag: v0.12
+        name: quay.io/gpte-devops-automation/gitea-operator
+        tag: v0.17
     nexus:
       enabled: true
     pipeline:

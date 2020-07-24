@@ -4,7 +4,7 @@ import (
 	rbac "k8s.io/api/rbac/v1"
 )
 
-func GogsRules() []rbac.PolicyRule {
+func GiteaRules() []rbac.PolicyRule {
 	return []rbac.PolicyRule{
 		{
 			APIGroups: []string{
@@ -32,24 +32,10 @@ func GogsRules() []rbac.PolicyRule {
 		},
 		{
 			APIGroups: []string{
-				"",
-			},
-			Resources: []string{
-				"namespaces",
-			},
-			Verbs: []string{
-				"get",
-			},
-		},
-		{
-			APIGroups: []string{
 				"apps",
 			},
 			Resources: []string{
 				"deployments",
-				"daemonsets",
-				"replicasets",
-				"statefulsets",
 			},
 			Verbs: []string{
 				"create",
@@ -63,10 +49,22 @@ func GogsRules() []rbac.PolicyRule {
 		},
 		{
 			APIGroups: []string{
+				"apps",
+			},
+			Resources: []string{
+				"replicasets",
+			},
+			Verbs: []string{
+				"get",
+			},
+		},
+		{
+			APIGroups: []string{
 				"route.openshift.io",
 			},
 			Resources: []string{
 				"routes",
+				"routes/custom-host",
 			},
 			Verbs: []string{
 				"create",
@@ -95,8 +93,7 @@ func GogsRules() []rbac.PolicyRule {
 				"gpte.opentlc.com",
 			},
 			Resources: []string{
-				"gogs",
-				"gogs/status",
+				"*",
 			},
 			Verbs: []string{
 				"create",
@@ -113,7 +110,7 @@ func GogsRules() []rbac.PolicyRule {
 				"apps",
 			},
 			ResourceNames: []string{
-				"gogs-operator",
+				"gitea-operator",
 			},
 			Resources: []string{
 				"deployments/finalizers",

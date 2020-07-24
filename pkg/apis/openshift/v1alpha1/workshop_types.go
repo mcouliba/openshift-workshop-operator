@@ -34,7 +34,7 @@ type InfrastructureSpec struct {
 	CertManager        CertManagerSpec        `json:"certManager"`
 	CodeReadyWorkspace CodeReadyWorkspaceSpec `json:"codeReadyWorkspace"`
 	Etherpad           EtherpadSpec           `json:"etherpad"`
-	Gogs               GogsSpec               `json:"gogs"`
+	Gitea              GiteaSpec              `json:"gitea"`
 	Guide              GuideSpec              `json:"guide"`
 	IstioWorkspace     IstioWorkspaceSpec     `json:"istioWorkspace"`
 	Nexus              NexusSpec              `json:"nexus"`
@@ -65,7 +65,7 @@ type EtherpadSpec struct {
 	Enabled bool `json:"enabled"`
 }
 
-type GogsSpec struct {
+type GiteaSpec struct {
 	Enabled bool      `json:"enabled"`
 	Image   ImageSpec `json:"image"`
 }
@@ -151,7 +151,7 @@ type WorkshopStatus struct {
 	CertManager        string `json:"certManager"`
 	CodeReadyWorkspace string `json:"codeReadyWorkspace"`
 	Etherpad           string `json:"etherpad"`
-	Gogs               string `json:"gogs"`
+	Gitea              string `json:"gitea"`
 	Guide              string `json:"guide"`
 	IstioWorkspace     string `json:"istioWorkspace"`
 	Nexus              string `json:"nexus"`

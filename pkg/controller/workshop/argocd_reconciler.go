@@ -100,9 +100,9 @@ func (r *ReconcileWorkshop) addArgoCD(instance *openshiftv1alpha1.Workshop, user
 p, ` + userRole + `, clusters, get, https://kubernetes.default.svc, allow
 p, ` + userRole + `, projects, get, default, allow
 p, ` + userRole + `, repositories, get, ` + instance.Spec.Source.GitURL + `, allow
-p, ` + userRole + `, repositories, get, http://gogs-gogs-server.workshop-infra.svc:3000/` + username + `/gitops-cn-project.git, allow
-p, ` + userRole + `, repositories, create, http://gogs-gogs-server.workshop-infra.svc:3000/` + username + `/gitops-cn-project.git, allow
-p, ` + userRole + `, repositories, delete, http://gogs-gogs-server.workshop-infra.svc:3000/` + username + `/gitops-cn-project.git, allow
+p, ` + userRole + `, repositories, get, http://gitea-server-gitea.svc:3000/` + username + `/gitops-cn-project.git, allow
+p, ` + userRole + `, repositories, create, http://gitea-server-gitea.svc:3000/` + username + `/gitops-cn-project.git, allow
+p, ` + userRole + `, repositories, delete, http://gitea-server-gitea.svc:3000/` + username + `/gitops-cn-project.git, allow
 g, ` + username + `, ` + userRole + `
 `
 		argocdPolicy = fmt.Sprintf("%s%s", argocdPolicy, userPolicy)

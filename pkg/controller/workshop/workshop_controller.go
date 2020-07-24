@@ -14,8 +14,8 @@ import (
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	ompv1 "github.com/operator-framework/operator-marketplace/pkg/apis/operators/v1"
 	openshiftv1alpha1 "github.com/redhat/openshift-workshop-operator/pkg/apis/openshift/v1alpha1"
-	gogscustomresource "github.com/redhat/openshift-workshop-operator/pkg/customresource/gogs"
 	certmanager "github.com/redhat/openshift-workshop-operator/pkg/deployment/certmanager"
+	giteacustomresource "github.com/redhat/openshift-workshop-operator/pkg/deployment/gitea"
 	smcp "github.com/redhat/openshift-workshop-operator/pkg/deployment/maistra/servicemeshcontrolplane"
 	smmr "github.com/redhat/openshift-workshop-operator/pkg/deployment/maistra/servicemeshmemberroll"
 	nexus "github.com/redhat/openshift-workshop-operator/pkg/deployment/nexus"
@@ -112,7 +112,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	if err := gogscustomresource.AddToScheme(mgr.GetScheme()); err != nil {
+	if err := giteacustomresource.AddToScheme(mgr.GetScheme()); err != nil {
 		return err
 	}
 
@@ -310,14 +310,6 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	}
 
 	//////////////////////////
-	// Workshopper
-	//////////////////////////
-	if result, err := r.reconcileWorkshopper(instance, users, appsHostnameSuffix,
-		openshiftConsoleURL, openshiftAPIURL); err != nil {
-		return result, err
-	}
-
-	//////////////////////////
 	// Bookbag
 	//////////////////////////
 	if result, err := r.reconcileBookbag(instance, users, appsHostnameSuffix,
@@ -347,9 +339,9 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	}
 
 	//////////////////////////
-	// Gogs
+	// Gitea
 	//////////////////////////
-	if result, err := r.reconcileGogs(instance); err != nil {
+	if result, err := r.reconcileGitea(instance, users); err != nil {
 		return result, err
 	}
 
