@@ -117,7 +117,7 @@ rules:
   - gpte.opentlc.com
   resources:
   - nexus
-  - gitea
+  - giteas
   verbs:
   - create
   - list
