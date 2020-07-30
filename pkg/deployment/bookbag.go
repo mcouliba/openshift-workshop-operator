@@ -22,7 +22,7 @@ func NewBookbagDeployment(cr *openshiftv1alpha1.Workshop, name string, namespace
 	"USER_ID": "` + userID + `",
 	"OPENSHIFT_PASSWORD": "` + cr.Spec.User.Password + `",
 	"CHE_URL": "http://codeready-workspaces.` + appsHostnameSuffix + `",
-	"GIT_URL": "https://gogs-gogs-server-workshop-infra.` + appsHostnameSuffix + `",
+	"GIT_URL": "https://gitea-server-gitea.` + appsHostnameSuffix + `",
 	"JAEGER_URL": "https://jaeger-istio-system.` + appsHostnameSuffix + `",
 	"KIALI_URL": "https://kiali-istio-system.` + appsHostnameSuffix + `",
 	"KIBANA_URL": "https://kibana-openshift-logging.` + appsHostnameSuffix + `",
