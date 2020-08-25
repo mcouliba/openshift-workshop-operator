@@ -4,7 +4,7 @@ metadata:
   name: cloud-native-workshop
 spec:
   user: 
-    number: 10
+    number: 5
     password: openshift
   source:
     gitURL: https://github.com/mcouliba/cloud-native-workshop
@@ -24,11 +24,11 @@ spec:
       enabled: true
       operatorHub:
         channel: latest
-        clusterServiceVersion: crwoperator.v2.2.0
+        clusterServiceVersion: crwoperator.v2.3.0
       openshiftOAuth: false
       pluginRegistryImage:
         name: quay.io/mcouliba/che-plugin-registry
-        tag: "2.2.0.GA_v2"
+        tag: "2.3.0.GA"
     etherpad:
       enabled: true
     gitea:
@@ -51,14 +51,14 @@ spec:
       enabled: true
       serviceMeshOperatorHub:
         channel: "stable"
-        clusterServiceVersion: servicemeshoperator.v1.1.5
+        clusterServiceVersion: servicemeshoperator.v1.1.7
       elasticSearchOperatorHub:
         channel: "4.5"
       jaegerOperatorHub:
         channel: "stable"
       kialiOperatorHub:
         channel: "stable"
-        clusterServiceVersion: kiali-operator.v1.12.13
+        clusterServiceVersion: kiali-operator.v1.12.14
     istioWorkspace:
       enabled: false
       image:
