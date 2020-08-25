@@ -59,7 +59,7 @@ please execute the following command:
 
 [source,bash]
 ----
-oc create -n workshop-infra -f deploy/crds/debugging_workshop_cr.yaml
+oc create -n workshop-infra -f deploy/crds/cloud_native_workshop_cr.yaml
 ----
 
 == Development
@@ -75,5 +75,5 @@ oc create -n workshop-infra -f deploy/crds/debugging_workshop_cr.yaml
 [source,bash]
 ----
 cd openshift-workshop-operator
-./buildImage.sh quay.io/mcouliba/openshift-workshop-operator:3.1
+./buildImage.sh quay.io/mcouliba/openshift-workshop-operator:latest
 ----
