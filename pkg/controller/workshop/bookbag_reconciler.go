@@ -23,11 +23,13 @@ func (r *ReconcileWorkshop) reconcileBookbag(instance *openshiftv1alpha1.Worksho
 	appsHostnameSuffix string, openshiftConsoleURL string) (reconcile.Result, error) {
 	enabled := instance.Spec.Infrastructure.Bookbag.Enabled
 
+	guidesNamespace := "workshop-guides"
+
 	id := 1
 	for {
 		if id <= users && enabled {
 			// Bookback
-			if result, err := r.addUpdateBookbag(instance, strconv.Itoa(id),
+			if result, err := r.addUpdateBookbag(instance, strconv.Itoa(id), guidesNamespace,
 				appsHostnameSuffix, openshiftConsoleURL); err != nil {
 				return result, err
 			}
@@ -36,13 +38,13 @@ func (r *ReconcileWorkshop) reconcileBookbag(instance *openshiftv1alpha1.Worksho
 			bookbagName := fmt.Sprintf("bookbag-%d", id)
 
 			ocpDeploymentFound := &appsv1.Deployment{}
-			ocpDeploymentErr := r.client.Get(context.TODO(), types.NamespacedName{Name: bookbagName, Namespace: instance.Namespace}, ocpDeploymentFound)
+			ocpDeploymentErr := r.client.Get(context.TODO(), types.NamespacedName{Name: bookbagName, Namespace: guidesNamespace}, ocpDeploymentFound)
 
 			if ocpDeploymentErr != nil && errors.IsNotFound(ocpDeploymentErr) {
 				break
 			}
 
-			if result, err := r.deleteBookbag(instance, strconv.Itoa(id)); err != nil {
+			if result, err := r.deleteBookbag(instance, strconv.Itoa(id), guidesNamespace); err != nil {
 				return result, err
 			}
 		}
@@ -64,9 +66,16 @@ func (r *ReconcileWorkshop) reconcileBookbag(instance *openshiftv1alpha1.Worksho
 }
 
 func (r *ReconcileWorkshop) addUpdateBookbag(instance *openshiftv1alpha1.Workshop, userID string,
-	appsHostnameSuffix string, openshiftConsoleURL string) (reconcile.Result, error) {
+	guidesNamespace string, appsHostnameSuffix string, openshiftConsoleURL string) (reconcile.Result, error) {
 
-	bookbagName := fmt.Sprintf("bookbag-%s", userID)
+	namespace := deployment.NewNamespace(instance, guidesNamespace)
+	if err := r.client.Create(context.TODO(), namespace); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Project", namespace.Name)
+	}
+
+	bookbagName := fmt.Sprintf("user%s-bookbag", userID)
 	labels := map[string]string{
 		"app":                       bookbagName,
 		"app.kubernetes.io/part-of": "bookbag",
@@ -79,14 +88,14 @@ func (r *ReconcileWorkshop) addUpdateBookbag(instance *openshiftv1alpha1.Worksho
 		"workshop.sh": "",
 	}
 
-	envConfigMap := deployment.NewConfigMap(instance, bookbagName+"-env", instance.Namespace, labels, data)
+	envConfigMap := deployment.NewConfigMap(instance, bookbagName+"-env", namespace.Name, labels, data)
 	if err := r.client.Create(context.TODO(), envConfigMap); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
 		logrus.Infof("Created %s ConfigMap", envConfigMap.Name)
 	}
 
-	varConfigMap := deployment.NewConfigMap(instance, bookbagName+"-vars", instance.Namespace, labels, nil)
+	varConfigMap := deployment.NewConfigMap(instance, bookbagName+"-vars", namespace.Name, labels, nil)
 	if err := r.client.Create(context.TODO(), varConfigMap); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
@@ -94,7 +103,7 @@ func (r *ReconcileWorkshop) addUpdateBookbag(instance *openshiftv1alpha1.Worksho
 	}
 
 	// Create Service Account
-	serviceAccount := deployment.NewServiceAccount(instance, bookbagName, instance.Namespace)
+	serviceAccount := deployment.NewServiceAccount(instance, bookbagName, namespace.Name)
 	if err := r.client.Create(context.TODO(), serviceAccount); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
@@ -104,7 +113,7 @@ func (r *ReconcileWorkshop) addUpdateBookbag(instance *openshiftv1alpha1.Worksho
 	// Create Role Binding
 	roleBinding := deployment.NewRoleBindingSA(deployment.NewRoleBindingSAParameters{
 		Name:               bookbagName,
-		Namespace:          instance.Namespace,
+		Namespace:          namespace.Name,
 		ServiceAccountName: serviceAccount.Name,
 		RoleName:           "admin",
 		RoleKind:           "Role",
@@ -117,14 +126,14 @@ func (r *ReconcileWorkshop) addUpdateBookbag(instance *openshiftv1alpha1.Worksho
 	}
 
 	// Deploy/Update Bookbag
-	ocpDeployment := deployment.NewBookbagDeployment(instance, bookbagName, instance.Namespace, labels, userID, appsHostnameSuffix, openshiftConsoleURL)
+	ocpDeployment := deployment.NewBookbagDeployment(instance, bookbagName, namespace.Name, labels, userID, appsHostnameSuffix, openshiftConsoleURL)
 	if err := r.client.Create(context.TODO(), ocpDeployment); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
 		logrus.Infof("Created %s Deployment", ocpDeployment.Name)
 	} else if errors.IsAlreadyExists(err) {
 		deploymentFound := &appsv1.Deployment{}
-		if err := r.client.Get(context.TODO(), types.NamespacedName{Name: ocpDeployment.Name, Namespace: instance.Namespace}, deploymentFound); err != nil {
+		if err := r.client.Get(context.TODO(), types.NamespacedName{Name: ocpDeployment.Name, Namespace: namespace.Name}, deploymentFound); err != nil {
 			return reconcile.Result{}, err
 		} else if err == nil {
 			if !reflect.DeepEqual(ocpDeployment.Spec.Template.Spec.Containers[0].Env, deploymentFound.Spec.Template.Spec.Containers[0].Env) {
@@ -138,7 +147,7 @@ func (r *ReconcileWorkshop) addUpdateBookbag(instance *openshiftv1alpha1.Worksho
 	}
 
 	// Create Service
-	service := deployment.NewService(instance, bookbagName, instance.Namespace, labels, []string{"http"}, []int32{10080})
+	service := deployment.NewService(instance, bookbagName, namespace.Name, labels, []string{"http"}, []int32{10080})
 	if err := r.client.Create(context.TODO(), service); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
@@ -146,7 +155,7 @@ func (r *ReconcileWorkshop) addUpdateBookbag(instance *openshiftv1alpha1.Worksho
 	}
 
 	// Create Route
-	route := deployment.NewRoute(instance, bookbagName, instance.Namespace, labels, bookbagName, 10080)
+	route := deployment.NewRoute(instance, bookbagName, namespace.Name, labels, bookbagName, 10080)
 	if err := r.client.Create(context.TODO(), route); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {
@@ -157,12 +166,12 @@ func (r *ReconcileWorkshop) addUpdateBookbag(instance *openshiftv1alpha1.Worksho
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileWorkshop) deleteBookbag(instance *openshiftv1alpha1.Workshop, userID string) (reconcile.Result, error) {
+func (r *ReconcileWorkshop) deleteBookbag(instance *openshiftv1alpha1.Workshop, userID string, guidesNamespace string) (reconcile.Result, error) {
 
-	bookbagName := fmt.Sprintf("bookbag-%s", userID)
+	bookbagName := fmt.Sprintf("user%s-bookbag", userID)
 
 	routeFound := &routev1.Route{}
-	routeErr := r.client.Get(context.TODO(), types.NamespacedName{Name: bookbagName, Namespace: instance.Namespace}, routeFound)
+	routeErr := r.client.Get(context.TODO(), types.NamespacedName{Name: bookbagName, Namespace: guidesNamespace}, routeFound)
 	if routeErr == nil {
 		// Delete Route
 		if err := r.client.Delete(context.TODO(), routeFound); err != nil {
@@ -172,7 +181,7 @@ func (r *ReconcileWorkshop) deleteBookbag(instance *openshiftv1alpha1.Workshop, 
 	}
 
 	serviceFound := &corev1.Service{}
-	serviceErr := r.client.Get(context.TODO(), types.NamespacedName{Name: bookbagName, Namespace: instance.Namespace}, serviceFound)
+	serviceErr := r.client.Get(context.TODO(), types.NamespacedName{Name: bookbagName, Namespace: guidesNamespace}, serviceFound)
 	if serviceErr == nil {
 		// Delete Service
 		if err := r.client.Delete(context.TODO(), serviceFound); err != nil {
@@ -182,7 +191,7 @@ func (r *ReconcileWorkshop) deleteBookbag(instance *openshiftv1alpha1.Workshop, 
 	}
 
 	ocpDeploymentFound := &appsv1.Deployment{}
-	ocpDeploymentErr := r.client.Get(context.TODO(), types.NamespacedName{Name: bookbagName, Namespace: instance.Namespace}, ocpDeploymentFound)
+	ocpDeploymentErr := r.client.Get(context.TODO(), types.NamespacedName{Name: bookbagName, Namespace: guidesNamespace}, ocpDeploymentFound)
 	if ocpDeploymentErr == nil {
 		// Undeploy Guide
 		if err := r.client.Delete(context.TODO(), ocpDeploymentFound); err != nil {
@@ -192,7 +201,7 @@ func (r *ReconcileWorkshop) deleteBookbag(instance *openshiftv1alpha1.Workshop, 
 	}
 
 	serviceAccountFound := &corev1.ServiceAccount{}
-	serviceAccountErr := r.client.Get(context.TODO(), types.NamespacedName{Name: bookbagName, Namespace: instance.Namespace}, serviceAccountFound)
+	serviceAccountErr := r.client.Get(context.TODO(), types.NamespacedName{Name: bookbagName, Namespace: guidesNamespace}, serviceAccountFound)
 	if serviceAccountErr == nil {
 		// Delete Service
 		if err := r.client.Delete(context.TODO(), serviceAccountFound); err != nil {

@@ -43,7 +43,6 @@ type InfrastructureSpec struct {
 	ServiceMesh        ServiceMeshSpec        `json:"serviceMesh"`
 	Serverless         ServerlessSpec         `json:"serverless"`
 	Vault              VaultSpec              `json:"vault"`
-	Workshopper        WorkshopperSpec        `json:"workshopper"`
 }
 
 type ArgoCDSpec struct {
@@ -98,10 +97,6 @@ type ServerlessSpec struct {
 	OperatorHub OperatorHubSpec `json:"operatorHub"`
 }
 
-type WorkshopperSpec struct {
-	Enabled bool `json:"enabled"`
-}
-
 type GuideSpec struct {
 	Enabled                     bool   `json:"enabled"`
 	GitRepositoryLabPath        string `json:"gitRepositoryLabPath"`
@@ -146,21 +141,21 @@ type WorkshopStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
-	ArgoCD             string `json:"argocd"`
-	Bookbag            string `json:"bookbag"`
-	CertManager        string `json:"certManager"`
-	CodeReadyWorkspace string `json:"codeReadyWorkspace"`
-	Etherpad           string `json:"etherpad"`
-	Gitea              string `json:"gitea"`
-	Guide              string `json:"guide"`
-	IstioWorkspace     string `json:"istioWorkspace"`
-	Nexus              string `json:"nexus"`
-	Pipeline           string `json:"pipeline"`
-	Project            string `json:"project"`
-	ServiceMesh        string `json:"serviceMesh"`
-	Serverless         string `json:"serverless"`
-	Vault              string `json:"vault"`
-	Workshopper        string `json:"workshopper"`
+	ArgoCD               string `json:"argocd"`
+	Bookbag              string `json:"bookbag"`
+	CertManager          string `json:"certManager"`
+	CodeReadyWorkspace   string `json:"codeReadyWorkspace"`
+	Etherpad             string `json:"etherpad"`
+	Gitea                string `json:"gitea"`
+	Guide                string `json:"guide"`
+	IstioWorkspace       string `json:"istioWorkspace"`
+	Nexus                string `json:"nexus"`
+	Pipeline             string `json:"pipeline"`
+	Project              string `json:"project"`
+	ServiceMesh          string `json:"serviceMesh"`
+	Serverless           string `json:"serverless"`
+	UsernameDistribution string `json:"usernameDistribution"`
+	Vault                string `json:"vault"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

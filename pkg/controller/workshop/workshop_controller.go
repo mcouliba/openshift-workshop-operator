@@ -303,6 +303,14 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	}
 
 	//////////////////////////
+	// Portal
+	//////////////////////////
+	if result, err := r.reconcilePortal(instance, users, appsHostnameSuffix,
+		openshiftConsoleURL); err != nil {
+		return result, err
+	}
+
+	//////////////////////////
 	// Projects
 	//////////////////////////
 	if result, err := r.reconcileProject(instance, users); err != nil {

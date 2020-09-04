@@ -25,9 +25,9 @@ import (
 // Reconciling CodeReadyWorkspace
 func (r *ReconcileWorkshop) reconcileCodeReadyWorkspace(instance *openshiftv1alpha1.Workshop, users int,
 	appsHostnameSuffix string, openshiftConsoleURL string, openshiftAPIURL string) (reconcile.Result, error) {
-	enabledCodeReadyWorkspace := instance.Spec.Infrastructure.CodeReadyWorkspace.Enabled
+	enabled := instance.Spec.Infrastructure.CodeReadyWorkspace.Enabled
 
-	if enabledCodeReadyWorkspace {
+	if enabled {
 
 		if result, err := r.addCodeReadyWorkspace(instance, users, appsHostnameSuffix, openshiftConsoleURL, openshiftAPIURL); err != nil {
 			return result, err
