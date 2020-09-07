@@ -72,5 +72,3 @@ spec:
       agentInjectorImage:
         name: "hashicorp/vault-k8s"
         tag: "0.3.0"
-    workshopper:
-      enabled: false

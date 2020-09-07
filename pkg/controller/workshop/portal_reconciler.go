@@ -132,7 +132,8 @@ func (r *ReconcileWorkshop) addUpdateUsernameDistribution(instance *openshiftv1a
 		if err := r.client.Get(context.TODO(), types.NamespacedName{Name: ocpDeployment.Name, Namespace: namespace.Name}, deploymentFound); err != nil {
 			return reconcile.Result{}, err
 		} else if err == nil {
-			if !reflect.DeepEqual(ocpDeployment.Spec.Template.Spec.Containers[0].Env, deploymentFound.Spec.Template.Spec.Containers[0].Env) {
+			if !reflect.DeepEqual(ocpDeployment.Spec.Template.Spec.Containers[0].Env, deploymentFound.Spec.Template.Spec.Containers[0].Env) ||
+				!reflect.DeepEqual(ocpDeployment.Spec.Template.Spec.Containers[0].Image, deploymentFound.Spec.Template.Spec.Containers[0].Image) {
 				// Update Guide
 				if err := r.client.Update(context.TODO(), ocpDeployment); err != nil {
 					return reconcile.Result{}, err
