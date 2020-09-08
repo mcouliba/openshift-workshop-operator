@@ -61,7 +61,7 @@ func NewUsernameDistributionDeployment(cr *openshiftv1alpha1.Workshop, name stri
 								},
 								{
 									Name:  "LAB_USER_ACCESS_TOKEN",
-									Value: cr.Name,
+									Value: cr.Spec.User.Password,
 								},
 								{
 									Name:  "LAB_USER_PASS",
