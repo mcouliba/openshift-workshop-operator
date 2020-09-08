@@ -41,7 +41,7 @@ spec:
     pipeline:
       enabled: true
       operatorHub:
-        channel: ocp-4.4
+        channel: ocp-4.5
         clusterServiceVersion: openshift-pipelines-operator.v1.0.1
     project:
       enabled: true
@@ -58,7 +58,7 @@ spec:
         channel: "stable"
       kialiOperatorHub:
         channel: "stable"
-        clusterServiceVersion: kiali-operator.v1.12.14
+        clusterServiceVersion: kiali-operator.v1.12.15
     istioWorkspace:
       enabled: false
       image:
