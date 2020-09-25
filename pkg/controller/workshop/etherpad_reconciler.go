@@ -55,7 +55,7 @@ func (r *ReconcileWorkshop) addEtherpad(instance *openshiftv1alpha1.Workshop, us
 		"database-root-password": "admin",
 		"database-user":          "admin",
 	}
-	etherpadDatabaseSecret := deployment.NewSecretStringData(instance, "etherpad-mysql", instance.Namespace, databaseCredentials)
+	etherpadDatabaseSecret := deployment.NewSecretStringData(instance, "etherpad-mysql", instance.Namespace, labels, databaseCredentials)
 	if err := r.client.Create(context.TODO(), etherpadDatabaseSecret); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {

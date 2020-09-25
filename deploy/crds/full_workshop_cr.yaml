@@ -29,6 +29,8 @@ spec:
       pluginRegistryImage:
         name: quay.io/mcouliba/che-plugin-registry
         tag: "2.3.0.GA"
+    etherpad:
+      enabled: false
     gitea:
       enabled: true
       image:
@@ -56,3 +58,16 @@ spec:
       kialiOperatorHub:
         channel: "stable"
         clusterServiceVersion: kiali-operator.v1.12.15
+    istioWorkspace:
+      enabled: false
+      image:
+        name: quay.io/maistra/istio-workspace
+        tag: v0.0.3
+    vault:
+      enabled: false
+      image:
+        name: vault
+        tag: "1.3.3"
+      agentInjectorImage:
+        name: "hashicorp/vault-k8s"
+        tag: "0.3.0"

@@ -27,7 +27,7 @@ require (
 	go.opencensus.io v0.19.2 // indirect
 	go.uber.org/atomic v1.3.2 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
-	golang.org/x/crypto v0.0.0-20190611184440-5c40567a22f8 // indirect
+	golang.org/x/crypto v0.0.0-20190611184440-5c40567a22f8
 	golang.org/x/sys v0.0.0-20190616124812-15dcb6c0061f // indirect
 	golang.org/x/tools v0.0.0-20190614205625-5aca471b1d59 // indirect
 	k8s.io/api v0.18.3

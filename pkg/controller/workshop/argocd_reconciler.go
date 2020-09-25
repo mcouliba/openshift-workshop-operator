@@ -13,6 +13,7 @@ import (
 	deployment "github.com/redhat/openshift-workshop-operator/pkg/deployment"
 	"github.com/redhat/openshift-workshop-operator/pkg/util"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/bcrypt"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -90,7 +91,17 @@ func (r *ReconcileWorkshop) addArgoCD(instance *openshiftv1alpha1.Workshop, user
 		}
 	}
 
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(instance.Spec.User.Password), bcrypt.DefaultCost)
+	if err != nil {
+		logrus.Errorf("Error when Bcrypt encrypt password for Argo CD: %v", err)
+		return reconcile.Result{}, err
+	}
+	bcryptPassword := string(hashedPassword)
+
 	argocdPolicy := ""
+	secretData := map[string]string{}
+	configMapData := map[string]string{}
+
 	for id := 1; id <= users; id++ {
 		username := fmt.Sprintf("user%d", id)
 		userRole := fmt.Sprintf("role:%s", username)
@@ -106,6 +117,30 @@ p, ` + userRole + `, repositories, delete, http://gitea-server.gitea.svc:3000/` 
 g, ` + username + `, ` + userRole + `
 `
 		argocdPolicy = fmt.Sprintf("%s%s", argocdPolicy, userPolicy)
+
+		secretData[fmt.Sprintf("accounts.%s.password", username)] = bcryptPassword
+
+		configMapData[fmt.Sprintf("accounts.%s", username)] = "login"
+	}
+
+	labels := map[string]string{
+		"app.kubernetes.io/name":    "argocd-secret",
+		"app.kubernetes.io/part-of": "argocd",
+	}
+
+	secret := deployment.NewSecretStringData(instance, "argocd-secret", namespace.Name, labels, secretData)
+	if err := r.client.Create(context.TODO(), secret); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s Secret", secret.Name)
+	}
+
+	labels["app.kubernetes.io/name"] = "argocd-cm"
+	configmap := deployment.NewConfigMap(instance, "argocd-cm", namespace.Name, labels, configMapData)
+	if err := r.client.Create(context.TODO(), configmap); err != nil && !errors.IsAlreadyExists(err) {
+		return reconcile.Result{}, err
+	} else if err == nil {
+		logrus.Infof("Created %s ConfigMap", configmap.Name)
 	}
 
 	customResource := deployment.NewArgoCDCustomResource(instance, "argocd", namespace.Name, argocdPolicy)

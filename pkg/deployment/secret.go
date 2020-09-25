@@ -6,8 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func NewSecretStringData(cr *openshiftv1alpha1.Workshop, name string, namespace string, stringData map[string]string) *corev1.Secret {
-	labels := GetLabels(cr, name)
+func NewSecretStringData(cr *openshiftv1alpha1.Workshop, name string, namespace string, labels map[string]string, stringData map[string]string) *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
@@ -22,8 +21,7 @@ func NewSecretStringData(cr *openshiftv1alpha1.Workshop, name string, namespace 
 	}
 }
 
-func NewSecretCrt(cr *openshiftv1alpha1.Workshop, name string, namespace string, crt []byte) *corev1.Secret {
-	labels := GetLabels(cr, name)
+func NewSecretCrt(cr *openshiftv1alpha1.Workshop, name string, namespace string, labels map[string]string, crt []byte) *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",

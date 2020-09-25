@@ -93,54 +93,54 @@ func (r *ReconcileWorkshop) deleteProject(namespaces *corev1.Namespace) (reconci
 
 func (r *ReconcileWorkshop) manageRoles(projectName string, username string) (reconcile.Result, error) {
 
-	// Istio
-	istioRole := deployment.NewRole(deployment.NewRoleParameters{
-		Name:      username + "-istio",
-		Namespace: projectName,
-		Rules:     deployment.IstioUserRules(),
-	})
-	if err := r.client.Create(context.TODO(), istioRole); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s Role", istioRole.Name)
-	}
+	// // Istio
+	// istioRole := deployment.NewRole(deployment.NewRoleParameters{
+	// 	Name:      username + "-istio",
+	// 	Namespace: projectName,
+	// 	Rules:     deployment.IstioUserRules(),
+	// })
+	// if err := r.client.Create(context.TODO(), istioRole); err != nil && !errors.IsAlreadyExists(err) {
+	// 	return reconcile.Result{}, err
+	// } else if err == nil {
+	// 	logrus.Infof("Created %s Role", istioRole.Name)
+	// }
 
-	istioRoleBinding := deployment.NewRoleBindingUser(deployment.NewRoleBindingUserParameters{
-		Name:      username + "-istio",
-		Namespace: projectName,
-		Username:  username,
-		RoleName:  istioRole.Name,
-		RoleKind:  "Role",
-	})
-	if err := r.client.Create(context.TODO(), istioRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s Role Binding", istioRole.Name)
-	}
+	// istioRoleBinding := deployment.NewRoleBindingUser(deployment.NewRoleBindingUserParameters{
+	// 	Name:      username + "-istio",
+	// 	Namespace: projectName,
+	// 	Username:  username,
+	// 	RoleName:  istioRole.Name,
+	// 	RoleKind:  "Role",
+	// })
+	// if err := r.client.Create(context.TODO(), istioRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
+	// 	return reconcile.Result{}, err
+	// } else if err == nil {
+	// 	logrus.Infof("Created %s Role Binding", istioRole.Name)
+	// }
 
-	istioArgocdRole := deployment.NewRole(deployment.NewRoleParameters{
-		Name:      username + "-istio-argocd",
-		Namespace: projectName,
-		Rules:     deployment.IstioArgoCDRules(),
-	})
-	if err := r.client.Create(context.TODO(), istioArgocdRole); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s Role", istioArgocdRole.Name)
-	}
+	// istioArgocdRole := deployment.NewRole(deployment.NewRoleParameters{
+	// 	Name:      username + "-istio-argocd",
+	// 	Namespace: projectName,
+	// 	Rules:     deployment.IstioArgoCDRules(),
+	// })
+	// if err := r.client.Create(context.TODO(), istioArgocdRole); err != nil && !errors.IsAlreadyExists(err) {
+	// 	return reconcile.Result{}, err
+	// } else if err == nil {
+	// 	logrus.Infof("Created %s Role", istioArgocdRole.Name)
+	// }
 
-	istioArgocdRoleBinding := deployment.NewRoleBindingUser(deployment.NewRoleBindingUserParameters{
-		Name:      username + "-istio-argocd",
-		Namespace: projectName,
-		Username:  "system:serviceaccount:argocd:argocd-application-controller",
-		RoleName:  istioArgocdRole.Name,
-		RoleKind:  "Role",
-	})
-	if err := r.client.Create(context.TODO(), istioArgocdRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
-		return reconcile.Result{}, err
-	} else if err == nil {
-		logrus.Infof("Created %s Role Binding", istioArgocdRoleBinding.Name)
-	}
+	// istioArgocdRoleBinding := deployment.NewRoleBindingUser(deployment.NewRoleBindingUserParameters{
+	// 	Name:      username + "-istio-argocd",
+	// 	Namespace: projectName,
+	// 	Username:  "system:serviceaccount:argocd:argocd-application-controller",
+	// 	RoleName:  istioArgocdRole.Name,
+	// 	RoleKind:  "Role",
+	// })
+	// if err := r.client.Create(context.TODO(), istioArgocdRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
+	// 	return reconcile.Result{}, err
+	// } else if err == nil {
+	// 	logrus.Infof("Created %s Role Binding", istioArgocdRoleBinding.Name)
+	// }
 
 	// User
 	userRoleBinding := deployment.NewRoleBindingUser(deployment.NewRoleBindingUserParameters{

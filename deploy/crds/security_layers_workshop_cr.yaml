@@ -7,77 +7,33 @@ spec:
     number: 5
     password: openshift
   source:
-    gitURL: https://github.com/lbroudoux/secured-fruits-catalog-k8s
-    gitBranch: "master"
+    gitURL: https://github.com/mcouliba/cloud-native-workshop
+    gitBranch: "ocp4.5"
   infrastructure:
-    argocd:
-      enabled: false
-      operatorHub:
-        channel: alpha
-        clusterServiceVersion: argocd-operator.v0.0.9
     bookbag:
-      enabled: false
-      image:
-        name: quay.io/mcouliba/debugging-workshop-bookbag
-        tag: "3.1"
-    certManager:
       enabled: true
-      operatorHub:
-        channel: alpha
-        clusterServiceVersion: cert-manager-operator.v0.15.1
+      image:
+        name: quay.io/mcouliba/cloud-native-workshop-bookbag
+        tag: "ocp4.5"
     codeReadyWorkspace:
       enabled: true
       operatorHub:
         channel: latest
-        clusterServiceVersion: crwoperator.v2.1.1
+        clusterServiceVersion: crwoperator.v2.3.0
       openshiftOAuth: false
       pluginRegistryImage:
         name: quay.io/mcouliba/che-plugin-registry
-        tag: "2.1.1.GA"
-    etherpad:
-      enabled: true
-    gitea:
-      enabled: false
-      image:
-        name: quay.io/gpte-devops-automation/gitea-operator
-        tag: v0.17
+        tag: "2.3.0.GA"
     nexus:
       enabled: true
-    pipeline:
-      enabled: false
-      operatorHub:
-        channel: dev-preview
-        clusterServiceVersion: openshift-pipelines-operator.v0.10.7
     project:
       enabled: true
-      devName: dev-project
       stagingName: asl-project
-    serviceMesh:
-      enabled: true
-      serviceMeshOperatorHub:
-        channel: "1.0"
-        clusterServiceVersion: servicemeshoperator.v1.1.2
-      elasticSearchOperatorHub:
-        channel: "4.4"
-        clusterServiceVersion: elasticsearch-operator.4.4.0-202005270305
-      jaegerOperatorHub:
-        channel: "stable"
-        clusterServiceVersion: jaeger-operator.v1.17.2
-      kialiOperatorHub:
-        channel: "stable"
-        clusterServiceVersion: kiali-operator.v1.12.11
-    istioWorkspace:
-      enabled: false
-      image:
-        name: quay.io/maistra/istio-workspace
-        tag: v0.0.3
     vault:
       enabled: true
       image:
         name: vault
-        tag: "1.3.3"
+        tag: "1.5.3"
       agentInjectorImage:
         name: "hashicorp/vault-k8s"
-        tag: "0.3.0"
-    workshopper:
-      enabled: true
+        tag: "0.5.0"

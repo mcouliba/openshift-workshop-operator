@@ -23,6 +23,15 @@ type NewRoleBindingUserParameters struct {
 	RoleKind  string
 }
 
+type NewRoleBindingUsersParameters struct {
+	Name      string
+	Namespace string
+	labels    map[string]string
+	Subject   []rbac.Subject
+	RoleName  string
+	RoleKind  string
+}
+
 func NewRoleBindingSA(param NewRoleBindingSAParameters) *rbac.RoleBinding {
 	return &rbac.RoleBinding{
 		TypeMeta: metav1.TypeMeta{
@@ -70,6 +79,21 @@ func NewRoleBindingUser(param NewRoleBindingUserParameters) *rbac.RoleBinding {
 			Name:     param.RoleName,
 			Kind:     param.RoleKind,
 			APIGroup: "rbac.authorization.k8s.io",
+		},
+	}
+}
+
+func NewRoleBindingUsers(param NewRoleBindingUsersParameters) *rbac.RoleBinding {
+	return &rbac.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      param.Name,
+			Namespace: param.Namespace,
+			Labels:    param.labels,
+		},
+		Subjects: param.Subject,
+		RoleRef: rbac.RoleRef{
+			Name: param.RoleName,
+			Kind: param.RoleKind,
 		},
 	}
 }

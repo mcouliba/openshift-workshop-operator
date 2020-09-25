@@ -67,16 +67,6 @@ listener "tcp" {
 storage "file" {
 	path = "/vault/data"
 }
-
-# Example configuration for using auto-unseal, using Google Cloud KMS. The
-# GKMS keys must already exist, and the cluster must have a service account
-# that is authorized to access GCP KMS.
-#seal "gcpckms" {
-#   project     = "vault-helm-dev"
-#   region      = "global"
-#   key_ring    = "vault-helm-unseal-kr"
-#   crypto_key  = "vault-helm-unseal-key"
-#}
 `,
 	}
 
@@ -218,7 +208,8 @@ func (r *ReconcileWorkshop) addVaultAgentInjector(instance *openshiftv1alpha1.Wo
 	}
 
 	// Create
-	mutatingWebhookConfiguration := deployment.NewMutatingWebhookConfiguration(instance, "vault-agent-injector-cfg", labels, deployment.VaultAgentInjectorWebHook(namespace.Name))
+	webhooks := deployment.VaultAgentInjectorWebHook(namespace.Name)
+	mutatingWebhookConfiguration := deployment.NewMutatingWebhookConfiguration(instance, "vault-agent-injector-cfg", labels, webhooks)
 	if err := r.client.Create(context.TODO(), mutatingWebhookConfiguration); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {

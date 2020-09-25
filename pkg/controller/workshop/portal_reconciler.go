@@ -57,7 +57,7 @@ func (r *ReconcileWorkshop) addRedis(instance *openshiftv1alpha1.Workshop) (reco
 	credentials := map[string]string{
 		"database-password": "redis",
 	}
-	secret := deployment.NewSecretStringData(instance, serviceName, namespace.Name, credentials)
+	secret := deployment.NewSecretStringData(instance, serviceName, namespace.Name, labels, credentials)
 	if err := r.client.Create(context.TODO(), secret); err != nil && !errors.IsAlreadyExists(err) {
 		return reconcile.Result{}, err
 	} else if err == nil {

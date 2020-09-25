@@ -80,7 +80,6 @@ type PipelineSpec struct {
 
 type ProjectSpec struct {
 	Enabled     bool   `json:"enabled"`
-	DevName     string `json:"devName"`
 	StagingName string `json:"stagingName"`
 }
 
