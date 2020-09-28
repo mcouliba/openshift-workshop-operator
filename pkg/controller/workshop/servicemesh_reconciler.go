@@ -102,29 +102,29 @@ func (r *ReconcileWorkshop) addServiceMesh(instance *openshiftv1alpha1.Workshop,
 		istioMembers = append(istioMembers, stagingProjectName)
 		istioUsers = append(istioUsers, userSubject)
 
-		// jaegerRole := deployment.NewRole(deployment.NewRoleParameters{
-		// 	Name:      username + "-jaeger",
-		// 	Namespace: "istio-system",
-		// 	Rules:     deployment.JaegerUserRules(),
-		// })
-		// if err := r.client.Create(context.TODO(), jaegerRole); err != nil && !errors.IsAlreadyExists(err) {
-		// 	return reconcile.Result{}, err
-		// } else if err == nil {
-		// 	logrus.Infof("Created %s Role", jaegerRole.Name)
-		// }
+		jaegerRole := deployment.NewRole(deployment.NewRoleParameters{
+			Name:      username + "-jaeger",
+			Namespace: "istio-system",
+			Rules:     deployment.JaegerUserRules(),
+		})
+		if err := r.client.Create(context.TODO(), jaegerRole); err != nil && !errors.IsAlreadyExists(err) {
+			return reconcile.Result{}, err
+		} else if err == nil {
+			logrus.Infof("Created %s Role", jaegerRole.Name)
+		}
 
-		// JaegerRoleBinding := deployment.NewRoleBindingUser(deployment.NewRoleBindingUserParameters{
-		// 	Name:      username + "-jaeger",
-		// 	Namespace: "istio-system",
-		// 	Username:  username,
-		// 	RoleName:  jaegerRole.Name,
-		// 	RoleKind:  "Role",
-		// })
-		// if err := r.client.Create(context.TODO(), JaegerRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
-		// 	return reconcile.Result{}, err
-		// } else if err == nil {
-		// 	logrus.Infof("Created %s Role Binding", JaegerRoleBinding.Name)
-		// }
+		JaegerRoleBinding := deployment.NewRoleBindingUser(deployment.NewRoleBindingUserParameters{
+			Name:      username + "-jaeger",
+			Namespace: "istio-system",
+			Username:  username,
+			RoleName:  jaegerRole.Name,
+			RoleKind:  "Role",
+		})
+		if err := r.client.Create(context.TODO(), JaegerRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
+			return reconcile.Result{}, err
+		} else if err == nil {
+			logrus.Infof("Created %s Role Binding", JaegerRoleBinding.Name)
+		}
 	}
 
 	meshUserRoleBinding := deployment.NewRoleBindingUsers(deployment.NewRoleBindingUsersParameters{
