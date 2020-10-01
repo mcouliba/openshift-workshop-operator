@@ -29,8 +29,6 @@ spec:
       pluginRegistryImage:
         name: quay.io/mcouliba/che-plugin-registry
         tag: "2.3.0.GA"
-    etherpad:
-      enabled: false
     gitea:
       enabled: true
       image:

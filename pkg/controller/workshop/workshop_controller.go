@@ -326,13 +326,6 @@ func (r *ReconcileWorkshop) Reconcile(request reconcile.Request) (reconcile.Resu
 	}
 
 	//////////////////////////
-	// Etherpad
-	//////////////////////////
-	if result, err := r.reconcileEtherpad(instance, users, appsHostnameSuffix); err != nil {
-		return result, err
-	}
-
-	//////////////////////////
 	// Nexus
 	//////////////////////////
 	if result, err := r.reconcileNexus(instance); err != nil {
