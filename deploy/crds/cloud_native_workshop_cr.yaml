@@ -24,11 +24,11 @@ spec:
       enabled: true
       operatorHub:
         channel: latest
-        clusterServiceVersion: crwoperator.v2.3.0
+        clusterServiceVersion: crwoperator.v2.4.0
       openshiftOAuth: false
       pluginRegistryImage:
         name: quay.io/mcouliba/che-plugin-registry
-        tag: "2.3.0.GA"
+        tag: "2.4.0.GA"
     gitea:
       enabled: true
       image:
@@ -48,7 +48,7 @@ spec:
       enabled: true
       serviceMeshOperatorHub:
         channel: "stable"
-        clusterServiceVersion: servicemeshoperator.v1.1.7
+        clusterServiceVersion: servicemeshoperator.v1.1.9
       elasticSearchOperatorHub:
         channel: "4.5"
       jaegerOperatorHub:
